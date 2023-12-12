@@ -36,7 +36,12 @@ SOFTWARE.
 /*---------- includes ----------*/
 
 #include "log_cfg.h"
+#include "stdarg.h"
+#include "stdbool.h"
 #include "stdint.h"
+#include "stdio.h"
+#include "string.h"
+
 /*---------- macro ----------*/
 
 /**
@@ -67,6 +72,12 @@ SOFTWARE.
     }
 
 /**
+ * @brief 定义一个宏，从__FILE__中查找到文件名,把目录都删去了
+ * @return {*}
+ */
+#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__))
+
+/**
  * @brief 如果要使用log_x这种函数，必须事先定义LOG_TAG和LOG_OUTPUT_LVL
  * @return {*}
  */
@@ -78,7 +89,7 @@ SOFTWARE.
 #endif
 
 #if LOG_OUTPUT_LVL >= LOG_LVL_ASSERT
-#define log_a(...) log_output(LOG_LVL_ASSERT, LOG_TAG, __FILE__, __FUNCTION__, __LINE__, __VA_ARGS__)
+#define log_a(...) log_output(LOG_LVL_ASSERT, LOG_TAG, __FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)
 #else
 #define log_a(...) ((void)0);
 #endif
@@ -90,6 +101,7 @@ SOFTWARE.
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
 
+void log_init(void);
 void log_output(uint8_t level, const char *tag, const char *file, const char *func, const long line, const char *format, ...);
 extern void (*log_assert_hook)(const char *expr, const char *func, size_t line);
 

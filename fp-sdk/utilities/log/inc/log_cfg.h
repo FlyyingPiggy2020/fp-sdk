@@ -40,19 +40,24 @@ SOFTWARE.
  * @brief 最大输出长度
  * @return {*}
  */
-#define LOG_LINE_BUF_SIZE 256
+#define LOG_LINE_BUF_SIZE    256
 
+/**
+ * @brief 数字长度
+ * @return {*}
+ */
+#define LOG_LINE_NUM_MAX_LEN 5
 /**
  * @brief 换行标志
  * @return {*}
  */
-#define LOG_NEWLINE_SIGN  "\r\n"
+#define LOG_NEWLINE_SIGN     "\r\n"
 
 /**
  * @brief 日志输出级别
  * @return {*}
  */
-#define LOG_OUTPUT_LVL    LOG_LVL_VERBOSE
+#define LOG_OUTPUT_LVL       LOG_LVL_VERBOSE
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
