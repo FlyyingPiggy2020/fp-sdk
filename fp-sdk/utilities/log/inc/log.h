@@ -91,5 +91,7 @@ SOFTWARE.
 /*---------- function prototype ----------*/
 
 void log_output(uint8_t level, const char *tag, const char *file, const char *func, const long line, const char *format, ...);
+extern void (*log_assert_hook)(const char *expr, const char *func, size_t line);
+
 /*---------- end of file ----------*/
 #endif
