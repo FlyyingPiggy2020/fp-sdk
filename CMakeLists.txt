@@ -7,10 +7,10 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-include_directories("${PROJECT_SOURCE_DIR}/fp-sdk/utilities/log/inc")
+include_directories("${PROJECT_SOURCE_DIR}/utilities/log/inc")
 
 # 添加子目录
-add_subdirectory(fp-sdk)
+add_subdirectory(utilities)
 
 # add_subdirectory(device_config)
 
