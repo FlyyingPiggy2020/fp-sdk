@@ -35,10 +35,6 @@ SOFTWARE.
 
 #include "log.h"
 #include "log_cfg.h"
-#include "stdarg.h"
-#include "stdint.h"
-#include "stdio.h"
-#include "string.h"
 /*---------- macro ----------*/
 
 /**
@@ -112,10 +108,17 @@ SOFTWARE.
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
 
-extern void log_port_output(const char *log, size_t size);
-
+/**
+ * @brief 初始化完成的标志
+ * @return {*}
+ */
+static bool is_init_ok = false;
 /*---------- function prototype ----------*/
 
+extern void log_port_output(const char *log, size_t size);
+extern void log_output_lock(void);
+extern void log_output_unlock(void);
+extern bool log_port_init(void);
 /**
  * @brief 断言函数
  * @param {char} *expr ：条件
@@ -126,6 +129,10 @@ extern void log_port_output(const char *log, size_t size);
 void (*log_assert_hook)(const char *expr, const char *func, size_t line);
 /*---------- variable ----------*/
 
+/**
+ * @brief 用于日志输出的buffer
+ * @return {*}
+ */
 static char log_buf[LOG_LINE_BUF_SIZE] = {0};
 
 // clang-format off
@@ -137,8 +144,26 @@ static const char *color_output_info[] = {
         [LOG_LVL_DEBUG]   = LOG_COLOR_DEBUG,
         [LOG_LVL_VERBOSE] = LOG_COLOR_VERBOSE,
 };
+
+static const char *output_name[] = {
+        [LOG_LVL_ASSERT]  = "ASSERT",
+        [LOG_LVL_ERROR]   = "ERROR",
+        [LOG_LVL_WARN]    = "WARN",
+        [LOG_LVL_INFO]    = "INFO",
+        [LOG_LVL_DEBUG]   = "DEBUG",
+        [LOG_LVL_VERBOSE] = "VERBOSE",
+};
 // clang-format on
 /*---------- function ----------*/
+
+/**
+ * @brief 初始化
+ * @return {*}
+ */
+void log_init(void)
+{
+    is_init_ok = log_port_init();
+}
 
 /**
  * @brief 字符串复制
@@ -178,13 +203,42 @@ size_t log_strcpy(size_t cur_len, char *dst, const char *src)
  */
 void log_output(uint8_t level, const char *tag, const char *file, const char *func, const long line, const char *format, ...)
 {
+    log_output_lock();
     size_t log_len = 0, fmt_result = 0, newline_len = strlen(LOG_NEWLINE_SIGN);
+    char line_num[LOG_LINE_NUM_MAX_LEN + 1] = {0};
+
     va_list args;
 
     LOG_ASSERT(level <= LOG_LVL_VERBOSE);
 
+    /* 增加颜色 */
     log_len += log_strcpy(log_len, log_buf + log_len, CSI_START);
     log_len += log_strcpy(log_len, log_buf + log_len, color_output_info[level]);
+    /* 增加level */
+    log_len += log_strcpy(log_len, log_buf + log_len, "[");
+    log_len += log_strcpy(log_len, log_buf + log_len, output_name[level]);
+    log_len += log_strcpy(log_len, log_buf + log_len, "]");
+    /* 增加tag */
+    log_len += log_strcpy(log_len, log_buf + log_len, "[");
+    log_len += log_strcpy(log_len, log_buf + log_len, tag);
+    log_len += log_strcpy(log_len, log_buf + log_len, "]");
+
+    /* 增加function */
+    log_len += log_strcpy(log_len, log_buf + log_len, "[");
+    log_len += log_strcpy(log_len, log_buf + log_len, func);
+    log_len += log_strcpy(log_len, log_buf + log_len, "(); ");
+    /* 增加file */
+
+    log_len += log_strcpy(log_len, log_buf + log_len, file);
+    log_len += log_strcpy(log_len, log_buf + log_len, ":");
+    /* 增加line */
+    snprintf(line_num, LOG_LINE_NUM_MAX_LEN, "%ld", line);
+    log_len += log_strcpy(log_len, log_buf + log_len, line_num);
+    log_len += log_strcpy(log_len, log_buf + log_len, ":");
+
+    log_len += log_strcpy(log_len, log_buf + log_len, "]");
+    log_len += log_strcpy(log_len, log_buf + log_len, " - ");
+
     va_start(args, format);
     /* 用vsnprintf构建输出的buff */
     fmt_result = vsnprintf(log_buf + log_len, LOG_LINE_BUF_SIZE - log_len, format, args);
@@ -209,6 +263,10 @@ void log_output(uint8_t level, const char *tag, const char *file, const char *fu
     }
     log_len += log_strcpy(log_len, log_buf + log_len, CSI_END);
     log_len += log_strcpy(log_len, log_buf + log_len, LOG_NEWLINE_SIGN);
-    log_port_output(log_buf, log_len);
+
+    if (is_init_ok == true) {
+        log_port_output(log_buf, log_len);
+    }
+    log_output_unlock();
 }
 /*---------- end of file ----------*/

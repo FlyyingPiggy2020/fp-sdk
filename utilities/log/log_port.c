@@ -28,13 +28,12 @@ SOFTWARE.
  * @Date         : 2023-12-12 15:07:00
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
  * @LastEditTime : 2023-12-12 15:07:01
- * @Brief        :
+ * @Brief        : 日志移植接口
  */
 
 /*---------- includes ----------*/
 
-#include "stdint.h"
-#include "stdio.h"
+#include <log.h>
 /*---------- macro ----------*/
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
@@ -42,6 +41,14 @@ SOFTWARE.
 /*---------- variable ----------*/
 /*---------- function ----------*/
 
+/**
+ * @brief 初始化输出
+ * @return {*}
+ */
+bool log_port_init(void)
+{
+    return true;
+}
 /**
  * @brief 定义输出函数
  * @param {char} *log ：输出指针
@@ -61,6 +68,7 @@ void log_port_output(const char *log, size_t size)
  */
 void log_output_lock(void)
 {
+    return;
 }
 
 /**
@@ -69,5 +77,6 @@ void log_output_lock(void)
  */
 void log_output_unlock(void)
 {
+    return;
 }
 /*---------- end of file ----------*/
