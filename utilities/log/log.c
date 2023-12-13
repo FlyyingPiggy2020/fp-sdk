@@ -34,7 +34,7 @@ SOFTWARE.
 /*---------- includes ----------*/
 
 #include "log.h"
-
+#include "log_cfg.h"
 /*---------- macro ----------*/
 
 /**
@@ -116,6 +116,8 @@ static bool is_init_ok = false;
 /*---------- function prototype ----------*/
 
 extern void log_port_output(const char *log, size_t size);
+extern void log_output_lock(void);
+extern void log_output_unlock(void);
 extern bool log_port_init(void);
 /**
  * @brief 断言函数
@@ -201,6 +203,7 @@ size_t log_strcpy(size_t cur_len, char *dst, const char *src)
  */
 void log_output(uint8_t level, const char *tag, const char *file, const char *func, const long line, const char *format, ...)
 {
+    log_output_lock();
     size_t log_len = 0, fmt_result = 0, newline_len = strlen(LOG_NEWLINE_SIGN);
     char line_num[LOG_LINE_NUM_MAX_LEN + 1] = {0};
 
@@ -264,5 +267,6 @@ void log_output(uint8_t level, const char *tag, const char *file, const char *fu
     if (is_init_ok == true) {
         log_port_output(log_buf, log_len);
     }
+    log_output_unlock();
 }
 /*---------- end of file ----------*/

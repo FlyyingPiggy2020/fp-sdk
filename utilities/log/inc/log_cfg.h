@@ -52,7 +52,6 @@ SOFTWARE.
  * @return {*}
  */
 #define LOG_NEWLINE_SIGN     "\r\n"
-
 /**
  * @brief 日志输出级别
  * @return {*}

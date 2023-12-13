@@ -35,7 +35,6 @@ SOFTWARE.
 
 /*---------- includes ----------*/
 
-#include "log_cfg.h"
 #include "stdarg.h"
 #include "stdbool.h"
 #include "stdint.h"
@@ -94,6 +93,35 @@ SOFTWARE.
 #define log_a(...) ((void)0);
 #endif
 
+#if LOG_OUTPUT_LVL >= LOG_LVL_ERROR
+#define log_e(...) log_output(LOG_LVL_ERROR, LOG_TAG, __FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)
+#else
+#define log_e(...) ((void)0);
+#endif
+
+#if LOG_OUTPUT_LVL >= LOG_LVL_WARN
+#define log_w(...) log_output(LOG_LVL_WARN, LOG_TAG, __FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)
+#else
+#define log_w(...) ((void)0);
+#endif
+
+#if LOG_OUTPUT_LVL >= LOG_LVL_INFO
+#define log_i(...) log_output(LOG_LVL_INFO, LOG_TAG, __FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)
+#else
+#define log_i(...) ((void)0);
+#endif
+
+#if LOG_OUTPUT_LVL >= LOG_LVL_DEBUG
+#define log_d(...) log_output(LOG_LVL_DEBUG, LOG_TAG, __FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)
+#else
+#define log_d(...) ((void)0);
+#endif
+
+#if LOG_OUTPUT_LVL >= LOG_LVL_VERBOSE
+#define log_v(...) log_output(LOG_LVL_VERBOSE, LOG_TAG, __FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)
+#else
+#define log_v(...) ((void)0);
+#endif
 #ifndef assert
 #define assert LOG_ASSERT
 #endif
