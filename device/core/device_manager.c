@@ -23,25 +23,94 @@ SOFTWARE.
 */
 /*
  * Copyright (c) 2023 by Moorgen Tech. Co, Ltd.
- * @FilePath     : driver.c
+ * @FilePath     : device_manager.c
  * @Author       : lxf
  * @Date         : 2023-12-14 10:52:42
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2023-12-14 10:52:54
- * @Brief        : 设备驱动框架
+ * @LastEditTime : 2023-12-20 13:12:04
+ * @Brief        : 设备管理
  */
 
 /*---------- includes ----------*/
 
-#include "driver.h"
+#undef LOG_TAG
+#define LOG_TAG "devmngr"
+#undef LOG_OUTPUT_LVL
+#define LOG_OUTPUT_LVL LOG_LVL_VERBOSE
+
+#include "device_manager.h"
+#include "log.h"
+#include "string.h"
+
 /*---------- macro ----------*/
+
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
+
+LIST_HEAD(device_list);
 /*---------- function prototype ----------*/
+
 /*---------- variable ----------*/
 /*---------- function ----------*/
 
-void device_open(char *name)
+/**
+ * @brief 根据名称查找设备
+ * @param {char} *name
+ * @return {*}没有找到则返回NULL
+ */
+device_t *device_find_name(const char *name)
 {
+    if (name == NULL) {
+        return NULL;
+    }
+    device_t *dev = NULL;
+    list_for_each_entry(dev, device_t, &device_list, list)
+    {
+        if (strncmp(dev->name, name, DEVICE_NAME_MAX) == 0) {
+            return dev;
+        }
+    }
+    return NULL;
+}
+
+/**
+ * @brief 设备注册
+ * @param {device_t} device
+ * @param {char} *name
+ * @param {int} flag
+ * @return {*}-1注册失败;0注册成功
+ */
+int32_t device_register(device_t *dev, const char *name)
+{
+    if (dev == NULL) {
+        return -1;
+    }
+
+    if (device_find_name(name) != NULL) {
+        return -1;
+    }
+
+    strncpy(dev->name, name, DEVICE_NAME_MAX);
+    list_add(&dev->list, &device_list);
+}
+
+/**
+ * @brief 设备解除注册，它会解除静态绑定，并不会释放内存
+ * @param {device_t} dev
+ * @return {*}
+ */
+int32_t device_unregister(device_t *dev)
+{
+    assert(dev == NULL);
+    list_del(&dev->list);
+}
+
+int32_t device_open(device_t *dev)
+{
+    assert(dev);
+
+    if (dev->ops->open != NULL) {
+        dev->ops->open(dev);
+    }
 }
 /*---------- end of file ----------*/

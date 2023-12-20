@@ -12,6 +12,7 @@ add_library(fp-sdk INTERFACE)
 # 添加子目录
 add_subdirectory(utilities)
 add_subdirectory(components)
+add_subdirectory(device)
 
 # 添加生成目标
 add_executable(Demo main.c)

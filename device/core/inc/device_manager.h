@@ -23,36 +23,44 @@ SOFTWARE.
 */
 /*
  * Copyright (c) 2023 by Moorgen Tech. Co, Ltd.
- * @FilePath     : driver.h
+ * @FilePath     : device_manager.h
  * @Author       : lxf
  * @Date         : 2023-12-14 10:52:47
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2023-12-14 10:52:50
- * @Brief        : 设备驱动框架
+ * @LastEditTime : 2023-12-20 13:12:17
+ * @Brief        : 设备管理
  */
 
-#ifndef __DRIVER_H__
-#define __DRIVER_H__
+#ifndef __DEVICE_MANAGER_H__
+#define __DEVICE_MANAGER_H__
 /*---------- includes ----------*/
+
+#include "clists.h"
 /*---------- macro ----------*/
+
+#define DEVICE_NAME_MAX 10 /* 最大名称字节数 */
 /*---------- type define ----------*/
 
 typedef struct
 {
-    int (*device_open)(void *device);
-    int (*device_close)(void *device);
-    int (*device_read)(void *device, void *buffer, int size);
-    int (*device_write)(void *device, const void *buffer, int size);
-    int (*device_ioctl)(void *device, int request, void *arg);
+    int (*open)(void *dev);
+    int (*close)(void *dev);
+    int (*read)(void *dev, void *buffer, int size);
+    int (*write)(void *dev, const void *buffer, int size);
+    int (*ioctl)(void *dev, int request, void *arg);
 } device_operations;
 
 typedef struct
 {
-    const char *name;
-    void *private_data;     // 设备特定的数据
+    const char name[DEVICE_NAME_MAX];
+    void *private_data;     // 设备私有的数据
+    uint16_t count;         // 操作次数(如果支持OS，则支持多次open同一个设备，只有最后一次close的时候才会释放资源，这个标志用于计数)
     device_operations *ops; // 指向设备操作的指针
-} device;
+    struct list_head list;  // 链表
+} device_t;
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
+
+int32_t device_register(device_t *dev, const char *name);
 /*---------- end of file ----------*/
 #endif
