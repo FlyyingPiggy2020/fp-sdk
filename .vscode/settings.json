@@ -84,7 +84,10 @@
         "log_cfg.h": "c",
         "log.h": "c",
         "stdio.h": "c",
-        "stdarg.h": "c"
+        "stdarg.h": "c",
+        "led_flash.h": "c",
+        "stdlib.h": "c",
+        "clists.h": "c"
     },
     "files.encoding": "utf8",
     "clang-format.executable": "${workspaceRoot}/clang-format.exe",

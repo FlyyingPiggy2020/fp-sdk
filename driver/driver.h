@@ -23,29 +23,36 @@ SOFTWARE.
 */
 /*
  * Copyright (c) 2023 by Moorgen Tech. Co, Ltd.
- * @FilePath     : led_flash.c
+ * @FilePath     : driver.h
  * @Author       : lxf
- * @Date         : 2023-12-14 09:41:14
+ * @Date         : 2023-12-14 10:52:47
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2023-12-14 10:13:33
- * @Brief        : 支持多个优先级的led闪烁驱动程序
+ * @LastEditTime : 2023-12-14 10:52:50
+ * @Brief        : 设备驱动框架
  */
 
+#ifndef __DRIVER_H__
+#define __DRIVER_H__
 /*---------- includes ----------*/
-
-#include "led_flash.h"
 /*---------- macro ----------*/
 /*---------- type define ----------*/
+
+typedef struct
+{
+    int (*device_open)(void *device);
+    int (*device_close)(void *device);
+    int (*device_read)(void *device, void *buffer, int size);
+    int (*device_write)(void *device, const void *buffer, int size);
+    int (*device_ioctl)(void *device, int request, void *arg);
+} device_operations;
+
+typedef struct
+{
+    const char *name;
+    void *private_data;     // 设备特定的数据
+    device_operations *ops; // 指向设备操作的指针
+} device;
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
-/*---------- variable ----------*/
-/*---------- function ----------*/
-
-void led_flash_start(void)
-{
-}
-
-void led_flash_thread(void)
-{
-}
 /*---------- end of file ----------*/
+#endif

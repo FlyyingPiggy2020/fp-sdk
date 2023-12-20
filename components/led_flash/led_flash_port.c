@@ -23,17 +23,15 @@ SOFTWARE.
 */
 /*
  * Copyright (c) 2023 by Moorgen Tech. Co, Ltd.
- * @FilePath     : led_flash.c
+ * @FilePath     : led_flash_port.c
  * @Author       : lxf
- * @Date         : 2023-12-14 09:41:14
+ * @Date         : 2023-12-14 10:39:02
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2023-12-14 10:13:33
- * @Brief        : 支持多个优先级的led闪烁驱动程序
+ * @LastEditTime : 2023-12-14 10:39:03
+ * @Brief        : led flash 移植接口
  */
 
 /*---------- includes ----------*/
-
-#include "led_flash.h"
 /*---------- macro ----------*/
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
@@ -41,11 +39,4 @@ SOFTWARE.
 /*---------- variable ----------*/
 /*---------- function ----------*/
 
-void led_flash_start(void)
-{
-}
-
-void led_flash_thread(void)
-{
-}
 /*---------- end of file ----------*/

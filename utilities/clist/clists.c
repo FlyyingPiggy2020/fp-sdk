@@ -23,29 +23,19 @@ SOFTWARE.
 */
 /*
  * Copyright (c) 2023 by Moorgen Tech. Co, Ltd.
- * @FilePath     : led_flash.c
+ * @FilePath     : clist.c
  * @Author       : lxf
- * @Date         : 2023-12-14 09:41:14
+ * @Date         : 2023-12-20 11:24:29
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2023-12-14 10:13:33
- * @Brief        : 支持多个优先级的led闪烁驱动程序
+ * @LastEditTime : 2023-12-20 11:24:30
+ * @Brief        : 空白文件
  */
 
 /*---------- includes ----------*/
-
-#include "led_flash.h"
 /*---------- macro ----------*/
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
 /*---------- variable ----------*/
 /*---------- function ----------*/
-
-void led_flash_start(void)
-{
-}
-
-void led_flash_thread(void)
-{
-}
 /*---------- end of file ----------*/
