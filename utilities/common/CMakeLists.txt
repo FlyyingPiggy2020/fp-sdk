@@ -3,7 +3,7 @@
 aux_source_directory(. DIR_LIB_SRCS)
 
 # 生成链接库
-add_library(log ${DIR_LIB_SRCS})
+add_library(common ${DIR_LIB_SRCS})
 
 # 添加include
-target_include_directories(log PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc)
+target_include_directories(common PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc)
