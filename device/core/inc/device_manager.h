@@ -36,31 +36,50 @@ SOFTWARE.
 /*---------- includes ----------*/
 
 #include "clists.h"
+#include "fp_def.h"
+
 /*---------- macro ----------*/
 
-#define DEVICE_NAME_MAX 10 /* 最大名称字节数 */
+#define DEVICE_NAME_MAX        10 /* 最大名称字节数 */
+
+#define DEVICE_FLAG_DEACTIVETE 0x000 /* 未激活 */
 /*---------- type define ----------*/
 
 typedef struct
 {
-    int (*open)(void *dev);
-    int (*close)(void *dev);
-    int (*read)(void *dev, void *buffer, int size);
-    int (*write)(void *dev, const void *buffer, int size);
-    int (*ioctl)(void *dev, int request, void *arg);
+    fp_err_t (*init)(void *dev);
+    fp_err_t (*open)(void *dev);
+    fp_err_t (*close)(void *dev);
+    fp_size_t (*read)(void *dev, int pos, void *buffer, int size);
+    fp_size_t (*write)(void *dev, int pos, const void *buffer, int size);
+    fp_err_t (*ioctl)(void *dev, int cmd, void *arg);
 } device_operations;
 
-typedef struct
+typedef struct device device_t; // 前向声明
+
+struct device
 {
-    const char name[DEVICE_NAME_MAX];
-    void *private_data;     // 设备私有的数据
-    uint16_t count;         // 操作次数(如果支持OS，则支持多次open同一个设备，只有最后一次close的时候才会释放资源，这个标志用于计数)
-    device_operations *ops; // 指向设备操作的指针
-    struct list_head list;  // 链表
-} device_t;
+    char name[DEVICE_NAME_MAX];
+    void *private_data; // 设备私有的数据
+    uint16_t count;     // 操作次数(如果支持OS，则支持多次open同一个设备，只有最后一次close的时候才会释放资源，这个标志用于计数)
+    uint16_t flag;      // 标志
+    uint16_t open_flag; // 打开标志
+    fp_err_t (*rx_indicate)(device_t *dev, fp_size_t size); // 接收中断
+    fp_err_t (*tx_complete)(device_t *dev, void *buffer);   // 发送完成
+    device_operations *ops;                                 // 指向设备操作的指针
+    struct list_head list;                                  // 链表
+};
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
 
-int32_t device_register(device_t *dev, const char *name);
+device_t *device_find_name(const char *name);
+fp_err_t device_register(device_t *dev, const char *name, uint16_t flags);
+fp_err_t device_open(device_t *dev, uint16_t oflag);
+fp_err_t device_close(device_t *dev);
+fp_size_t device_read(device_t *dev, int pos, void *buffer, int size);
+fp_size_t device_write(device_t *dev, int pos, const void *buffer, int size);
+fp_err_t device_control(device_t *dev, int cmd, void *arg);
+fp_err_t device_set_rx_indicate(device_t *dev, fp_err_t (*rx_ind)(device_t *dev, fp_size_t size));
+fp_err_t device_set_tx_complete(device_t *dev, fp_err_t (*tx_done)(device_t *dev, void *buffer));
 /*---------- end of file ----------*/
 #endif

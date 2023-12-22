@@ -90,7 +90,16 @@
         "clists.h": "c",
         "xmemory": "c",
         "device_manager.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "fp_def.h": "c",
+        "compare": "c",
+        "tuple": "c",
+        "type_traits": "c",
+        "utility": "c",
+        "xstring": "c",
+        "xtr1common": "c",
+        "xutility": "c",
+        "stddef.h": "c"
     },
     "files.encoding": "utf8",
     "clang-format.executable": "${workspaceRoot}/clang-format.exe",

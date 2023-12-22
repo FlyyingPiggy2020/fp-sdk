@@ -2,6 +2,7 @@
 set(SUBDIRS
     log
     clists
+    common
 )
 
 # 添加子目录
