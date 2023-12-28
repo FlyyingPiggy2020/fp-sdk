@@ -23,49 +23,67 @@ SOFTWARE.
 */
 /*
  * Copyright (c) 2023 by Moorgen Tech. Co, Ltd.
- * @FilePath     : log_cfg.h
+ * @FilePath     : a7159.c
  * @Author       : lxf
- * @Date         : 2023-12-12 15:36:14
+ * @Date         : 2023-12-28 08:34:47
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2023-12-12 15:36:15
- * @Brief        : 日志配置文件
+ * @LastEditTime : 2023-12-28 08:35:09
+ * @Brief        : a7159
  */
 
-#ifndef __LOG_CFG_H__
-#define __LOG_CFG_H__
 /*---------- includes ----------*/
+#include "../../device/core/inc/device_manager.h"
+#include "../../utilities/log/inc/log.h"
+
 /*---------- macro ----------*/
 
-/**
- * @brief 最大输出长度
- * @return {*}
- */
-#define LOG_LINE_BUF_SIZE    256
-
-/**
- * @brief 数字长度
- * @return {*}
- */
-#define LOG_LINE_NUM_MAX_LEN 5
-/**
- * @brief 换行标志
- * @return {*}
- */
-#define LOG_NEWLINE_SIGN     "\r\n"
-/**
- * @brief 日志输出级别
- * @return {*}
- */
-#define LOG_OUTPUT_LVL       LOG_LVL_VERBOSE
-
-/**
- * @brief 是否使用RTOS
- * @return {*}
- */
-#define LOG_USE_RTOS        1
-
+#undef LOG_TAG
+#define LOG_TAG "a7159"
 /*---------- type define ----------*/
+
+typedef enum
+{
+    REG_SYSTEM_CLOCK = 0X00,
+    REG_PLL1 = 0X01,
+    REG_PLL2 = 0X02,
+    REG_PLL3 = 0X03,
+    REG_PLL4 = 0X04,
+    REG_PLL5 = 0X05,
+    REG_PLL6 = 0X06,
+    REG_CRYSTAL = 0X07,
+    REG_PAGEA = 0X08,
+    REG_PAGEB = 0X09,
+    REG_RX1 = 0X0A,
+    REG_RX2 = 0X0B,
+    REG_ADC = 0X0C,
+    REG_PIN_CONTROL = 0X0D,
+    REG_CALIBRATION = 0X0E,
+    REG_MODE_CONTROL = 0X0F,
+} a7159_reg_t;
+
+typedef enum
+{
+    CMD_WRITE_REG = 0x00,
+    CMD_READ_REG = 0x80,
+    CMD_WRITE_ID = 0x20,
+    CMD_READ_ID = 0xA0,
+    CMD_WRITE_TX_FIFO = 0x40,
+    CMD_READ_RX_FIFO = 0xC0,
+    CMD_RESET_TX_FIFO = 0x60,
+    CMD_RESET_RX_FIFO = 0xE0,
+    CMD_RESET = 0x70,
+    CMD_SLEEP_MODE = 0x10,
+    CMD_IDLE_MODE = 0x12,
+    CMD_STANDBY_MODE = 0x14,
+    CMD_PLL_MODE = 0x16,
+    CMD_RX_MODE = 0x18,
+    CMD_TX_MODE = 0x1A,
+    CMD_DEEP_SLEEP_MODE_TRI_STATE = 0x1C,
+    CMD_DEEP_SLEEP_MODE_PULL_HIGH = 0x1F
+} a7139_cmd_t;
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
+/*---------- variable ----------*/
+/*---------- function ----------*/
+
 /*---------- end of file ----------*/
-#endif

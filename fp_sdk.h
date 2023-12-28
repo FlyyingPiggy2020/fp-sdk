@@ -23,47 +23,22 @@ SOFTWARE.
 */
 /*
  * Copyright (c) 2023 by Moorgen Tech. Co, Ltd.
- * @FilePath     : log_cfg.h
+ * @FilePath     : fp_sdk.h
  * @Author       : lxf
- * @Date         : 2023-12-12 15:36:14
+ * @Date         : 2023-12-27 18:29:53
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2023-12-12 15:36:15
- * @Brief        : 日志配置文件
+ * @LastEditTime : 2023-12-27 18:29:54
+ * @Brief        : fp-sdk头文件
  */
 
-#ifndef __LOG_CFG_H__
-#define __LOG_CFG_H__
+#ifndef __FP_SDK_H__
+#define __FP_SDK_H__
 /*---------- includes ----------*/
+
+#include "utilities/log/inc/log.h"
+#include "utilities/export/inc/export.h"
+#include "device/core/inc/device_manager.h"
 /*---------- macro ----------*/
-
-/**
- * @brief 最大输出长度
- * @return {*}
- */
-#define LOG_LINE_BUF_SIZE    256
-
-/**
- * @brief 数字长度
- * @return {*}
- */
-#define LOG_LINE_NUM_MAX_LEN 5
-/**
- * @brief 换行标志
- * @return {*}
- */
-#define LOG_NEWLINE_SIGN     "\r\n"
-/**
- * @brief 日志输出级别
- * @return {*}
- */
-#define LOG_OUTPUT_LVL       LOG_LVL_VERBOSE
-
-/**
- * @brief 是否使用RTOS
- * @return {*}
- */
-#define LOG_USE_RTOS        1
-
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/

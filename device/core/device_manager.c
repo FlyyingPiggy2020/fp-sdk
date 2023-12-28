@@ -38,9 +38,8 @@ SOFTWARE.
 #undef LOG_OUTPUT_LVL
 #define LOG_OUTPUT_LVL LOG_LVL_VERBOSE
 
-#include "device_manager.h"
-#include "fp_def.h"
-#include "log.h"
+#include "inc/device_manager.h"
+#include "../../utilities/log/inc/log.h"
 #include "string.h"
 
 /*---------- macro ----------*/

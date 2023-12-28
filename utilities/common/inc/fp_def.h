@@ -33,6 +33,8 @@ SOFTWARE.
 #ifndef __FP_DEF_H__
 #define __FP_DEF_H__
 /*---------- includes ----------*/
+
+#include "stdint.h"
 /*---------- macro ----------*/
 
 /**
@@ -88,6 +90,14 @@ SOFTWARE.
 #define DEVICE_OFLAG_OPEN      0x008 /**< 设备已打开 */
 #define DEVICE_OFLAG_MASK      0xf0f /**< mask of open flag */
 
+#if defined(__ARMCC_VERSION)
+#define fp_section(x)    __attribute__((section(x))) /**< 将变量或函数放入指定的代码段 */
+#define fp_used          __attribute__((used))       /**< 让编译器保留变量或函数即使它没被使用 */
+#define fp_align(n)      __attribute__((aligned(n))) /**< 按n字节对齐 */
+#define fp_weak          __attribute__((weak))       /**< 弱定义 */
+#define fp_inline        static __inline             /**< 内联 */
+#define fp_always_inline fp_inline                   /**< 内联 */
+#endif
 /*---------- type define ----------*/
 
 typedef int32_t fp_err_t;  /**< 错误类型 */

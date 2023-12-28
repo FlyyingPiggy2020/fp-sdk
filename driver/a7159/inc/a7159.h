@@ -23,47 +23,18 @@ SOFTWARE.
 */
 /*
  * Copyright (c) 2023 by Moorgen Tech. Co, Ltd.
- * @FilePath     : log_cfg.h
+ * @FilePath     : a7159.h
  * @Author       : lxf
- * @Date         : 2023-12-12 15:36:14
+ * @Date         : 2023-12-28 08:34:57
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2023-12-12 15:36:15
- * @Brief        : 日志配置文件
+ * @LastEditTime : 2023-12-28 08:35:16
+ * @Brief        : Sub 1Ghz FSK/GFSK Transceiver with 2K ~ 250Kbps
  */
 
-#ifndef __LOG_CFG_H__
-#define __LOG_CFG_H__
+#ifndef __A7159_H__
+#define __A7159_H__
 /*---------- includes ----------*/
 /*---------- macro ----------*/
-
-/**
- * @brief 最大输出长度
- * @return {*}
- */
-#define LOG_LINE_BUF_SIZE    256
-
-/**
- * @brief 数字长度
- * @return {*}
- */
-#define LOG_LINE_NUM_MAX_LEN 5
-/**
- * @brief 换行标志
- * @return {*}
- */
-#define LOG_NEWLINE_SIGN     "\r\n"
-/**
- * @brief 日志输出级别
- * @return {*}
- */
-#define LOG_OUTPUT_LVL       LOG_LVL_VERBOSE
-
-/**
- * @brief 是否使用RTOS
- * @return {*}
- */
-#define LOG_USE_RTOS        1
-
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/

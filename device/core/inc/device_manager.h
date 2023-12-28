@@ -35,8 +35,8 @@ SOFTWARE.
 #define __DEVICE_MANAGER_H__
 /*---------- includes ----------*/
 
-#include "clists.h"
-#include "fp_def.h"
+#include "../../../utilities/clists/inc/clists.h"
+#include "../../../utilities/common/inc/fp_def.h"
 
 /*---------- macro ----------*/
 

@@ -33,8 +33,9 @@ SOFTWARE.
 
 /*---------- includes ----------*/
 
-#include "log.h"
-#include "log_cfg.h"
+#include "inc/log.h"
+#include "inc/log_cfg.h"
+#include "../export/inc/export.h"
 /*---------- macro ----------*/
 
 /**
@@ -160,10 +161,12 @@ static const char *output_name[] = {
  * @brief 初始化
  * @return {*}
  */
-void log_init(void)
+int log_init(void)
 {
     is_init_ok = log_port_init();
+    return 0;
 }
+INIT_BOARD_EXPORT(log_init);
 
 /**
  * @brief 字符串复制

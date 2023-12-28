@@ -33,12 +33,23 @@ SOFTWARE.
 
 /*---------- includes ----------*/
 
-#include <log.h>
+#include "inc/log.h"
+#include "inc/log_cfg.h"
+
+#if (LOG_USE_RTOS == 1)
+#include "main.h"
+#include "cmsis_os.h"
+#endif
 /*---------- macro ----------*/
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
+
+#if (LOG_USE_RTOS == 1)
+static osMutexId_t mutex_id;
+#endif
 /*---------- function prototype ----------*/
 /*---------- variable ----------*/
+
 /*---------- function ----------*/
 
 /**
@@ -47,6 +58,9 @@ SOFTWARE.
  */
 bool log_port_init(void)
 {
+#if (LOG_USE_RTOS == 1)
+    mutex_id = osMutexNew(NULL);
+#endif
     return true;
 }
 /**
@@ -59,6 +73,9 @@ void log_port_output(const char *log, size_t size)
 {
 #ifdef _WIN32
     fwrite(log, sizeof(char), size, stdout); /* windows下输出到终端 */
+#else
+    extern UART_HandleTypeDef huart1;
+    HAL_UART_Transmit(&huart1,(const uint8_t *)log,size,0xffff);
 #endif
 }
 
@@ -68,6 +85,9 @@ void log_port_output(const char *log, size_t size)
  */
 void log_output_lock(void)
 {
+#if (LOG_USE_RTOS == 1)
+    osMutexAcquire(mutex_id, osWaitForever);
+#endif
     return;
 }
 
@@ -77,6 +97,9 @@ void log_output_lock(void)
  */
 void log_output_unlock(void)
 {
+#if (LOG_USE_RTOS == 1)
+    osMutexRelease(mutex_id);
+#endif
     return;
 }
 /*---------- end of file ----------*/
