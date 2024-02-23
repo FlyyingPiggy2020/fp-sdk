@@ -22,26 +22,33 @@ SOFTWARE.
 
 */
 /*
- * Copyright (c) 2023 by Moorgen Tech. Co, Ltd.
- * @FilePath     : fp_sdk.h
+ * Copyright (c) 2024 by Moorgen Tech. Co, Ltd.
+ * @FilePath     : shell.h
  * @Author       : lxf
- * @Date         : 2023-12-27 18:29:53
+ * @Date         : 2024-02-23 14:33:31
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2023-12-27 18:29:54
- * @Brief        : fp-sdk头文件
+ * @LastEditTime : 2024-02-23 14:33:32
+ * @Brief        : shell (Test by MobaXterm)
  */
 
-#ifndef __FP_SDK_H__
-#define __FP_SDK_H__
+#ifndef __SHELL_H__
+#define __SHELL_H__
 /*---------- includes ----------*/
-
-#include "utilities/log/inc/log.h"
-#include "utilities/shell/inc/shell.h"
-#include "utilities/export/inc/export.h"
-#include "device/core/inc/device_manager.h"
 /*---------- macro ----------*/
+
+/* https://www.asciitable.com/ */
+
+#define SHELL_TAB 0X09
+#define SHELL_UP  "^[[A"
+#define SHELL_DO  "^[[B"
+#define SHELL_RT  "^[[C"
+#define SHELL_LT  "^[[D"
+
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
+
+void set_shell_output(void *output);
+void set_shell_input(void *input);
 /*---------- end of file ----------*/
 #endif

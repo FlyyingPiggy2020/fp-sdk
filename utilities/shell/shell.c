@@ -22,26 +22,45 @@ SOFTWARE.
 
 */
 /*
- * Copyright (c) 2023 by Moorgen Tech. Co, Ltd.
- * @FilePath     : fp_sdk.h
+ * Copyright (c) 2024 by Moorgen Tech. Co, Ltd.
+ * @FilePath     : shell.c
  * @Author       : lxf
- * @Date         : 2023-12-27 18:29:53
+ * @Date         : 2024-02-23 14:33:11
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2023-12-27 18:29:54
- * @Brief        : fp-sdk头文件
+ * @LastEditTime : 2024-02-23 14:35:40
+ * @Brief        : shell (Test by MobaXterm)
  */
 
-#ifndef __FP_SDK_H__
-#define __FP_SDK_H__
 /*---------- includes ----------*/
 
-#include "utilities/log/inc/log.h"
-#include "utilities/shell/inc/shell.h"
-#include "utilities/export/inc/export.h"
-#include "device/core/inc/device_manager.h"
+#include "fp_sdk.h"
+#include "main.h"
+#include "inc/shell.h"
 /*---------- macro ----------*/
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
+/*---------- variable ----------*/
+/*---------- function ----------*/
+
+extern void (*shell_output)(const char *buffer, fp_size_t size);
+extern fp_size_t (*shell_input)(char *log, fp_size_t wsize);
+int shell_init(void)
+{
+    return 0;
+}
+
+void shell_loop(void)
+{
+    char data;
+    if (shell_input == NULL) {
+        return;
+    }
+
+    if (shell_input(&data, 1) == 0) {
+        return;
+    }
+
+    shell_output(&data, 1);
+}
 /*---------- end of file ----------*/
-#endif
