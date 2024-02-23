@@ -34,8 +34,9 @@ SOFTWARE.
 /*---------- includes ----------*/
 
 #include "inc/log.h"
-#include "inc/log_cfg.h"
 #include "../export/inc/export.h"
+#include "inc/log_cfg.h"
+
 /*---------- macro ----------*/
 
 /**
@@ -116,7 +117,7 @@ SOFTWARE.
 static bool is_init_ok = false;
 /*---------- function prototype ----------*/
 
-extern void log_port_output(const char *log, size_t size);
+extern void (*log_port_output)(const char *log, size_t size);
 extern void log_output_lock(void);
 extern void log_output_unlock(void);
 extern bool log_port_init(void);
@@ -164,9 +165,9 @@ static const char *output_name[] = {
 int log_init(void)
 {
     is_init_ok = log_port_init();
-    return 0;
+    return is_init_ok;
 }
-INIT_BOARD_EXPORT(log_init);
+ INIT_BOARD_EXPORT(log_init);
 
 /**
  * @brief 字符串复制
