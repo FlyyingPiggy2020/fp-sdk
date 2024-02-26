@@ -34,12 +34,16 @@ SOFTWARE.
 #ifndef __FP_SDK_H__
 #define __FP_SDK_H__
 /*---------- includes ----------*/
-
+#include "main.h"
 #include "utilities/log/inc/log.h"
 #include "utilities/shell/inc/shell.h"
 #include "utilities/export/inc/export.h"
 #include "device/core/inc/device_manager.h"
+#include "utilities/pingpong/inc/pingpong.h"
 /*---------- macro ----------*/
+
+#define DISABLE_IRQ __disable_irq
+#define ENABLE_IRQ __enable_irq
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
