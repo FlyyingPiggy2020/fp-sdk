@@ -23,7 +23,6 @@
 
 /*---------- includes ----------*/
 #include "inc/pingpong.h"
-#include "fp_sdk.h"
 
 /*---------- macro ----------*/
 /*---------- variable prototype ----------*/
@@ -38,7 +37,7 @@ void pingpong_buffer_init(struct pingpong_buffer *handler, void *buf0, void *buf
     handler->buffer[1] = buf1;
 }
 
-bool pingpong_buffer_get_read_buf(struct pingpong_buffer *handler, void **pread_buf, uint32_t *size)
+bool pingpong_buffer_get_read_buf(struct pingpong_buffer *handler, void **pread_buf, fp_size_t *size)
 {
     if (handler->count == 0) {
         return false;
@@ -70,7 +69,7 @@ void pingpong_buffer_get_write_buf(struct pingpong_buffer *handler, void **pwrit
     *pwrite_buf = handler->buffer[handler->write_index];
 }
 
-void pingpong_buffer_set_write_done(struct pingpong_buffer *handler, uint32_t size)
+void pingpong_buffer_set_write_done(struct pingpong_buffer *handler, fp_size_t size)
 {
     DISABLE_IRQ();
     handler->size[handler->write_index] = size;

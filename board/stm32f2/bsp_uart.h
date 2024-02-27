@@ -4,7 +4,7 @@
  * @Author       : lxf
  * @Date         : 2024-02-26 09:32:53
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2024-02-26 17:01:52
+ * @LastEditTime : 2024-02-27 08:53:36
  * @Brief        : usart driver
  */
 
@@ -22,6 +22,5 @@
 
 void bsp_uart_init(void);
 
-void bsp_uart_loop(void);
 /*---------- end of file ----------*/
 #endif

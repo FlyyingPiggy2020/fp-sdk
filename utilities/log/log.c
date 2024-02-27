@@ -167,7 +167,7 @@ int log_init(void)
     is_init_ok = log_port_init();
     return is_init_ok;
 }
- INIT_BOARD_EXPORT(log_init);
+
 
 /**
  * @brief 字符串复制

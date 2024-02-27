@@ -41,7 +41,7 @@ SOFTWARE.
 /*---------- variable prototype ----------*/
 
 void (*shell_output)(const char *buffer, fp_size_t size) = NULL;
-fp_size_t (*shell_input)(char *log, fp_size_t wsize) = NULL;
+fp_size_t (*shell_input)(char *log)                      = NULL;
 /*---------- function prototype ----------*/
 /*---------- variable ----------*/
 /*---------- function ----------*/

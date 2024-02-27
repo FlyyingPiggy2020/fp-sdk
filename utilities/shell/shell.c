@@ -32,35 +32,134 @@ SOFTWARE.
  */
 
 /*---------- includes ----------*/
-
+#define LOG_TAG "shell"
 #include "fp_sdk.h"
-#include "main.h"
-#include "inc/shell.h"
+
 /*---------- macro ----------*/
+
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
+
+char recv_data[SHELL_REC_MAX_SIZE]; // 临时接收buf
 /*---------- function prototype ----------*/
+
+static void shell_handler(char *data, fp_size_t size);
+static bool is_data_too_long(fp_size_t size);
+static bool is_data_special(char data);
+
+static void write_prompt(uint8_t newline);
+
+static void shell_cmd_enter(void);
 /*---------- variable ----------*/
+Shell fp_shell;
 /*---------- function ----------*/
 
 extern void (*shell_output)(const char *buffer, fp_size_t size);
-extern fp_size_t (*shell_input)(char *log, fp_size_t wsize);
+extern fp_size_t (*shell_input)(char *log);
+
 int shell_init(void)
 {
+    assert(shell_output);
+    assert(shell_input);
+    //    INIT_LIST_HEAD(fp_shell.parser.buff.list);
+
+    fp_shell.user.name = SHELL_DEFAULT_NAME;
+    write_prompt(1);
     return 0;
 }
 
 void shell_loop(void)
 {
-    char data;
+    fp_size_t len = 0;
+
     if (shell_input == NULL) {
         return;
     }
+    len = shell_input(recv_data);
+    if (len != 0 && is_data_too_long(len)) {
+        // 数据太长
+        shell_handler(recv_data, SHELL_REC_MAX_SIZE - fp_shell.parser.buffindex);
+    } else {
+        shell_handler(recv_data, len);
+    }
+}
 
-    if (shell_input(&data, 1) == 0) {
-        return;
+static void shell_handler(char *data, fp_size_t size)
+{
+    for (fp_size_t i = 0; i < size; i++) {
+        if (is_data_special(*(data + i))) { // 特殊命令
+            if (*(data + i) == '\r' || *(data + i) == '\n') {
+                shell_cmd_enter(); // 回车
+            }
+        } else {
+            // 非特殊命令
+            shell_output(data + i, 1);
+        }
+    }
+}
+
+static void shell_write_string(const char *string)
+{
+    shell_output(string, strlen(string));
+}
+/**
+ * @brief 判断是否为特殊命令
+ * @param {char} data
+ * @return {*}
+ */
+static bool is_data_special(char data)
+{
+    bool retval = false;
+    switch (data) {
+        case '\r':
+        case '\n':
+            retval = true;
+            break;
+        default:
+            break;
     }
 
-    shell_output(&data, 1);
+    return retval;
+}
+
+/**
+ * @brief 判断是否数据超出限制
+ * @param {fp_size_t} size
+ * @return {*}
+ */
+static bool is_data_too_long(fp_size_t size)
+{
+    return (size + fp_shell.parser.buffindex) < SHELL_REC_MAX_SIZE ? true : false;
+}
+
+/**
+ * @brief 写命令提示行
+ * @param {uint8_t} newline
+ * @return {*}
+ */
+static void write_prompt(uint8_t newline)
+{
+    if (newline) {
+        shell_write_string(NEWLINE);
+    }
+    shell_write_string(fp_shell.user.name);
+    shell_write_string(":");
+    shell_write_string("$ ");
+}
+/**
+ * @brief 回车命令
+ * @return {*}
+ */
+static void shell_cmd_enter(void)
+{
+    write_prompt(1);
+}
+/**
+ * @brief ANSI Escape code :https://blog.csdn.net/q1003675852/article/details/134999871
+ * @return {*}
+ */
+void ansi_escape_code(char *data, uint8_t len)
+{
+    memcpy(data, SHELL_CURSOR_UP, len);
 }
 /*---------- end of file ----------*/

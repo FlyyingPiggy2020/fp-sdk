@@ -4,7 +4,7 @@
  * @Author       : lxf
  * @Date         : 2024-02-26 09:32:44
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2024-02-26 17:31:45
+ * @LastEditTime : 2024-02-27 09:05:02
  * @Brief        : 1.如果处理不过来,覆盖原先的数据
  *                 2.单次接收不能超过默认的buff大小
  */
@@ -16,7 +16,7 @@
 /*---------- macro ----------*/
 
 #if (1 == USE_USART1)
-#define USART1_RX_BUF_SIZE 10
+#define USART1_RX_BUF_SIZE 128
 #endif
 /*---------- type define ----------*/
 
@@ -60,22 +60,6 @@ void bsp_uart_init(void)
     HAL_UARTEx_ReceiveToIdle_DMA(&huart1, pingpong[0], USART1_RX_BUF_SIZE);
 }
 
-/**
- * @brief 在主循环中调用
- * @return {*}
- */
-void bsp_uart_loop(void)
-{
-    void    *tempbuf[1];
-    uint32_t size;
-    if (pingpong_buffer_get_read_buf(&uart1_pingpong_handler, tempbuf, &size)) {
-
-        //        HAL_Delay(3000); // 延时，用于模拟耗时的操作
-        // 这里要用阻塞发送，否则的话需要在发送完成中断里面调用pingpong_buffer_set_read_done,不然的话可能这个待发送的buf会被DMA修改。
-        HAL_UART_Transmit(&huart1, tempbuf[0], size, 0XFFFF);
-        pingpong_buffer_set_read_done(&uart1_pingpong_handler);
-    }
-}
 /**
  * @brief 空闲中断回调函数
  * @param {UART_HandleTypeDef} *huart
