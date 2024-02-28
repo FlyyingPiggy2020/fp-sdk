@@ -101,7 +101,10 @@
         "xutility": "c",
         "stddef.h": "c",
         "export.h": "c",
-        "fp_sdk.h": "c"
+        "fp_sdk.h": "c",
+        "initializer_list": "cpp",
+        "pingpong.h": "c",
+        "shell.h": "c"
     },
     "files.encoding": "utf8",
     "clang-format.executable": "${workspaceRoot}/clang-format.exe",

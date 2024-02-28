@@ -29,12 +29,15 @@ SOFTWARE.
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
  * @LastEditTime : 2024-02-23 14:35:40
  * @Brief        : shell (Test by MobaXterm)
+ *
+ * 需要根据知己的SHELL_REC_MAX_SIZE大小修改Heap Size
  */
 
 /*---------- includes ----------*/
 #define LOG_TAG "shell"
-#include "fp_sdk.h"
 
+#include "fp_sdk.h"
+#include "stdlib.h"
 /*---------- macro ----------*/
 
 /*---------- type define ----------*/
@@ -47,11 +50,15 @@ static void shell_handler(char *data, fp_size_t size);
 static bool is_data_too_long(fp_size_t size);
 static bool is_data_special(char data);
 
+static void shell_write_string(const char *string);
 static void write_prompt(uint8_t newline);
 
 static void shell_cmd_enter(void);
+
+int clear(uint8_t argc, char *argv[]);
 /*---------- variable ----------*/
 Shell fp_shell;
+
 /*---------- function ----------*/
 
 extern void (*shell_output)(const char *buffer, fp_size_t size);
@@ -61,10 +68,28 @@ int shell_init(void)
 {
     assert(shell_output);
     assert(shell_input);
-    //    INIT_LIST_HEAD(fp_shell.parser.buff.list);
 
+#if defined(__CC_ARM) || (defined(__ARMCC_VERSION) && __ARMCC_VERSION >= 6000000)
+    extern const unsigned int shell_command$$Base;
+    extern const unsigned int shell_command$$Limit;
+    fp_shell.commandList.start = (shell_command_t *)(&shell_command$$Base);
+    fp_shell.commandList.end   = (shell_command_t *)(&shell_command$$Limit);
+    fp_shell.commandList.count = ((size_t)(&shell_command$$Limit) - (size_t)(&shell_command$$Base)) / sizeof(shell_command_t);
+
+#elif defined(__ICCARM__) || defined(__ICCRX__)
+#pragma section = "shell_command"
+    fp_shell.commandList.base  = (shell_command_t *)(__section_begin("shell_command"));
+    fp_shell.commandList.count = ((size_t)(__section_end("shell_command")) - (size_t)(__section_begin("shell_command"))) / sizeof(shell_command_t);
+#elif defined(__GNUC__)
+    fp_shell.commandList.base  = (shell_command_t *)(&_shell_command_start);
+    fp_shell.commandList.count = ((size_t)(&_shell_command_end) - (size_t)(&_shell_command_start)) / sizeof(shell_command_t);
+#else
+#error not supported compiler, please use command table mode
+#endif
+    INIT_LIST_HEAD(&fp_shell.parser.buff.list);
     fp_shell.user.name = SHELL_DEFAULT_NAME;
-    write_prompt(1);
+    clear(0, NULL);
+    write_prompt(0);
     return 0;
 }
 
@@ -76,9 +101,15 @@ void shell_loop(void)
         return;
     }
     len = shell_input(recv_data);
-    if (len != 0 && is_data_too_long(len)) {
-        // 数据太长
-        shell_handler(recv_data, SHELL_REC_MAX_SIZE - fp_shell.parser.buffindex);
+    if (len == 0) {
+        return;
+    }
+
+    if (is_data_too_long(len) && !is_data_special(recv_data[0])) {
+        // 数据太长并且不是特殊的键值
+        shell_handler(recv_data, SHELL_REC_MAX_SIZE - fp_shell.parser.length);
+        shell_write_string(NEWLINE);
+        log_e("input data is larger than max size");
     } else {
         shell_handler(recv_data, len);
     }
@@ -93,9 +124,46 @@ static void shell_handler(char *data, fp_size_t size)
             }
         } else {
             // 非特殊命令
+            inputbuff_t *temp = malloc(sizeof(inputbuff_t));
+            assert(temp);
+            temp->data = *(data + i);
+            list_add_tail(&temp->list, &fp_shell.parser.buff.list);
+            fp_shell.parser.length++;
             shell_output(data + i, 1);
         }
     }
+}
+
+/**
+ * @brief 按下回车后接收到的数据解析
+ * @param {char} *data
+ * @param {fp_size_t} size
+ * @return {*} 0:不需要换行;1需要换行
+ */
+static int cmd_parser_handler(char *data, fp_size_t size)
+{
+    volatile const shell_command_t *fn_ptr = NULL;
+
+    int argc = 0;
+
+    char *argv[SHELL_REC_MAX_ARGS] = { NULL };
+
+    for (fn_ptr = (shell_command_t *)fp_shell.commandList.start; fn_ptr < (shell_command_t *)fp_shell.commandList.end; fn_ptr++) {
+        if (!strcmp(data, fn_ptr->cmd.name)) {
+            // strtok会分割*data,让他变得不完整,用空格分割接收到的字符串
+            char *p2 = strtok(data, " ");
+            while (p2 && argc < SHELL_REC_MAX_ARGS - 1) {
+                argv[argc++] = p2;
+
+                p2 = strtok(0, " ");
+            }
+            argv[argc] = NULL;
+            return fn_ptr->cmd.function(argc, argv);
+        }
+    }
+
+    // 回车后没有匹配到命令
+    return 1;
 }
 
 static void shell_write_string(const char *string)
@@ -103,7 +171,7 @@ static void shell_write_string(const char *string)
     shell_output(string, strlen(string));
 }
 /**
- * @brief 判断是否为特殊命令
+ * @brief 判断是否为特殊命令，例如回车，方向键，tab键等
  * @param {char} data
  * @return {*}
  */
@@ -113,6 +181,7 @@ static bool is_data_special(char data)
     switch (data) {
         case '\r':
         case '\n':
+        case '\033':
             retval = true;
             break;
         default:
@@ -129,7 +198,7 @@ static bool is_data_special(char data)
  */
 static bool is_data_too_long(fp_size_t size)
 {
-    return (size + fp_shell.parser.buffindex) < SHELL_REC_MAX_SIZE ? true : false;
+    return (size + fp_shell.parser.length) < SHELL_REC_MAX_SIZE ? false : true;
 }
 
 /**
@@ -152,8 +221,40 @@ static void write_prompt(uint8_t newline)
  */
 static void shell_cmd_enter(void)
 {
-    write_prompt(1);
+    char cmdbuf[SHELL_REC_MAX_SIZE] = { 0 };
+
+    uint8_t      index       = 0;
+    uint8_t      is_new_line = 1;
+    inputbuff_t *cmd         = NULL;
+
+    struct list_head *pos;
+    struct list_head *pos_tmp;
+    // 遍历list,把data提取出来,并释放该节点
+    list_for_each_safe(pos, pos_tmp, &fp_shell.parser.buff.list)
+    {
+        cmd = list_entry(pos, inputbuff_t, list);
+
+        cmdbuf[index++] = cmd->data;
+
+        list_del(&cmd->list);
+        free(cmd);
+        cmd = NULL;
+    }
+    is_new_line            = cmd_parser_handler(cmdbuf, fp_shell.parser.length);
+    fp_shell.parser.length = 0;
+    write_prompt(is_new_line);
 }
+
+/**
+ * @brief clear命令
+ * @return {*}
+ */
+int clear(uint8_t argc, char *argv[])
+{
+    shell_write_string("\033[2J\033[1H");
+    return 0;
+}
+SHELL_EXPORT_CMD(clear, clear);
 /**
  * @brief ANSI Escape code :https://blog.csdn.net/q1003675852/article/details/134999871
  * @return {*}

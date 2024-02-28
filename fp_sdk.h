@@ -37,6 +37,7 @@ SOFTWARE.
 #include "main.h"
 
 #include "utilities/clists/inc/clists.h" //这条需要放到前面因为后面的文件里用到了链表
+#include "utilities/common/inc/fp_def.h"
 #include "utilities/log/inc/log.h"
 #include "utilities/shell/inc/shell.h"
 #include "utilities/export/inc/export.h"
@@ -47,7 +48,7 @@ SOFTWARE.
 /*---------- macro ----------*/
 
 #define DISABLE_IRQ __disable_irq
-#define ENABLE_IRQ __enable_irq
+#define ENABLE_IRQ  __enable_irq
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/

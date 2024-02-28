@@ -39,8 +39,9 @@ SOFTWARE.
 
 /*---------- macro ----------*/
 #define SHELL_REC_MAX_SIZE 128 // shell最大接收大小
+#define SHELL_REC_MAX_ARGS 10  // 最大变量个数
 
-#define SHELL_DEFAULT_NAME "fpshell\0"
+#define SHELL_DEFAULT_NAME "fpshell"
 #define NEWLINE            "\r\n"
 /* https://www.asciitable.com/ */
 /* https://blog.csdn.net/q1003675852/article/details/134999871 */
@@ -49,20 +50,23 @@ SOFTWARE.
 #define SHELL_CURSOR_UP    SHELL_CSI "A"
 #define SHELL_TAB          0X09
 
+#define SHELL_EXPORT_CMD(_name, _func)                                                  \
+    const char shell_cmd_##_name[] = #_name;                                            \
+                                                                                        \
+    fp_used const shell_command_t shell_command_##_name fp_section("shell_command") = { \
+        .cmd.name     = shell_cmd_##_name,                                              \
+        .cmd.function = (int (*)(uint8_t, char **))_func,                               \
+    }
 /*---------- type define ----------*/
 
-// // 用树来保存cli命令
-// typedef struct tree_bro { // 树的兄弟
-//     struct tree_bro *next;
-// } Bro_t;
+typedef struct shell_command {
+    struct
+    {
+        const char *name;
+        int (*function)(uint8_t argc, char *argv[]);
+    } cmd;
 
-// typedef struct tree_node {
-//     char              *data;        // 节点数据
-//     struct tree_node  *parent;      // 家长
-//     struct tree_node **child;       // 孩子动态数据
-//     int                child_count; // 孩子个数
-//     Bro_t              bro_list;    // 兄弟节点
-// };
+} shell_command_t;
 
 typedef struct inputbuff {
 
@@ -75,14 +79,14 @@ typedef struct inputbuff {
  */
 typedef struct shell_def {
     struct {
-        uint8_t     length;    // 当前输入数据长度
-        uint8_t     cursor;    // 当前光标位置
-        inputbuff_t buff;      // 输入buff
-        uint8_t     buffindex; // 输入buff大小
+        uint8_t     length; // 当前输入数据长度
+        uint8_t     cursor; // 当前光标位置
+        inputbuff_t buff;   // 输入buff
     } parser;
 
     struct {
-        void   *base;  // 命令表基地址
+        void   *start; // 命令表基地址
+        void   *end;
         uint8_t count; // 命令数量
     } commandList;
 
@@ -92,17 +96,6 @@ typedef struct shell_def {
 
 } Shell;
 
-/**
- * @brief 命令表定义
- */
-typedef struct shell_command {
-    union {
-        struct {
-            int value;                // 按键键值
-            int (*function)(Shell *); // 按键执行
-        } key;
-    };
-} shell_command_list;
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
 int  shell_init(void);
