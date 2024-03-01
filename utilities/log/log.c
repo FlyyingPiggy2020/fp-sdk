@@ -135,7 +135,7 @@ void (*log_assert_hook)(const char *expr, const char *func, size_t line);
  * @brief 用于日志输出的buffer
  * @return {*}
  */
-static char log_buf[LOG_LINE_BUF_SIZE] = {0};
+static char log_buf[LOG_LINE_BUF_SIZE] = { 0 };
 
 // clang-format off
 static const char *color_output_info[] = {
@@ -168,7 +168,6 @@ int log_init(void)
     return is_init_ok;
 }
 
-
 /**
  * @brief 字符串复制
  * @param {size_t} cur_len
@@ -187,8 +186,7 @@ size_t log_strcpy(size_t cur_len, char *dst, const char *src)
         /* make sure destination has enough space */
         if (cur_len++ < LOG_LINE_BUF_SIZE) {
             *dst++ = *src++;
-        }
-        else {
+        } else {
             break;
         }
     }
@@ -208,8 +206,8 @@ size_t log_strcpy(size_t cur_len, char *dst, const char *src)
 void log_output(uint8_t level, const char *tag, const char *file, const char *func, const long line, const char *format, ...)
 {
     log_output_lock();
-    int log_len = 0, fmt_result = 0, newline_len = strlen(LOG_NEWLINE_SIGN);
-    char line_num[LOG_LINE_NUM_MAX_LEN + 1] = {0};
+    int  log_len = 0, fmt_result = 0, newline_len = strlen(LOG_NEWLINE_SIGN);
+    char line_num[LOG_LINE_NUM_MAX_LEN + 1] = { 0 };
 
     va_list args;
 
@@ -251,8 +249,7 @@ void log_output(uint8_t level, const char *tag, const char *file, const char *fu
     /* 校验长度是否合法 */
     if ((log_len + fmt_result <= LOG_LINE_BUF_SIZE) && (fmt_result > -1)) {
         log_len += fmt_result;
-    }
-    else {
+    } else {
         log_len = LOG_LINE_BUF_SIZE;
     }
 

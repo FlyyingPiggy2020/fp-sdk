@@ -38,35 +38,22 @@ SOFTWARE.
 #include "fp_sdk.h"
 
 /*---------- macro ----------*/
-#define SHELL_REC_MAX_SIZE 128 // shell最大接收大小
-#define SHELL_REC_MAX_ARGS 10  // 最大变量个数
+#define SHELL_REC_MAX_SIZE   128 // shell最大接收大小
+#define SHELL_TRANS_MAX_SIZE 128 // shell最大输出大小
+#define SHELL_REC_MAX_ARGS   10  // 最大变量个数
 
-#define SHELL_DEFAULT_NAME "fpshell"
-#define NEWLINE            "\r\n"
+#define SHELL_DEFAULT_NAME   "fpshell"
+#define NEWLINE              "\r\n"
 /* https://www.asciitable.com/ */
 /* https://blog.csdn.net/q1003675852/article/details/134999871 */
 
-#define SHELL_CSI          "\033["
-#define SHELL_CURSOR_UP    SHELL_CSI "A"
-#define SHELL_TAB          0X09
+#define SHELL_CSI            "\033["
+#define SHELL_CURSOR_UP      SHELL_CSI "A"
+#define SHELL_TAB            0X09
 
-#define SHELL_EXPORT_CMD(_name, _func)                                                  \
-    const char shell_cmd_##_name[] = #_name;                                            \
-                                                                                        \
-    fp_used const shell_command_t shell_command_##_name fp_section("shell_command") = { \
-        .cmd.name     = shell_cmd_##_name,                                              \
-        .cmd.function = (int (*)(uint8_t, char **))_func,                               \
-    }
 /*---------- type define ----------*/
 
-typedef struct shell_command {
-    struct
-    {
-        const char *name;
-        int (*function)(uint8_t argc, char *argv[]);
-    } cmd;
 
-} shell_command_t;
 
 typedef struct inputbuff {
 
@@ -78,10 +65,13 @@ typedef struct inputbuff {
  * @brief shell定义
  */
 typedef struct shell_def {
+    char    recv_buf[SHELL_REC_MAX_SIZE];
+    uint8_t recv_len;
     struct {
-        uint8_t     length; // 当前输入数据长度
-        uint8_t     cursor; // 当前光标位置
-        inputbuff_t buff;   // 输入buff
+        uint8_t     length;   // 当前输入数据长度
+        uint8_t     cursor;   // 当前光标位置
+        inputbuff_t buff;     // 输入buff
+        uint8_t     key_type; // 判断特殊键值
     } parser;
 
     struct {
@@ -94,14 +84,31 @@ typedef struct shell_def {
         const char *name; // 名字
     } user;
 
+    void (*shell_write)(const char *send_buf, fp_size_t size);
+    fp_size_t (*shell_read)(char *recv_buf);
 } Shell;
+
+typedef struct shell_command {
+    struct
+    {
+        const char *name;
+        int (*function)(Shell *, uint8_t argc, char *argv[]);
+    } cmd;
+
+} shell_command_t;
+
+#define SHELL_EXPORT_CMD(_name, _func)                                                  \
+    const char shell_cmd_##_name[] = #_name;                                            \
+                                                                                        \
+    fp_used const shell_command_t shell_command_##_name fp_section("shell_command") = { \
+        .cmd.name     = shell_cmd_##_name,                                              \
+        .cmd.function = (int (*)(Shell *, uint8_t, char **))_func,                      \
+    }
 
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
-int  shell_init(void);
-void shell_loop(void);
+int  shell_init(Shell *shell);
+void shell_loop(Shell *shell);
 
-void set_shell_output(void *output);
-void set_shell_input(void *input);
 /*---------- end of file ----------*/
 #endif
