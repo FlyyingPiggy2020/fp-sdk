@@ -37,17 +37,21 @@ SOFTWARE.
 #include "inc/log_cfg.h"
 
 #if (LOG_USE_RTOS == 1)
-#include "main.h"
 #include "cmsis_os.h"
+#include "main.h"
+
 #endif
 /*---------- macro ----------*/
 /*---------- type define ----------*/
+
 /*---------- variable prototype ----------*/
 
 #if (LOG_USE_RTOS == 1)
 static osMutexId_t mutex_id;
 #endif
 /*---------- function prototype ----------*/
+
+void (*log_port_output)(const char *log, size_t size) = NULL;
 /*---------- variable ----------*/
 
 /*---------- function ----------*/
@@ -61,22 +65,18 @@ bool log_port_init(void)
 #if (LOG_USE_RTOS == 1)
     mutex_id = osMutexNew(NULL);
 #endif
+    if (log_port_output == NULL) {
+        return false;
+    }
     return true;
 }
 /**
  * @brief 定义输出函数
- * @param {char} *log ：输出指针
- * @param {size_t} size ：长度
  * @return {*}
  */
-void log_port_output(const char *log, size_t size)
+void set_log_port_output(void *output)
 {
-#ifdef _WIN32
-    fwrite(log, sizeof(char), size, stdout); /* windows下输出到终端 */
-#else
-    extern UART_HandleTypeDef huart1;
-    HAL_UART_Transmit(&huart1,(const uint8_t *)log,size,0xffff);
-#endif
+    log_port_output = output;
 }
 
 /**

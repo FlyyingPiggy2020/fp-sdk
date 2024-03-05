@@ -4,7 +4,7 @@
  * @Author       : lxf
  * @Date         : 2023-12-28 10:31:34
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2023-12-28 11:25:37
+ * @LastEditTime : 2024-02-22 15:19:39
  * @Brief        : export机制(不需要显示调用初始化函数)
  */
 
@@ -78,4 +78,13 @@ void fp_components_init(void)
     }
 }
 
+#ifdef __ARMCC_VERSION
+void $Sub$$main(void)
+{
+    extern int $Super$$main(void);
+    fp_components_board_init();
+    fp_components_init();
+    $Super$$main();
+}
+#endif
 /*---------- end of file ----------*/

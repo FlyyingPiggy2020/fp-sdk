@@ -82,6 +82,8 @@ typedef enum
     CMD_DEEP_SLEEP_MODE_PULL_HIGH = 0x1F
 } a7139_cmd_t;
 /*---------- variable prototype ----------*/
+
+static void ctl_cs_pin(uint8_t);
 /*---------- function prototype ----------*/
 /*---------- variable ----------*/
 /*---------- function ----------*/

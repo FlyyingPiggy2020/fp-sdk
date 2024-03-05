@@ -62,7 +62,7 @@ SOFTWARE.
  * @brief 是否使用RTOS
  * @return {*}
  */
-#define LOG_USE_RTOS        1
+#define LOG_USE_RTOS        0
 
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/

@@ -44,18 +44,19 @@ SOFTWARE.
 
 #define DEVICE_FLAG_DEACTIVETE 0x000 /* 未激活 */
 /*---------- type define ----------*/
+typedef struct device device_t; // 前向声明
 
 typedef struct
 {
-    fp_err_t (*init)(void *dev);
-    fp_err_t (*open)(void *dev);
-    fp_err_t (*close)(void *dev);
-    fp_size_t (*read)(void *dev, int pos, void *buffer, int size);
-    fp_size_t (*write)(void *dev, int pos, const void *buffer, int size);
-    fp_err_t (*ioctl)(void *dev, int cmd, void *arg);
-} device_operations;
+    fp_err_t (*init)(device_t *dev);
+    fp_err_t (*open)(device_t *dev);
+    fp_err_t (*close)(device_t *dev);
+    fp_size_t (*read)(device_t *dev, int pos, void *buffer, int size);
+    fp_size_t (*write)(device_t *dev, int pos, const void *buffer, int size);
+    fp_err_t (*ioctl)(device_t *dev, int cmd, void *arg);
+} device_ops;
 
-typedef struct device device_t; // 前向声明
+
 
 struct device
 {
@@ -66,7 +67,7 @@ struct device
     uint16_t open_flag; // 打开标志
     fp_err_t (*rx_indicate)(device_t *dev, fp_size_t size); // 接收中断
     fp_err_t (*tx_complete)(device_t *dev, void *buffer);   // 发送完成
-    device_operations *ops;                                 // 指向设备操作的指针
+    device_ops *ops;                                 // 指向设备操作的指针
     struct list_head list;                                  // 链表
 };
 /*---------- variable prototype ----------*/
