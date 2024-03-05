@@ -28,7 +28,7 @@ extern void shell_prompt(Shell *shell, uint8_t is_new_line);
 int clear(Shell *shell, uint8_t argc, char *argv[])
 {
     if (argc == 1) {
-        shell_output(shell, "\033[2J\033[1H");
+        shell_output(shell, "\033[2J\033[3J\033[1H");
         shell_prompt(shell, 0);
     }
     return 0;

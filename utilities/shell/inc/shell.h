@@ -53,12 +53,9 @@ SOFTWARE.
 
 /*---------- type define ----------*/
 
-
-
 typedef struct inputbuff {
 
-    uint8_t data; // 数据
-
+    uint8_t          data; // 数据
     struct list_head list; // 链表
 } inputbuff_t;
 /**
@@ -68,10 +65,12 @@ typedef struct shell_def {
     char    recv_buf[SHELL_REC_MAX_SIZE];
     uint8_t recv_len;
     struct {
-        uint8_t     length;   // 当前输入数据长度
-        uint8_t     cursor;   // 当前光标位置
-        inputbuff_t buff;     // 输入buff
-        uint8_t     key_type; // 判断特殊键值
+        uint8_t      length;          // 当前输入数据长度
+        uint8_t      cursor;          // 当前光标位置(相对于user.name)
+        inputbuff_t  buff;            // 输入buff
+        inputbuff_t *cursor_buff;     // 当前光标位置的buff指针
+        uint8_t      key_type;        // 判断特殊键值
+        uint8_t      vt_sequences[1]; // vt模式的特殊键值缓存
     } parser;
 
     struct {
@@ -82,6 +81,7 @@ typedef struct shell_def {
 
     struct {
         const char *name; // 名字
+        uint8_t     name_size;
     } user;
 
     void (*shell_write)(const char *send_buf, fp_size_t size);

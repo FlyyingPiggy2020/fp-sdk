@@ -30,7 +30,8 @@ SOFTWARE.
  * @LastEditTime : 2024-02-23 14:35:40
  * @Brief        : shell (Test by MobaXterm)
  *
- * 需要根据知己的SHELL_REC_MAX_SIZE大小修改Heap Size
+ * 需要根据知己的SHELL_REC_MAX_SIZE大小修改Heap Size,里面使用了
+ * malloc，是从Heap Size申请的，如果空间不够，会Log_e提示报错。
  */
 
 /*---------- includes ----------*/
@@ -74,7 +75,10 @@ int shell_init(Shell *shell)
 #error not supported compiler, please use command table mode
 #endif
     INIT_LIST_HEAD(&shell->parser.buff.list);
-    shell->user.name = SHELL_DEFAULT_NAME;
+    shell->parser.buff.data = 0;// 后面删除逻辑用到这个，必须赋值给空格，否则最后一个字节会删不掉..
+    shell->parser.cursor_buff = &shell->parser.buff;
+    shell->user.name          = SHELL_DEFAULT_NAME;
+    shell->user.name_size     = sizeof(SHELL_DEFAULT_NAME) + 3;
     clear(shell, 1, NULL);
     return 0;
 }
@@ -82,6 +86,7 @@ int shell_init(Shell *shell)
 void shell_loop(Shell *shell)
 {
     assert(shell->shell_read);
+    assert(shell->parser.cursor_buff);
     shell->recv_len = shell->shell_read(shell->recv_buf);
     if (shell->recv_len == 0) {
         return;
