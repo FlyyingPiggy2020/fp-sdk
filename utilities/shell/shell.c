@@ -47,6 +47,7 @@ SOFTWARE.
 /*---------- function prototype ----------*/
 extern void shell_cmd_parser(Shell *shell);
 extern void shell_prompt(Shell *shell, uint8_t is_new_line);
+extern void shell_output(Shell *shell, const char *format, ...);
 extern int  clear(Shell *shell, uint8_t argc, char *argv[]);
 /*---------- variable ----------*/
 
@@ -79,7 +80,8 @@ int shell_init(Shell *shell)
     shell->parser.cursor_buff = &shell->parser.buff;
     shell->user.name          = SHELL_DEFAULT_NAME;
     shell->user.name_size     = sizeof(SHELL_DEFAULT_NAME) + 3;
-    clear(shell, 1, NULL);
+    shell_output(shell, "\033[2J\033[3J\033[1H");
+    shell_prompt(shell, 0);
     return 0;
 }
 

@@ -23,12 +23,12 @@ SOFTWARE.
 */
 /*
  * Copyright (c) 2024 by Moorgen Tech. Co, Ltd.
- * @FilePath     : shell_cmd_clear.c
+ * @FilePath     : shell_cmd_clear1.c
  * @Author       : lxf
- * @Date         : 2024-03-01 11:53:35
+ * @Date         : 2024-03-05 17:21:04
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2024-03-02 08:42:45
- * @Brief        : shell内置命令clear
+ * @LastEditTime : 2024-03-05 17:22:31
+ * @Brief        :
  */
 
 /*---------- includes ----------*/
@@ -43,12 +43,11 @@ extern void shell_output(Shell *shell, const char *format, ...);
 extern void shell_prompt(Shell *shell, uint8_t is_new_line);
 /*---------- variable ----------*/
 /*---------- function ----------*/
-
 /**
- * @brief clear命令
+ * @brief clear命令，测试tab补全
  * @return {*}
  */
-int clear(Shell *shell, uint8_t argc, char *argv[])
+int clear1(Shell *shell, uint8_t argc, char *argv[])
 {
     if (argc == 1) {
         shell_output(shell, "\033[2J\033[3J\033[1H");
@@ -56,5 +55,5 @@ int clear(Shell *shell, uint8_t argc, char *argv[])
     }
     return 0;
 }
-SHELL_EXPORT_CMD(clear, clear);
+SHELL_EXPORT_CMD(clear12, clear1);
 /*---------- end of file ----------*/

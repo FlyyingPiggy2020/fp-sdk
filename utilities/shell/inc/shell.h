@@ -41,14 +41,13 @@ SOFTWARE.
 #define SHELL_REC_MAX_SIZE   128 // shell最大接收大小
 #define SHELL_TRANS_MAX_SIZE 128 // shell最大输出大小
 #define SHELL_REC_MAX_ARGS   10  // 最大变量个数
+#define SHELL_CMD_MAX_LENS   10  // 命令的最大长度：因为tab补全的时候会用到。relloc的话需要在函数外面free感觉不太好。
 
 #define SHELL_DEFAULT_NAME   "fpshell"
 #define NEWLINE              "\r\n"
 /* https://www.asciitable.com/ */
 /* https://blog.csdn.net/q1003675852/article/details/134999871 */
 
-#define SHELL_CSI            "\033["
-#define SHELL_CURSOR_UP      SHELL_CSI "A"
 #define SHELL_TAB            0X09
 
 /*---------- type define ----------*/
