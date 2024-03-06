@@ -38,6 +38,7 @@ SOFTWARE.
 
 #include "utilities/clists/inc/clists.h" //这条需要放到前面因为后面的文件里用到了链表
 #include "utilities/common/inc/fp_def.h"
+#include "utilities/heap/TLSF-2.4.6/src/tlsf.h"
 #include "utilities/log/inc/log.h"
 #include "utilities/shell/inc/shell.h"
 #include "utilities/export/inc/export.h"
@@ -52,5 +53,7 @@ SOFTWARE.
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
+
+int heap_init(void);
 /*---------- end of file ----------*/
 #endif

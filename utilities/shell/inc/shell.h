@@ -41,7 +41,7 @@ SOFTWARE.
 #define SHELL_REC_MAX_SIZE   128 // shell最大接收大小
 #define SHELL_TRANS_MAX_SIZE 128 // shell最大输出大小
 #define SHELL_REC_MAX_ARGS   10  // 最大变量个数
-#define SHELL_CMD_MAX_LENS   10  // 命令的最大长度：因为tab补全的时候会用到。relloc的话需要在函数外面free感觉不太好。
+#define SHELL_CMD_MAX_LENS   50  // 命令的最大长度：因为tab补全的时候会用到。relloc的话需要在函数外面free感觉不太好。
 
 #define SHELL_DEFAULT_NAME   "fpshell"
 #define NEWLINE              "\r\n"

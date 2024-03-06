@@ -166,8 +166,6 @@ void shell_prompt_del_from_cursor(Shell *shell)
 
     inputbuff_t *temp = NULL;
 
-    char recv_buf[SHELL_REC_MAX_SIZE] = { 0 };
-
     temp = shell->parser.cursor_buff;
 
     // 光标没被移动过
