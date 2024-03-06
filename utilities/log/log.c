@@ -206,7 +206,11 @@ size_t log_strcpy(size_t cur_len, char *dst, const char *src)
 void log_output(uint8_t level, const char *tag, const char *file, const char *func, const long line, const char *format, ...)
 {
     log_output_lock();
-    int  log_len = 0, fmt_result = 0, newline_len = strlen(LOG_NEWLINE_SIGN);
+    int log_len = 0, fmt_result = 0;
+
+#if (LOG_USE_NEWLINE_BEGIN == 0)
+    int newline_len = strlen(LOG_NEWLINE_SIGN);
+#endif
     char line_num[LOG_LINE_NUM_MAX_LEN + 1] = { 0 };
 
     va_list args;

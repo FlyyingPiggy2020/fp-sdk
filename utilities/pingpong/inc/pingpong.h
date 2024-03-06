@@ -28,7 +28,7 @@ extern "C" {
 #endif
 
 /*---------- includes ----------*/
-#include "fp_sdk.h"
+#include "../../common/inc/fp_def.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>

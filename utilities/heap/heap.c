@@ -28,7 +28,7 @@ SOFTWARE.
  * @Date         : 2024-03-06 13:25:47
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
  * @LastEditTime : 2024-03-06 13:25:51
- * @Brief        : 使用tlsf作为内存管理,这个内存管理算法有一定的空间浪费,时间复杂度是O1
+ * @Brief        : 使用tlsf作为内存管理,这个内存管理算法有3224字节空间做位图。
  */
 
 #if (defined(__ARMCC_VERSION) && __ARMCC_VERSION >= 6000000)
@@ -38,14 +38,17 @@ __asm(".global __use_no_heap_region\n\t"); // AC6申明不使用C库的堆
 #else
 #endif
 /*---------- includes ----------*/
-
+#define LOG_TAG "heap"
+#include "TLSF-2.4.6/src/tlsf.h"
 #include "fp_sdk.h"
+
+#include "stdlib.h"
 /*---------- macro ----------*/
 
-#define POOL_SIZE 1024 * 10 //实际上的P0OL_SIZE有大约4KB做位图了，所以这个要比实际大一点才行。
+#define POOL_SIZE 1024 * 10 // 实际上的P0OL_SIZE有3224字节做位图了.可用size比这个小。
 /*---------- type define ----------*/
 
-static char heap_pool[POOL_SIZE];
+static char  heap_pool[POOL_SIZE];
 static void *shell_malloc_ptr = NULL;
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
@@ -80,6 +83,7 @@ void *calloc(size_t nmemb, size_t size)
     return tlsf_calloc(nmemb, size);
 }
 
+#if (FP_USE_SHELL == 1)
 /**
  * @brief 获取已使用的heap size
  * @return {*}
@@ -87,35 +91,10 @@ void *calloc(size_t nmemb, size_t size)
 int heap_get_used_size(Shell *shell, uint8_t argc, char *argv[])
 {
     size_t used_heap_size = get_used_size(heap_pool);
-    log_i("Total used memory= %d\n", used_heap_size);
+    shell->shell_write("\r\n", 2);
+    log_i("Used memory= %d.Total memory size = %d.", used_heap_size, POOL_SIZE);
     return 0;
 }
 SHELL_EXPORT_CMD(heap_used_size, heap_get_used_size);
-
-/**
- * @brief 获取已使用的heap size
- * @return {*}
- */
-int heap_malloc(Shell *shell, uint8_t argc, char *argv[])
-{
-    if(argc == 1) {
-        shell_malloc_ptr = malloc(1024);
-    }
-    return 0;
-}
-SHELL_EXPORT_CMD(heap_malloc, heap_malloc);
-
-/**
- * @brief 获取已使用的heap size
- * @return {*}
- */
-int heap_free(Shell *shell, uint8_t argc, char *argv[])
-{
-    if(argc == 1 && shell_malloc_ptr != NULL) {
-        free(shell_malloc_ptr);
-        shell_malloc_ptr = NULL;
-    }
-    return 0;
-}
-SHELL_EXPORT_CMD(heap_free, heap_free);
+#endif
 /*---------- end of file ----------*/

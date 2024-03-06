@@ -23,7 +23,7 @@
 
 /*---------- includes ----------*/
 #include "inc/pingpong.h"
-
+#include "string.h"
 /*---------- macro ----------*/
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/

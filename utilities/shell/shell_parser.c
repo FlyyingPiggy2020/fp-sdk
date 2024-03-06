@@ -34,7 +34,7 @@ SOFTWARE.
 /*---------- includes ----------*/
 
 #include "inc/shell.h"
-#include "stdlib.h"
+#include "utilities/log/inc/log.h"
 /*---------- macro ----------*/
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/

@@ -34,6 +34,7 @@ SOFTWARE.
 /*---------- includes ----------*/
 
 #include "inc/shell.h"
+#include "utilities/log/inc/log.h"
 /*---------- macro ----------*/
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
@@ -75,6 +76,7 @@ void shell_executor(Shell *shell, char *data, fp_size_t size)
     for (fn_ptr = (shell_command_t *)shell->commandList.start; fn_ptr < (shell_command_t *)shell->commandList.end; fn_ptr++) {
         if (!strcmp(argv[0], fn_ptr->cmd.name)) { /* 接收到正确的命令 */
             fn_ptr->cmd.function(shell, argc, argv);
+            shell_prompt(shell, 0);
             return;
         }
     }

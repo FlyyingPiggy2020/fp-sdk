@@ -34,22 +34,27 @@ SOFTWARE.
 #ifndef __FP_SDK_H__
 #define __FP_SDK_H__
 /*---------- includes ----------*/
-#include "main.h"
+
+/**
+ * @brief 是否使用SHELL
+ * @return {*}
+ */
+#define FP_USE_SHELL 1
 
 #include "utilities/clists/inc/clists.h" //这条需要放到前面因为后面的文件里用到了链表
 #include "utilities/common/inc/fp_def.h"
-#include "utilities/heap/TLSF-2.4.6/src/tlsf.h"
-#include "utilities/log/inc/log.h"
-#include "utilities/shell/inc/shell.h"
 #include "utilities/export/inc/export.h"
+#include "device/core/inc/device_manager.h"
 #include "utilities/pingpong/inc/pingpong.h"
 
-#include "device/core/inc/device_manager.h"
+#include "utilities/heap/TLSF-2.4.6/src/tlsf.h"
+#include "utilities/log/inc/log.h"
+#if (FP_USE_SHELL == 1)
+#include "utilities/shell/inc/shell.h"
+#endif
 
 /*---------- macro ----------*/
 
-#define DISABLE_IRQ __disable_irq
-#define ENABLE_IRQ  __enable_irq
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/

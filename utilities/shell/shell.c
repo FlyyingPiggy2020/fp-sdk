@@ -37,8 +37,11 @@ SOFTWARE.
 /*---------- includes ----------*/
 #define LOG_TAG "shell"
 
-#include "fp_sdk.h"
-#include "stdlib.h"
+
+#include "inc/shell.h"
+
+#include "utilities/log/inc/log.h"
+
 /*---------- macro ----------*/
 
 /*---------- type define ----------*/
@@ -76,7 +79,7 @@ int shell_init(Shell *shell)
 #error not supported compiler, please use command table mode
 #endif
     INIT_LIST_HEAD(&shell->parser.buff.list);
-    shell->parser.buff.data = 0;// 后面删除逻辑用到这个，必须赋值给空格，否则最后一个字节会删不掉..
+    shell->parser.buff.data   = 0; // 后面删除逻辑用到这个，必须赋值给空格，否则最后一个字节会删不掉..
     shell->parser.cursor_buff = &shell->parser.buff;
     shell->user.name          = SHELL_DEFAULT_NAME;
     shell->user.name_size     = sizeof(SHELL_DEFAULT_NAME) + 3;
@@ -93,7 +96,6 @@ void shell_loop(Shell *shell)
     if (shell->recv_len == 0) {
         return;
     }
-
     shell_cmd_parser(shell);
 }
 

@@ -40,6 +40,12 @@ SOFTWARE.
 
 #include "inc/device_manager.h"
 #include "../../utilities/log/inc/log.h"
+#include "../../utilities/export/inc/export.h"
+
+#if (FP_USE_SHELL == 1)
+#include "../../utilities/shell/inc/shell.h"
+#endif
+
 #include "string.h"
 
 /*---------- macro ----------*/
@@ -289,4 +295,23 @@ fp_err_t device_set_tx_complete(device_t *dev, fp_err_t (*tx_done)(device_t *dev
     dev->tx_complete = tx_done;
     return FP_EOK;
 }
+
+#if (FP_USE_SHELL == 1)
+/**
+ * @brief 查看已注册设备列表
+ * @return {*}
+ */
+int device_list_display(Shell *shell, uint8_t argc, char *argv[])
+{
+    device_t *dev = NULL;
+    list_for_each_entry(dev, device_t, &device_list, list)
+    {
+        shell->shell_write("\r\n",2);
+        shell->shell_write(dev->name, DEVICE_NAME_MAX);
+    }
+    shell->shell_write("\r\n",2);
+    return 0;
+}
+SHELL_EXPORT_CMD(device_list, device_list_display);
+#endif
 /*---------- end of file ----------*/

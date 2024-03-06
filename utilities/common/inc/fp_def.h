@@ -33,10 +33,12 @@ SOFTWARE.
 #ifndef __FP_DEF_H__
 #define __FP_DEF_H__
 /*---------- includes ----------*/
-
+#include "main.h"
 #include "stdint.h"
 /*---------- macro ----------*/
 
+#define DISABLE_IRQ            __disable_irq
+#define ENABLE_IRQ             __enable_irq
 /**
  * @brief 错误码
  * @return {*}

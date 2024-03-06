@@ -35,7 +35,12 @@ SOFTWARE.
 #define __SHELL_H__
 /*---------- includes ----------*/
 
-#include "fp_sdk.h"
+#include "stdarg.h"
+#include "stdlib.h"
+#include "string.h"
+
+#include "utilities/clists/inc/clists.h"
+#include "utilities/common/inc/fp_def.h"
 
 /*---------- macro ----------*/
 #define SHELL_REC_MAX_SIZE   128 // shell最大接收大小
