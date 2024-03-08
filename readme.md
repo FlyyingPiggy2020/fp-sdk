@@ -10,3 +10,5 @@
 
 
 # 使用说明
+
+esp32c3 把fp-sdk目录放到对应工程components下

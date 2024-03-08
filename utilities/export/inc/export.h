@@ -3,8 +3,8 @@
  * @FilePath     : export.h
  * @Author       : lxf
  * @Date         : 2023-12-28 10:31:44
- * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2023-12-28 11:26:03
+ * @LastEditors  : flyyingpiggy2020 154562451@qq.com
+ * @LastEditTime : 2024-03-07 17:46:16
  * @Brief        : export机制(不需要显示调用初始化函数)
  */
 
@@ -12,7 +12,7 @@
 #define __EXPORT_H__
 /*---------- includes ----------*/
 
-#include "../../common/inc./fp_def.h"
+#include "../../common/inc/fp_def.h"
 /*---------- macro ----------*/
 /*---------- type define ----------*/
 
