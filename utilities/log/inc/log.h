@@ -64,8 +64,7 @@ SOFTWARE.
             log_a("(%s) has assert failed.", #EXPR);        \
             while (1)                                       \
                 ;                                           \
-        }                                                   \
-        else {                                              \
+        } else {                                            \
             log_assert_hook(#EXPR, __FUNCTION__, __LINE__); \
         }                                                   \
     }
@@ -74,7 +73,9 @@ SOFTWARE.
  * @brief 定义一个宏，从__FILE__中查找到文件名,把目录都删去了
  * @return {*}
  */
+#ifndef __FILENAME__
 #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__))
+#endif
 
 /**
  * @brief 如果要使用log_x这种函数，必须事先定义LOG_TAG和LOG_OUTPUT_LVL
@@ -122,6 +123,8 @@ SOFTWARE.
 #else
 #define log_v(...) ((void)0);
 #endif
+
+#undef assert
 #ifndef assert
 #define assert LOG_ASSERT
 #endif
@@ -129,7 +132,7 @@ SOFTWARE.
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
 
-int log_init(void);
+int  log_init(void);
 void log_output(uint8_t level, const char *tag, const char *file, const char *func, const long line, const char *format, ...);
 void set_log_port_output(void *output);
 extern void (*log_assert_hook)(const char *expr, const char *func, size_t line);

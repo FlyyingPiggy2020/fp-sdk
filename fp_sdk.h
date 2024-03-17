@@ -41,17 +41,24 @@ SOFTWARE.
  */
 #define FP_USE_SHELL 1
 
-// #include "utilities/clists/inc/clists.h" //这条需要放到前面因为后面的文件里用到了链表
-// #include "utilities/common/inc/fp_def.h"
-// #include "utilities/export/inc/export.h"
-// #include "device/core/inc/device_manager.h"
-// #include "utilities/pingpong/inc/pingpong.h"
-
-// #include "utilities/heap/TLSF-2.4.6/src/tlsf.h"
-// #include "utilities/log/inc/log.h"
-// #if (FP_USE_SHELL == 1)
-// #include "utilities/shell/inc/shell.h"
-// #endif
+#if (USE_ESP == 1)
+#include "utilities/clists/inc/clists.h" //这条需要放到前面因为后面的文件里用到了链表
+#include "utilities/common/inc/fp_def.h"
+#include "device/core/inc/device_manager.h"
+#include "utilities/log/inc/log.h"
+#include "utilities/export/inc/export.h"
+#else
+#include "utilities/clists/inc/clists.h" //这条需要放到前面因为后面的文件里用到了链表
+#include "utilities/common/inc/fp_def.h"
+#include "device/core/inc/device_manager.h"
+#include "utilities/log/inc/log.h"
+#include "utilities/export/inc/export.h"
+#include "utilities/pingpong/inc/pingpong.h"
+#include "utilities/heap/TLSF-2.4.6/src/tlsf.h"
+#if (FP_USE_SHELL == 1)
+#include "utilities/shell/inc/shell.h"
+#endif
+#endif
 
 /*---------- macro ----------*/
 

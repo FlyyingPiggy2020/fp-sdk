@@ -42,8 +42,7 @@ SOFTWARE.
 #define __LIST_HEAD_H
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 /*---------- includes ----------*/
@@ -51,7 +50,7 @@ extern "C"
 #include <stddef.h>
 #include <stdint.h>
 
-    /*---------- macro ----------*/
+/*---------- macro ----------*/
 
 #if defined(__CC_ARM) || defined(__ARMCC_VERSION)
 #define container_of(ptr, type, member) ((type *)((char *)ptr - offsetof(type, member)))
@@ -270,333 +269,331 @@ extern "C"
  */
 #define list_safe_reset_next(pos, n, type, member) n = list_next_entry(pos, type, member)
 
-    /*---------- type define ----------*/
-    struct list_head
-    {
-        struct list_head *next;
-        struct list_head *prev;
-    };
+/*---------- type define ----------*/
+struct list_head {
+    struct list_head *next;
+    struct list_head *prev;
+};
 
-    /*---------- variable prototype ----------*/
-    /*---------- function prototype ----------*/
-    /**
-     * @brief Initialize the linked list to an empty linked list.
-     * @param list: list head will be initialize.
-     * @retval None
-     */
-    static inline void INIT_LIST_HEAD(struct list_head *list)
-    {
-        list->next = list;
-        list->prev = list;
+/*---------- variable prototype ----------*/
+/*---------- function prototype ----------*/
+/**
+ * @brief Initialize the linked list to an empty linked list.
+ * @param list: list head will be initialize.
+ * @retval None
+ */
+static inline void INIT_LIST_HEAD(struct list_head *list)
+{
+    list->next = list;
+    list->prev = list;
+}
+
+/*
+ * Insert a new entry between two known consecutive entries.
+ *
+ * This is only for internal list manipulation where we know
+ * the prev/next entries already!
+ */
+static inline void __list_add(struct list_head *pnew, struct list_head *prev, struct list_head *next)
+{
+    pnew->next = next;
+    pnew->prev = prev;
+    next->prev = pnew;
+    prev->next = pnew;
+}
+
+/**
+ * @brief Add a new entry. Insert a new entry after the specified
+ * head. This is good for implementing stacks.
+ * @param pnew: new entry to be added.
+ * @param head: list head to add it after.
+ * @retval None
+ */
+static inline void list_add(struct list_head *pnew, struct list_head *head)
+{
+    __list_add(pnew, head, head->next);
+}
+
+/**
+ * @brief Add a new entry. Insert a new entry before the specified
+ * head. This is useful for implementing queues.
+ * @param pnew: new entry to be added.
+ * @param head: list head to add it before.
+ * @retval None
+ */
+static inline void list_add_tail(struct list_head *pnew, struct list_head *head)
+{
+    __list_add(pnew, head->prev, head);
+}
+
+/*
+ * Delete a list entry by marking the prev/next entries point to
+ * each other.
+ *
+ * This is only for internal list manipulation where we know the
+ * prev/next entries already!
+ */
+static inline void __list_del(struct list_head *prev, struct list_head *next)
+{
+    prev->next = next;
+    next->prev = prev;
+}
+
+/**
+ * @brief Deletes entry from list.
+ * @note list_empty() on entry does not return true after this, the
+ * entry is in an undefined state.
+ * @param entry: the element to delete from the list.
+ * @retval None
+ */
+static inline void list_del(struct list_head *entry)
+{
+    __list_del(entry->prev, entry->next);
+    entry->prev = NULL;
+    entry->next = NULL;
+}
+
+/**
+ * @brief Deletes entry from list and reinitialize it.
+ * @param entry: the element to delete from the list.
+ * @retval None
+ */
+static inline void list_del_init(struct list_head *entry)
+{
+    __list_del(entry->prev, entry->next);
+    INIT_LIST_HEAD(entry);
+}
+
+/**
+ * @brief Replace old entry by new one. If @old was empty, it
+ * will be overwritten.
+ * @param old: The elemnet to be replaced.
+ * @param pnew: The new element to insert.
+ * @retval None
+ */
+static inline void list_replace(struct list_head *old, struct list_head *pnew)
+{
+    pnew->next       = old->next;
+    pnew->next->prev = pnew;
+    pnew->prev       = old->prev;
+    pnew->prev->next = pnew;
+}
+
+/**
+ * @brief Replace old entry by new one. If @old was empty, it
+ * will be overwritten.
+ * @param old: The elemnet to be replaced.
+ * @param pnew: The new element to insert.
+ * @retval None
+ */
+static inline void list_replace_init(struct list_head *old, struct list_head *pnew)
+{
+    list_replace(old, pnew);
+    INIT_LIST_HEAD(old);
+}
+
+/**
+ * @brief Delete from one list and add as another's head.
+ * @param list: the entry to move.
+ * @param head: the head that will precede our entry.
+ * @retval None
+ */
+static inline void list_move(struct list_head *list, struct list_head *head)
+{
+    __list_del(list->prev, list->next);
+    list_add(list, head);
+}
+
+/**
+ * @brief Delete from one list and add as another's tail
+ * @param list: the entry to move.
+ * @param head: the head that will folliw our entry.
+ * @retval None
+ */
+static inline void list_move_tail(struct list_head *list, struct list_head *head)
+{
+    __list_del(list->prev, list->next);
+    list_add_tail(list, head);
+}
+
+/**
+ * @brief Tests whether @list is the last entry in list @head.
+ * @param list: the entry to test.
+ * @param head: the head of the list.
+ * @retval true: @list is the last entry in the list @head.
+ *         false: @list is not the last entry in the list @head.
+ */
+static inline bool list_is_last(const struct list_head *list, const struct list_head *head)
+{
+    return (list->next == head);
+}
+
+/**
+ * @brief Test whether a list is empty.
+ * @param head: the list to test.
+ * @retval true: @head is an empty list.
+ *         false: @head is not an empty list.
+ */
+static inline bool list_empty(const struct list_head *head)
+{
+    return (head->next == head);
+}
+
+/**
+ * @brief Rotate the list to the left.
+ * @param head: the head of the list.
+ * @retval None
+ */
+static inline void list_rotate_left(struct list_head *head)
+{
+    struct list_head *first = NULL;
+
+    if (!list_empty(head)) {
+        first = head->next;
+        list_move_tail(first, head);
     }
+}
 
-    /*
-     * Insert a new entry between two known consecutive entries.
-     *
-     * This is only for internal list manipulation where we know
-     * the prev/next entries already!
-     */
-    static inline void __list_add(struct list_head *pnew, struct list_head *prev, struct list_head *next)
-    {
-        pnew->next = next;
-        pnew->prev = prev;
-        next->prev = pnew;
-        prev->next = pnew;
-    }
+/**
+ * @brief Tests whether a list is empty and not being modified.
+ * Description:
+ * tests whether a list is empty _and_ checks that no other CPU
+ * might be in the process of modifying either member(next or prev).
+ * @note Using list_empty_careful() without synchronization can
+ * only be safe if the only activity that can happen to the list
+ * entry is list_del_init(). Eg. it can not be used if another
+ * CPU could re-list_add() it.
+ * @param head: the list to test.
+ * @retval true: @head is an empty list and no other CPU is modifying
+ * the member(next or prev).
+ *         false: @head is not an empty list or other CPU is modifying
+ * the member(next or prev).
+ */
+static inline bool list_empty_careful(const struct list_head *head)
+{
+    struct list_head *next = head->next;
 
-    /**
-     * @brief Add a new entry. Insert a new entry after the specified
-     * head. This is good for implementing stacks.
-     * @param pnew: new entry to be added.
-     * @param head: list head to add it after.
-     * @retval None
-     */
-    static inline void list_add(struct list_head *pnew, struct list_head *head)
-    {
-        __list_add(pnew, head, head->next);
-    }
+    return ((next == head) && (next == head->prev));
+}
 
-    /**
-     * @brief Add a new entry. Insert a new entry before the specified
-     * head. This is useful for implementing queues.
-     * @param pnew: new entry to be added.
-     * @param head: list head to add it before.
-     * @retval None
-     */
-    static inline void list_add_tail(struct list_head *pnew, struct list_head *head)
-    {
-        __list_add(pnew, head->prev, head);
-    }
+/**
+ * @brief Tests whether a list has just one entry.
+ * @param head: the list to test.
+ * @retval true: @head has just one entry.
+ *         false: @head not has just one entry.
+ */
+static inline bool list_is_singular(const struct list_head *head)
+{
+    return (!list_empty(head) && (head->next == head->prev));
+}
 
-    /*
-     * Delete a list entry by marking the prev/next entries point to
-     * each other.
-     *
-     * This is only for internal list manipulation where we know the
-     * prev/next entries already!
-     */
-    static inline void __list_del(struct list_head *prev, struct list_head *next)
-    {
-        prev->next = next;
-        next->prev = prev;
-    }
+static inline void __list_cut_position(struct list_head *list, struct list_head *head, struct list_head *entry)
+{
+    struct list_head *new_first = entry->next;
 
-    /**
-     * @brief Deletes entry from list.
-     * @note list_empty() on entry does not return true after this, the
-     * entry is in an undefined state.
-     * @param entry: the element to delete from the list.
-     * @retval None
-     */
-    static inline void list_del(struct list_head *entry)
-    {
-        __list_del(entry->prev, entry->next);
-        entry->prev = NULL;
-        entry->next = NULL;
-    }
+    list->next       = head->next;
+    list->next->prev = list;
+    list->prev       = entry;
+    entry->next      = list;
+    head->next       = new_first;
+    new_first->prev  = head;
+}
 
-    /**
-     * @brief Deletes entry from list and reinitialize it.
-     * @param entry: the element to delete from the list.
-     * @retval None
-     */
-    static inline void list_del_init(struct list_head *entry)
-    {
-        __list_del(entry->prev, entry->next);
-        INIT_LIST_HEAD(entry);
-    }
-
-    /**
-     * @brief Replace old entry by new one. If @old was empty, it
-     * will be overwritten.
-     * @param old: The elemnet to be replaced.
-     * @param pnew: The new element to insert.
-     * @retval None
-     */
-    static inline void list_replace(struct list_head *old, struct list_head *pnew)
-    {
-        pnew->next = old->next;
-        pnew->next->prev = pnew;
-        pnew->prev = old->prev;
-        pnew->prev->next = pnew;
-    }
-
-    /**
-     * @brief Replace old entry by new one. If @old was empty, it
-     * will be overwritten.
-     * @param old: The elemnet to be replaced.
-     * @param pnew: The new element to insert.
-     * @retval None
-     */
-    static inline void list_replace_init(struct list_head *old, struct list_head *pnew)
-    {
-        list_replace(old, pnew);
-        INIT_LIST_HEAD(old);
-    }
-
-    /**
-     * @brief Delete from one list and add as another's head.
-     * @param list: the entry to move.
-     * @param head: the head that will precede our entry.
-     * @retval None
-     */
-    static inline void list_move(struct list_head *list, struct list_head *head)
-    {
-        __list_del(list->prev, list->next);
-        list_add(list, head);
-    }
-
-    /**
-     * @brief Delete from one list and add as another's tail
-     * @param list: the entry to move.
-     * @param head: the head that will folliw our entry.
-     * @retval None
-     */
-    static inline void list_move_tail(struct list_head *list, struct list_head *head)
-    {
-        __list_del(list->prev, list->next);
-        list_add_tail(list, head);
-    }
-
-    /**
-     * @brief Tests whether @list is the last entry in list @head.
-     * @param list: the entry to test.
-     * @param head: the head of the list.
-     * @retval true: @list is the last entry in the list @head.
-     *         false: @list is not the last entry in the list @head.
-     */
-    static inline bool list_is_last(const struct list_head *list, const struct list_head *head)
-    {
-        return (list->next == head);
-    }
-
-    /**
-     * @brief Test whether a list is empty.
-     * @param head: the list to test.
-     * @retval true: @head is an empty list.
-     *         false: @head is not an empty list.
-     */
-    static inline bool list_empty(const struct list_head *head)
-    {
-        return (head->next == head);
-    }
-
-    /**
-     * @brief Rotate the list to the left.
-     * @param head: the head of the list.
-     * @retval None
-     */
-    static inline void list_rotate_left(struct list_head *head)
-    {
-        struct list_head *first = NULL;
-
-        if (!list_empty(head)) {
-            first = head->next;
-            list_move_tail(first, head);
+/**
+ * @brief Cut a list into two. This helper moves the initial
+ * part of @head, up to and including @entry, from @head to
+ * @list. You should pass an @entry an element you know is on
+ * @head. @list should be an empty list or a list you do not
+ * care about losing its data.
+ * @param list: a new list to add all removed entries.
+ * @param head: a list with entries.
+ * @param entry: an entry within head, could be the head itself
+ * and if so we won't cut the list.
+ * @retval None
+ */
+static inline void list_cut_position(struct list_head *list, struct list_head *head, struct list_head *entry)
+{
+    do {
+        if (list_empty(head)) {
+            break;
         }
-    }
-
-    /**
-     * @brief Tests whether a list is empty and not being modified.
-     * Description:
-     * tests whether a list is empty _and_ checks that no other CPU
-     * might be in the process of modifying either member(next or prev).
-     * @note Using list_empty_careful() without synchronization can
-     * only be safe if the only activity that can happen to the list
-     * entry is list_del_init(). Eg. it can not be used if another
-     * CPU could re-list_add() it.
-     * @param head: the list to test.
-     * @retval true: @head is an empty list and no other CPU is modifying
-     * the member(next or prev).
-     *         false: @head is not an empty list or other CPU is modifying
-     * the member(next or prev).
-     */
-    static inline bool list_empty_careful(const struct list_head *head)
-    {
-        struct list_head *next = head->next;
-
-        return ((next == head) && (next == head->prev));
-    }
-
-    /**
-     * @brief Tests whether a list has just one entry.
-     * @param head: the list to test.
-     * @retval true: @head has just one entry.
-     *         false: @head not has just one entry.
-     */
-    static inline bool list_is_singular(const struct list_head *head)
-    {
-        return (!list_empty(head) && (head->next == head->prev));
-    }
-
-    static inline void __list_cut_position(struct list_head *list, struct list_head *head, struct list_head *entry)
-    {
-        struct list_head *new_first = entry->next;
-
-        list->next = head->next;
-        list->next->prev = list;
-        list->prev = entry;
-        entry->next = list;
-        head->next = new_first;
-        new_first->prev = head;
-    }
-
-    /**
-     * @brief Cut a list into two. This helper moves the initial
-     * part of @head, up to and including @entry, from @head to
-     * @list. You should pass an @entry an element you know is on
-     * @head. @list should be an empty list or a list you do not
-     * care about losing its data.
-     * @param list: a new list to add all removed entries.
-     * @param head: a list with entries.
-     * @param entry: an entry within head, could be the head itself
-     * and if so we won't cut the list.
-     * @retval None
-     */
-    static inline void list_cut_position(struct list_head *list, struct list_head *head, struct list_head *entry)
-    {
-        do {
-            if (list_empty(head)) {
-                break;
-            }
-            if (list_is_singular(head) && (head->next != entry && head != entry)) {
-                break;
-            }
-            if (entry == head) {
-                INIT_LIST_HEAD(list);
-            }
-            else {
-                __list_cut_position(list, head, entry);
-            }
-        } while (0);
-    }
-
-    static inline void __list_splice(const struct list_head *list, struct list_head *prev, struct list_head *next)
-    {
-        struct list_head *first = list->next;
-        struct list_head *last = list->prev;
-
-        first->prev = prev;
-        prev->next = first;
-        last->next = next;
-        next->prev = last;
-    }
-
-    /**
-     * @brief Join two lists, this is designed for stacks.
-     * @param list: the new list to add.
-     * @param head: the place to add it in the first list.
-     * @retval None
-     */
-    static inline void list_splice(const struct list_head *list, struct list_head *head)
-    {
-        if (!list_empty(list)) {
-            __list_splice(list, head, head->next);
+        if (list_is_singular(head) && (head->next != entry && head != entry)) {
+            break;
         }
-    }
-
-    /**
-     * @brief Join two lists, each list being queue.
-     * @param list: the new list to add.
-     * @param head: the place to add it in thr first list.
-     * @retval None
-     */
-    static inline void list_splice_tail(const struct list_head *list, struct list_head *head)
-    {
-        if (!list_empty(list)) {
-            __list_splice(list, head->prev, head);
-        }
-    }
-
-    /**
-     * @brief Join two lists and reinitialise the emptied list.
-     * The list at @list is reinitialise.
-     * @param list: the new list to add.
-     * @param head: the place to add it in the first list.
-     * @retval None
-     */
-    static inline void list_splice_init(struct list_head *list, struct list_head *head)
-    {
-        if (!list_empty(list)) {
-            __list_splice(list, head, head->next);
+        if (entry == head) {
             INIT_LIST_HEAD(list);
+        } else {
+            __list_cut_position(list, head, entry);
         }
-    }
+    } while (0);
+}
 
-    /**
-     * @brief Join two lists and reinitialise the emptied list. Each of
-     * the lists is a queue. The list at @list is reinitialise.
-     * @param list: the new list to add.
-     * @param head: the place to add it in the first list.
-     * @retval None
-     */
-    static inline void list_splice_tail_init(struct list_head *list, struct list_head *head)
-    {
-        if (!list_empty(list)) {
-            __list_splice(list, head->prev, head);
-            INIT_LIST_HEAD(list);
-        }
+static inline void __list_splice(const struct list_head *list, struct list_head *prev, struct list_head *next)
+{
+    struct list_head *first = list->next;
+    struct list_head *last  = list->prev;
+
+    first->prev = prev;
+    prev->next  = first;
+    last->next  = next;
+    next->prev  = last;
+}
+
+/**
+ * @brief Join two lists, this is designed for stacks.
+ * @param list: the new list to add.
+ * @param head: the place to add it in the first list.
+ * @retval None
+ */
+static inline void list_splice(const struct list_head *list, struct list_head *head)
+{
+    if (!list_empty(list)) {
+        __list_splice(list, head, head->next);
     }
+}
+
+/**
+ * @brief Join two lists, each list being queue.
+ * @param list: the new list to add.
+ * @param head: the place to add it in thr first list.
+ * @retval None
+ */
+static inline void list_splice_tail(const struct list_head *list, struct list_head *head)
+{
+    if (!list_empty(list)) {
+        __list_splice(list, head->prev, head);
+    }
+}
+
+/**
+ * @brief Join two lists and reinitialise the emptied list.
+ * The list at @list is reinitialise.
+ * @param list: the new list to add.
+ * @param head: the place to add it in the first list.
+ * @retval None
+ */
+static inline void list_splice_init(struct list_head *list, struct list_head *head)
+{
+    if (!list_empty(list)) {
+        __list_splice(list, head, head->next);
+        INIT_LIST_HEAD(list);
+    }
+}
+
+/**
+ * @brief Join two lists and reinitialise the emptied list. Each of
+ * the lists is a queue. The list at @list is reinitialise.
+ * @param list: the new list to add.
+ * @param head: the place to add it in the first list.
+ * @retval None
+ */
+static inline void list_splice_tail_init(struct list_head *list, struct list_head *head)
+{
+    if (!list_empty(list)) {
+        __list_splice(list, head->prev, head);
+        INIT_LIST_HEAD(list);
+    }
+}
 
 #ifdef __cplusplus
 }

@@ -21,47 +21,33 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 */
-
 /*
  * Copyright (c) 2024 by Moorgen Tech. Co, Ltd.
- * @FilePath     : bsp.c
+ * @FilePath     : serial.h
  * @Author       : lxf
- * @Date         : 2024-03-08 08:35:17
+ * @Date         : 2024-03-16 13:24:50
  * @LastEditors  : flyyingpiggy2020 154562451@qq.com
- * @LastEditTime : 2024-03-11 15:02:00
- * @Brief        :
+ * @LastEditTime : 2024-03-16 13:24:51
+ * @Brief        : serial head file
  */
 
+#ifndef __SERIAL_H_
+#define __SERIAL_H_
 /*---------- includes ----------*/
 
-#include "inc/bsp.h"
+#define LOG_TAG "Serial"
 
-#include "esp_log.h"
-#include "driver/uart.h"
+#include "fp_sdk.h"
 /*---------- macro ----------*/
 
-#define TAG "bsp"
+struct device_serial
+{
+    struct device parent;    
+};
+
+
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
-/*---------- variable ----------*/
-/*---------- function ----------*/
-
-void bsp_init(void)
-{
-    /* Configure parameters of an UART driver,
-     * communication pins and install the driver */
-    uart_config_t uart_config = {
-        .baud_rate  = 115200,
-        .data_bits  = UART_DATA_8_BITS,
-        .parity     = UART_PARITY_DISABLE,
-        .stop_bits  = UART_STOP_BITS_1,
-        .flow_ctrl  = UART_HW_FLOWCTRL_DISABLE,
-        .source_clk = UART_SCLK_DEFAULT,
-    };
-    // Install UART driver, and get the queue.
-    uart_driver_install(0, 1024 * 2, 1024 * 2, 20, NULL, 0);
-    ESP_LOGI(TAG, "bsp init");
-    return;
-}
 /*---------- end of file ----------*/
+#endif

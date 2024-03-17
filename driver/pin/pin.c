@@ -3,12 +3,13 @@
  * @FilePath     : pin.c
  * @Author       : lxf
  * @Date         : 2024-02-22 17:17:43
- * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2024-02-23 11:59:39
+ * @LastEditors: flyyingpiggy2020 154562451@qq.com
+ * @LastEditTime: 2024-03-16 14:01:44
  * @Brief        : STM32 引脚
  */
 
 /*---------- includes ----------*/
+#define LOG_TAG "Pin"
 
 #include "inc/pin.h"
 
@@ -29,7 +30,7 @@ static struct device_pin _hw_pin;
 static fp_size_t _pin_read(device_t *dev, int pos, void *buffer, int size)
 {
     struct device_pin_value *value;
-    struct device_pin *pin = (struct device_pin *)dev;
+    struct device_pin       *pin = (struct device_pin *)dev;
 
     assert(pin != NULL);
 
@@ -45,7 +46,7 @@ static fp_size_t _pin_read(device_t *dev, int pos, void *buffer, int size)
 static fp_size_t _pin_write(device_t *dev, int pos, const void *buffer, int size)
 {
     struct device_pin_value *value;
-    struct device_pin *pin = (struct device_pin *)dev;
+    struct device_pin       *pin = (struct device_pin *)dev;
 
     /* check parameters */
     assert(pin != NULL);
@@ -61,7 +62,7 @@ static fp_size_t _pin_write(device_t *dev, int pos, const void *buffer, int size
 static fp_err_t _pin_control(device_t *dev, int cmd, void *args)
 {
     struct device_pin_mode *mode;
-    struct device_pin *pin = (struct device_pin *)dev;
+    struct device_pin      *pin = (struct device_pin *)dev;
 
     /* check parameters */
     assert(pin != NULL);

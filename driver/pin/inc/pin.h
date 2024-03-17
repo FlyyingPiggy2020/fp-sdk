@@ -3,15 +3,14 @@
  * @FilePath     : pin.h
  * @Author       : lxf
  * @Date         : 2024-02-22 18:30:24
- * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2024-02-23 11:50:50
+ * @LastEditors: flyyingpiggy2020 154562451@qq.com
+ * @LastEditTime: 2024-03-16 14:01:34
  * @Brief        : 引脚驱动
  */
 
 #ifndef __PIN_H__
 #define __PIN_H__
 /*---------- includes ----------*/
-#define LOG_TAG "Pin"
 
 #include "fp_sdk.h"
 /*---------- macro ----------*/
@@ -40,33 +39,28 @@
 /*---------- type define ----------*/
 
 /* pin device and operations for RT-Thread */
-struct device_pin
-{
-    struct device parent;
+struct device_pin {
+    struct device         parent;
     const struct pin_ops *ops;
 };
 
-struct device_pin_value
-{
+struct device_pin_value {
     uint32_t pin;
-    uint8_t value; /* PIN_LOW or PIN_HIGH */
+    uint8_t  value; /* PIN_LOW or PIN_HIGH */
 };
 
-struct device_pin_mode
-{
+struct device_pin_mode {
     uint32_t pin;
-    uint8_t mode; /* e.g. PIN_MODE_OUTPUT */
+    uint8_t  mode; /* e.g. PIN_MODE_OUTPUT */
 };
 
-struct rt_pin_irq_hdr
-{
+struct rt_pin_irq_hdr {
     uint32_t pin;
-    uint8_t mode; /* e.g. PIN_IRQ_MODE_RISING */
+    uint8_t  mode; /* e.g. PIN_IRQ_MODE_RISING */
     void (*hdr)(void *args);
     void *args;
 };
-struct pin_ops
-{
+struct pin_ops {
     void (*pin_mode)(struct device *device, uint32_t pin, uint8_t mode);
     void (*pin_write)(struct device *device, uint32_t pin, uint8_t value);
     int8_t (*pin_read)(struct device *device, uint32_t pin);
@@ -79,6 +73,7 @@ struct pin_ops
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
 
-int device_pin_register(const char *name, const struct pin_ops *ops);
+int    device_pin_register(const char *name, const struct pin_ops *ops);
+int8_t pin_read(uint32_t pin, uint8_t value);
 /*---------- end of file ----------*/
 #endif

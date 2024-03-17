@@ -3,8 +3,8 @@
  * @FilePath     : export.h
  * @Author       : lxf
  * @Date         : 2023-12-28 10:31:44
- * @LastEditors  : flyyingpiggy2020 154562451@qq.com
- * @LastEditTime : 2024-03-07 17:46:16
+ * @LastEditors: flyyingpiggy2020 154562451@qq.com
+ * @LastEditTime: 2024-03-17 10:06:26
  * @Brief        : export机制(不需要显示调用初始化函数)
  */
 
@@ -17,9 +17,11 @@
 /*---------- type define ----------*/
 
 typedef int (*init_fn_t)(void);
-
-#define INIT_EXPORT(fn, level)    fp_used const init_fn_t __fp_init_##fn fp_section(".fpi_fn." level) = fn
-
+#if (USE_ESP == 1)
+#define INIT_EXPORT(fn, level) fp_used const init_fn_t __fp_init_##fn fp_section("fpi_fn" level) = fn
+#else
+#define INIT_EXPORT(fn, level) fp_used const init_fn_t __fp_init_##fn fp_section(".fpi_fn." level) = fn
+#endif
 /**
  * @brief 板级初始化
  * @return {*}
@@ -50,5 +52,8 @@ typedef int (*init_fn_t)(void);
 
 void fp_components_board_init(void);
 void fp_components_init(void);
+#if (USE_ESP == 1)
+void submain(void);
+#endif
 /*---------- end of file ----------*/
 #endif
