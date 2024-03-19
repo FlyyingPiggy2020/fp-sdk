@@ -31,23 +31,46 @@ SOFTWARE.
  * @Brief        : esp pin driver
  */
 
+/*---------- includes ----------*/
+
 #include "fp_sdk.h"
 #include "pin.h"
 #include "esp_log.h"
-/*---------- includes ----------*/
+#include "driver/gpio.h"
 
 /*---------- macro ----------*/
+
+#define TAG "esp_pin"
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
 /*---------- variable ----------*/
 /*---------- function ----------*/
+static void esp32_pin_write(device_t *dev, uint32_t pin, uint8_t value)
+{
+    // TODO:assert pin mode.
+    gpio_set_level(pin, value);
+}
 
+static int8_t esp32_pin_read(device_t *dev, uint32_t pin)
+{
+    // TODO:assert pin mode.
+    int8_t value = gpio_get_level(pin);
+    return value;
+}
+
+static void esp32_pin_mode(device_t *dev, uint32_t pin, uint8_t mode)
+{
+    if (mode == PIN_MODE_OUTPUT) {
+        gpio_reset_pin(pin);
+        gpio_set_direction(pin, GPIO_MODE_OUTPUT);
+    }
+}
 // clang-format off
-const struct pin_ops _stm32_pin_ops = {
-    // stm32_pin_mode, 
-    // stm32_pin_write, 
-    // stm32_pin_read, 
+const struct pin_ops _esp32_pin_ops = {
+    esp32_pin_mode, 
+    esp32_pin_write, 
+    esp32_pin_read, 
     // stm32_pin_attach_irq, 
     // stm32_pin_dettach_irq, 
     // stm32_pin_irq_enable, 
@@ -63,8 +86,8 @@ void esp32_pin_link_hook(void) {}
 
 int hw_esp32_pin_init(void)
 {
-    log_i("esp_pin", "hello world");
-    return device_pin_register("pin", &_stm32_pin_ops);
+    ESP_LOGI(TAG, "esp pin init");
+    return device_pin_register("pin", &_esp32_pin_ops);
 }
 INIT_APP_EXPORT(hw_esp32_pin_init);
 

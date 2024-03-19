@@ -4,7 +4,7 @@
  * @Author       : lxf
  * @Date         : 2024-02-22 18:30:24
  * @LastEditors: flyyingpiggy2020 154562451@qq.com
- * @LastEditTime: 2024-03-16 14:01:34
+ * @LastEditTime: 2024-03-19 15:22:12
  * @Brief        : 引脚驱动
  */
 
@@ -73,7 +73,12 @@ struct pin_ops {
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
 
-int    device_pin_register(const char *name, const struct pin_ops *ops);
+void pin_mode(uint32_t pin, uint8_t mode);
+
 int8_t pin_read(uint32_t pin, uint8_t value);
+
+void pin_write(uint32_t pin, uint8_t value);
+
+int device_pin_register(const char *name, const struct pin_ops *ops);
 /*---------- end of file ----------*/
 #endif
