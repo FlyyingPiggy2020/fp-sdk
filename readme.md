@@ -8,7 +8,10 @@
 
 `protocol`协议
 
-
 # 使用说明
 
-esp32 把fp-sdk目录放到对应工程components下,在最外层的CmakeList.txt里面增加`add_definitions(-DUSE_ESP=1)`
+esp32 把fp-sdk目录放到对应工程`components`下
+
+CmakeList.txt里面根据 `ESP_PLATFORM 来判断是否为ESP-IDF环境。`
+
+增加 `add_definitions(-DUSE_ESP=1)` 宏定义去预编译代码

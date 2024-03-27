@@ -28,26 +28,86 @@ SOFTWARE.
  * @Date         : 2024-03-16 13:24:50
  * @LastEditors  : flyyingpiggy2020 154562451@qq.com
  * @LastEditTime : 2024-03-16 13:24:51
- * @Brief        : serial head file
+ * @Brief        : serial is a full-dup communication method
  */
 
 #ifndef __SERIAL_H_
 #define __SERIAL_H_
 /*---------- includes ----------*/
 
-#define LOG_TAG "Serial"
-
+#include "freertos/FreeRTOS.h"
+#include "freertos/queue.h"
+#include "freertos/semphr.h"
 #include "fp_sdk.h"
 /*---------- macro ----------*/
 
-struct device_serial
-{
-    struct device parent;    
+#define SERIAL_DATA_5_BITS    0x0 /*!< word length: 5bits*/
+#define SERIAL_DATA_6_BITS    0x1 /*!< word length: 6bits*/
+#define SERIAL_DATA_7_BITS    0x2 /*!< word length: 7bits*/
+#define SERIAL_DATA_8_BITS    0x3 /*!< word length: 8bits*/
+
+#define SERIAL_STOP_BITS_1    0x1 /*!< stop bit: 1bit*/
+#define SERIAL_STOP_BITS_1_5  0x2 /*!< stop bit: 1.5bits*/
+#define SERIAL_STOP_BITS_2    0x3 /*!< stop bit: 2bits*/
+
+#define SERIAL_PARITY_DISABLE 0x0 /*!< Disable UART parity*/
+#define SERIAL_PARITY_EVEN    0x1 /*!< Enable UART even parity*/
+#define SERIAL_PARITY_ODD     0x2 /*!< Enable UART odd parity*/
+/*---------- type define ----------*/
+struct device_serial {
+    struct device parent;
+    uint8_t usart_port;
+    QueueHandle_t event_queue;
+    TaskHandle_t task_handle;
+    SemaphoreHandle_t resource_ready; // is resource ready
+    const struct serial_ops *ops;
+    const struct serial_config *config;
 };
 
+struct serial_config {
+    int32_t tx_io_num;
+    int32_t rx_io_num;
+    int32_t tx_buffer_size;
+    int32_t rx_buffer_size;
+    uint32_t baud_rate;
+    uint8_t data_bits;
+    uint8_t parity;
+    uint8_t stop_bits;
+};
 
-/*---------- type define ----------*/
+struct serial_ops {
+    /**
+     * @brief serial read data form fifo
+     * @param {device} *device :serial device
+     * @param {uint8_t} *buff : output buffer
+     * @param {fp_size_t} wanted_size : wanted size
+     * @return {*} real size
+     */
+    fp_size_t (*serial_read)(struct device *device, uint8_t *buff, fp_size_t wanted_size);
+
+    /**
+     * @brief serial write data to fifo
+     * @param {device} *device : serial device
+     * @param {uint8_t} *buff : ouput buffer
+     * @param {fp_size_t} size : buff size
+     * @return {*} NULL
+     */
+    void (*serial_write)(struct device *device, uint8_t *buff, fp_size_t size);
+
+    /**
+     * @brief serial config
+     * @param {device} *device : serial device
+     * @param {serial_config} config : config,such as baud rates, data bits ....
+     * @return {*}
+     */
+    fp_size_t (*serial_config)(struct device *device, struct serial_config *config);
+};
+
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
+
+int device_serial_register(struct device_serial *serial, const char *name, const struct serial_ops *ops);
+
+fp_size_t serial_config(struct device *device, struct serial_config *config);
 /*---------- end of file ----------*/
 #endif
