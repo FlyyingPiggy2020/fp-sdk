@@ -43,6 +43,10 @@ SOFTWARE.
 
 static struct device_serial _hw_serial0;
 static struct device_serial _hw_serial1;
+
+QueueHandle_t _hw_serial0_event_queue;
+QueueHandle_t _hw_serial1_event_queue;
+
 TaskHandle_t serial0_Handle = NULL;
 TaskHandle_t serial1_Handle = NULL;
 /*---------- variable prototype ----------*/
@@ -54,10 +58,14 @@ static void uart1_event_task(void *pvParameters);
 /*---------- function ----------*/
 static fp_size_t esp32_serial_raed(struct device *device, uint8_t *buff, fp_size_t wanted_size)
 {
-    return 0;
+    struct device_serial *serial = (struct device_serial *)device;
+
+    return uart_read_bytes(serial->usart_port, buff, wanted_size, portMAX_DELAY);
 }
 static void esp32_serial_write(struct device *device, uint8_t *buff, fp_size_t size)
 {
+    struct device_serial *serial = (struct device_serial *)device;
+    uart_write_bytes(serial->usart_port, (const char *)buff, size);
     return;
 }
 
@@ -118,7 +126,7 @@ static uart_config_t _get_uart_config(struct serial_config config)
     }
     return uart_config;
 }
-static fp_size_t esp32_serial_config(struct device *device, struct serial_config *config)
+static fp_size_t esp32_serial_config(struct device *device, struct serial_config *config, void (*rxidle_event)(fp_size_t event_size))
 {
     struct device_serial *serial = (struct device_serial *)device;
 
@@ -127,21 +135,32 @@ static fp_size_t esp32_serial_config(struct device *device, struct serial_config
     uart_config_t uart_config = _get_uart_config(*config);
     serial->config = config;
 
-    uart_driver_install(serial->usart_port, config->rx_buffer_size, config->tx_buffer_size, 20, &serial->event_queue, 0);
+    if (rxidle_event != NULL) {
+        serial->ops->idle_callback = rxidle_event;
+    }
+    if (serial->usart_port == 0) {
+        uart_driver_install(serial->usart_port, config->rx_buffer_size, config->tx_buffer_size, 20, &_hw_serial0_event_queue, 0);
+    } else if (serial->usart_port == 1) {
+        uart_driver_install(serial->usart_port, config->rx_buffer_size, config->tx_buffer_size, 20, &_hw_serial1_event_queue, 0);
+    }
     uart_param_config(serial->usart_port, &uart_config);
     uart_set_pin(serial->usart_port, config->tx_io_num, config->rx_io_num, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
 
-    if (serial0_Handle == NULL) {
+    // create serial task if is first init
+    if (serial0_Handle == NULL && serial->usart_port == 0) {
         xTaskCreate(uart0_event_task, "uart0_event_task", 2048, NULL, 12, &serial0_Handle);
+    } else if (serial1_Handle == NULL && serial->usart_port == 1) {
+        xTaskCreate(uart1_event_task, "uart1_event_task", 2048, NULL, 12, &serial1_Handle);
     }
     return 0;
 }
 
 // clang-format off
-const struct serial_ops _esp32_serial_ops = {
+struct serial_ops _esp32_serial_ops = {
     esp32_serial_raed, 
     esp32_serial_write,
     esp32_serial_config,
+    NULL,
 };
 // clang-format on
 
@@ -156,8 +175,6 @@ int hw_esp32_serial_init(void)
     device_serial_register(&_hw_serial0, "serial0", &_esp32_serial_ops);
     device_serial_register(&_hw_serial1, "serial1", &_esp32_serial_ops);
 
-    // xTaskCreate(uart1_event_task, "uart1_event_task", 2048, NULL, 12, &_hw_serial1.task_handle);
-
     return 0;
 }
 INIT_APP_EXPORT(hw_esp32_serial_init);
@@ -166,21 +183,18 @@ static void uart0_event_task(void *pvParameters)
 {
 
     uart_event_t event;
-    QueueHandle_t uart_queue = _hw_serial0.event_queue;
-    uint8_t uart_port = _hw_serial0.usart_port;
+    QueueHandle_t uart_queue = _hw_serial0_event_queue;
     int32_t rx_size = _hw_serial0.config->rx_buffer_size;
     uint8_t *dtmp = (uint8_t *)malloc(rx_size);
     ESP_LOGI(TAG, "uart0_event_task create");
     for (;;) {
         if (xQueueReceive(uart_queue, (void *)&event, (TickType_t)portMAX_DELAY)) {
             bzero(dtmp, rx_size);
-            ESP_LOGI(TAG, "uart0[%d] event", uart_port);
             switch (event.type) {
-                case UART_DATA:
-                    ESP_LOGI(TAG, "[UART0 DATA] : %d", event.size);
-                    uart_read_bytes(uart_port, dtmp, event.size, portMAX_DELAY);
-                    ESP_LOGI(TAG, "[DATA0 EVT]:");
-                    uart_write_bytes(uart_port, (const char *)dtmp, event.size);
+                case UART_DATA: // usart receice data
+                    if (_hw_serial0.ops->idle_callback != NULL) {
+                        _hw_serial0.ops->idle_callback(event.size);
+                    }
                     break;
 
                 default:
@@ -196,20 +210,17 @@ static void uart0_event_task(void *pvParameters)
 static void uart1_event_task(void *pvParameters)
 {
     uart_event_t event;
-    QueueHandle_t uart_queue = _hw_serial1.event_queue;
-    uint8_t uart_port = _hw_serial1.usart_port;
+    QueueHandle_t uart_queue = _hw_serial1_event_queue;
     int32_t rx_size = _hw_serial1.config->rx_buffer_size;
     uint8_t *dtmp = (uint8_t *)malloc(rx_size);
     for (;;) {
         if (xQueueReceive(uart_queue, (void *)&event, (TickType_t)portMAX_DELAY)) {
             bzero(dtmp, rx_size);
-            ESP_LOGI(TAG, "uart1[%d] event", uart_port);
             switch (event.type) {
                 case UART_DATA:
-                    ESP_LOGI(TAG, "[UART1 DATA] : %d", event.size);
-                    uart_read_bytes(uart_port, dtmp, event.size, portMAX_DELAY);
-                    ESP_LOGI(TAG, "[DATA1 EVT]:");
-                    uart_write_bytes(uart_port, (const char *)dtmp, event.size);
+                    if (_hw_serial1.ops->idle_callback != NULL) {
+                        _hw_serial1.ops->idle_callback(event.size);
+                    }
                     break;
 
                 default:

@@ -42,7 +42,7 @@ SOFTWARE.
 /*---------- variable ----------*/
 /*---------- function ----------*/
 
-int device_serial_register(struct device_serial *serial, const char *name, const struct serial_ops *ops)
+int device_serial_register(struct device_serial *serial, const char *name, struct serial_ops *ops)
 {
     serial->parent.rx_indicate = NULL;
     serial->parent.tx_complete = NULL;
@@ -71,12 +71,12 @@ void serial_write(struct device *device, uint8_t *buff, fp_size_t size)
     return serial->ops->serial_write(device, buff, size);
 }
 
-fp_size_t serial_config(struct device *device, struct serial_config *config)
+fp_size_t serial_config(struct device *device, struct serial_config *config, void (*idle_callback)(fp_size_t event_size))
 {
     struct device_serial *serial = (struct device_serial *)device;
 
     assert(serial->ops != NULL);
 
-    return serial->ops->serial_config(device, config);
+    return serial->ops->serial_config(device, config, idle_callback);
 }
 /*---------- end of file ----------*/

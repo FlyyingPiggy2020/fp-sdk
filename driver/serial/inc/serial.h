@@ -39,6 +39,7 @@ SOFTWARE.
 #include "freertos/queue.h"
 #include "freertos/semphr.h"
 #include "fp_sdk.h"
+#include "utilities/common/inc/fp_def.h"
 /*---------- macro ----------*/
 
 #define SERIAL_DATA_5_BITS    0x0 /*!< word length: 5bits*/
@@ -57,10 +58,7 @@ SOFTWARE.
 struct device_serial {
     struct device parent;
     uint8_t usart_port;
-    QueueHandle_t event_queue;
-    TaskHandle_t task_handle;
-    SemaphoreHandle_t resource_ready; // is resource ready
-    const struct serial_ops *ops;
+    struct serial_ops *ops;
     const struct serial_config *config;
 };
 
@@ -100,14 +98,24 @@ struct serial_ops {
      * @param {serial_config} config : config,such as baud rates, data bits ....
      * @return {*}
      */
-    fp_size_t (*serial_config)(struct device *device, struct serial_config *config);
+    fp_size_t (*serial_config)(struct device *device, struct serial_config *config, void (*rxidle_event)(fp_size_t event_size));
+
+    /**
+     * @brief rx idle,notify task to read rxbuff.
+     * @return {*}
+     */
+    void (*idle_callback)(fp_size_t event_size);
 };
 
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
 
-int device_serial_register(struct device_serial *serial, const char *name, const struct serial_ops *ops);
+int device_serial_register(struct device_serial *serial, const char *name, struct serial_ops *ops);
 
-fp_size_t serial_config(struct device *device, struct serial_config *config);
+fp_size_t serial_read(struct device *device, uint8_t *buff, fp_size_t wanted_size);
+
+void serial_write(struct device *device, uint8_t *buff, fp_size_t size);
+
+fp_size_t serial_config(struct device *device, struct serial_config *config, void (*idle_callback)(fp_size_t event_size));
 /*---------- end of file ----------*/
 #endif

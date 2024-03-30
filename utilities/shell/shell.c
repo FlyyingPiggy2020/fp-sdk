@@ -37,7 +37,6 @@ SOFTWARE.
 /*---------- includes ----------*/
 #define LOG_TAG "shell"
 
-
 #include "inc/shell.h"
 
 #include "utilities/log/inc/log.h"
@@ -51,7 +50,7 @@ SOFTWARE.
 extern void shell_cmd_parser(Shell *shell);
 extern void shell_prompt(Shell *shell, uint8_t is_new_line);
 extern void shell_output(Shell *shell, const char *format, ...);
-extern int  clear(Shell *shell, uint8_t argc, char *argv[]);
+extern int clear(Shell *shell, uint8_t argc, char *argv[]);
 /*---------- variable ----------*/
 
 /*---------- function ----------*/
@@ -65,24 +64,27 @@ int shell_init(Shell *shell)
     extern const unsigned int shell_command$$Base;
     extern const unsigned int shell_command$$Limit;
     shell->commandList.start = (shell_command_t *)(&shell_command$$Base);
-    shell->commandList.end   = (shell_command_t *)(&shell_command$$Limit);
+    shell->commandList.end = (shell_command_t *)(&shell_command$$Limit);
     shell->commandList.count = ((size_t)(&shell_command$$Limit) - (size_t)(&shell_command$$Base)) / sizeof(shell_command_t);
 
 #elif defined(__ICCARM__) || defined(__ICCRX__)
 #pragma section = "shell_command"
-    fp_shell.commandList.base  = (shell_command_t *)(__section_begin("shell_command"));
+    fp_shell.commandList.base = (shell_command_t *)(__section_begin("shell_command"));
     fp_shell.commandList.count = ((size_t)(__section_end("shell_command")) - (size_t)(__section_begin("shell_command"))) / sizeof(shell_command_t);
 #elif defined(__GNUC__)
-    fp_shell.commandList.base  = (shell_command_t *)(&_shell_command_start);
-    fp_shell.commandList.count = ((size_t)(&_shell_command_end) - (size_t)(&_shell_command_start)) / sizeof(shell_command_t);
+    extern const unsigned int _shell_command_start;
+    extern const unsigned int _shell_command_end;
+    shell->commandList.start = (shell_command_t *)(&_shell_command_start);
+    shell->commandList.end = (shell_command_t *)(&_shell_command_end);
+    shell->commandList.count = ((size_t)(&_shell_command_end) - (size_t)(&_shell_command_start)) / sizeof(shell_command_t);
 #else
 #error not supported compiler, please use command table mode
 #endif
     INIT_LIST_HEAD(&shell->parser.buff.list);
-    shell->parser.buff.data   = 0; // 后面删除逻辑用到这个，必须赋值给空格，否则最后一个字节会删不掉..
+    shell->parser.buff.data = 0; // 后面删除逻辑用到这个，必须赋值给空格，否则最后一个字节会删不掉..
     shell->parser.cursor_buff = &shell->parser.buff;
-    shell->user.name          = SHELL_DEFAULT_NAME;
-    shell->user.name_size     = sizeof(SHELL_DEFAULT_NAME) + 3;
+    shell->user.name = SHELL_DEFAULT_NAME;
+    shell->user.name_size = sizeof(SHELL_DEFAULT_NAME) + 3;
     shell_output(shell, "\033[2J\033[3J\033[1H");
     shell_prompt(shell, 0);
     return 0;

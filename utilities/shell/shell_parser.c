@@ -130,8 +130,7 @@ static void shell_parser_insert_data_to_cursor_postion(Shell *shell, char buf)
  */
 static fp_size_t shell_parser_read_clean_list(Shell *shell, char *recv_buf)
 {
-    uint8_t index       = 0;
-    uint8_t is_new_line = 1;
+    uint8_t index = 0;
 
     inputbuff_t *cmd = NULL;
 
@@ -152,8 +151,8 @@ static fp_size_t shell_parser_read_clean_list(Shell *shell, char *recv_buf)
         }
     }
 
-    shell->parser.length      = 0;
-    shell->parser.cursor      = 0;
+    shell->parser.length = 0;
+    shell->parser.cursor = 0;
     shell->parser.cursor_buff = &shell->parser.buff;
     return index;
 }
@@ -166,8 +165,7 @@ static fp_size_t shell_parser_read_clean_list(Shell *shell, char *recv_buf)
  */
 static fp_size_t shell_parser_read_list(Shell *shell, char *recv_buf)
 {
-    uint8_t index       = 0;
-    uint8_t is_new_line = 1;
+    uint8_t index = 0;
 
     inputbuff_t *cmd = NULL;
 
@@ -219,12 +217,12 @@ static void shell_parser_clean_cursor_postion_data(Shell *shell)
  */
 bool shell_parser_cmd_line_check_ANSI(Shell *shell, char data)
 {
-    typedef enum {
+    enum {
         NORMAL = 0,
         ESC,
         MULTI_KEY,
         MULTI_KEY1,
-    } keytype_e;
+    };
 
     if (data == '\033') { // ESC
         shell->parser.key_type = ESC;
@@ -270,7 +268,7 @@ bool shell_parser_cmd_line_check_ANSI(Shell *shell, char data)
         return true;
     } else if (data >= '1' && data <= '9') {
         if (shell->parser.key_type == MULTI_KEY) {
-            shell->parser.key_type        = MULTI_KEY1;
+            shell->parser.key_type = MULTI_KEY1;
             shell->parser.vt_sequences[0] = data;
             return true;
         }
@@ -321,7 +319,7 @@ int findCommonCharacters(const char *strs[], int n, char *com_strs)
         }
         if (strs_index == n) { // 完成对某个byte的完全匹配
             com_strs[byte_index] = *(strs[0] + byte_index);
-            strs_index           = 0;
+            strs_index = 0;
             byte_index++;
         }
         if (*(strs[0] + byte_index) != *(strs[strs_index] + byte_index)) {

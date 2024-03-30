@@ -54,6 +54,20 @@ SOFTWARE.
 #define LOG_LVL_DEBUG   4
 #define LOG_LVL_VERBOSE 5
 
+#if (USE_ESP == 1)
+/**
+ * @brief 定义日志断言函数(条件不成立就会输出断言信息)
+ * @return {*}
+ */
+#define LOG_ASSERT(EXPR)                                    \
+    if (!(EXPR)) {                                          \
+        if (log_assert_hook == NULL) {                      \
+            log_a("(%s) has assert failed.", #EXPR);        \
+        } else {                                            \
+            log_assert_hook(#EXPR, __FUNCTION__, __LINE__); \
+        }                                                   \
+    }
+#else
 /**
  * @brief 定义日志断言函数(条件不成立就会输出断言信息)
  * @return {*}
@@ -68,7 +82,7 @@ SOFTWARE.
             log_assert_hook(#EXPR, __FUNCTION__, __LINE__); \
         }                                                   \
     }
-
+#endif
 /**
  * @brief 定义一个宏，从__FILE__中查找到文件名,把目录都删去了
  * @return {*}
@@ -132,7 +146,7 @@ SOFTWARE.
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
 
-int  log_init(void);
+int log_init(void);
 void log_output(uint8_t level, const char *tag, const char *file, const char *func, const long line, const char *format, ...);
 void set_log_port_output(void *output);
 extern void (*log_assert_hook)(const char *expr, const char *func, size_t line);

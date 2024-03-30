@@ -44,6 +44,11 @@ extern void shell_prompt(Shell *shell, uint8_t is_new_line);
 /*---------- variable ----------*/
 /*---------- function ----------*/
 
+#if (USE_ESP == 1)
+void esp32_cmd_clear_link_hook(void)
+{
+}
+#endif
 /**
  * @brief clear命令
  * @return {*}
