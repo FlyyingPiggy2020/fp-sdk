@@ -33,8 +33,9 @@ SOFTWARE.
 
 /*---------- includes ----------*/
 
-#include "inc/log.h"
 #include "inc/log_cfg.h"
+#include "inc/log.h"
+
 
 #if (LOG_USE_RTOS == 1)
 #include "cmsis_os.h"

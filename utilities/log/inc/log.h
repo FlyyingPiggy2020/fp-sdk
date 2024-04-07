@@ -98,9 +98,16 @@ SOFTWARE.
 #if !defined(LOG_TAG)
 #define LOG_TAG "NO_TAG"
 #endif
+
+#if (DEBUG)
 #if !defined(LOG_OUTPUT_LVL)
 #define LOG_OUTPUT_LVL LOG_LVL_VERBOSE
 #endif
+#else
+#undef LOG_OUTPUT_LVL
+#define LOG_OUTPUT_LVL (-1)
+#endif
+
 
 #if LOG_OUTPUT_LVL >= LOG_LVL_ASSERT
 #define log_a(...) log_output(LOG_LVL_ASSERT, LOG_TAG, __FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)
