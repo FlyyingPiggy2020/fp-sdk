@@ -34,9 +34,12 @@ SOFTWARE.
 #define __FP_DEF_H__
 /*---------- includes ----------*/
 #include "stdint.h"
-/*---------- macro ----------*/
-#if defined(__ARMCC_VERSION) // armcc or armclang compliter
+
+#if (__ARMCC_VERSION >= 6000000)
 #include "cmsis_armclang.h"
+#endif
+/*---------- macro ----------*/
+#if defined(__ARMCC_VERSION)                         // armcc or armclang compliter
 #define fp_section(x)    __attribute__((section(x))) /**< 将变量或函数放入指定的代码段 */
 #define fp_used          __attribute__((used))       /**< 让编译器保留变量或函数即使它没被使用 */
 #define fp_align(n)      __attribute__((aligned(n))) /**< 按n字节对齐 */
