@@ -102,12 +102,13 @@ SOFTWARE.
 #if (DEBUG)
 #if !defined(LOG_OUTPUT_LVL)
 #define LOG_OUTPUT_LVL LOG_LVL_VERBOSE
+#define log_hex(buf,size) log_output_hex(LOG_TAG,buf,size)
 #endif
 #else
 #undef LOG_OUTPUT_LVL
 #define LOG_OUTPUT_LVL (-1)
+#define log_hex(...) ((void)0);
 #endif
-
 
 #if LOG_OUTPUT_LVL >= LOG_LVL_ASSERT
 #define log_a(...) log_output(LOG_LVL_ASSERT, LOG_TAG, __FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)
@@ -156,6 +157,7 @@ SOFTWARE.
 int log_init(void);
 void log_output(uint8_t level, const char *tag, const char *file, const char *func, const long line, const char *format, ...);
 void set_log_port_output(void *output);
+void log_output_hex(const char *tag,char *buf, uint16_t size);
 extern void (*log_assert_hook)(const char *expr, const char *func, size_t line);
 
 /*---------- end of file ----------*/

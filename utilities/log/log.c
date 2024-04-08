@@ -274,4 +274,46 @@ void log_output(uint8_t level, const char *tag, const char *file, const char *fu
     }
     log_output_unlock();
 }
+
+void log_output_hex(const char *tag,char *buf, uint16_t size)
+{
+    char dump_string[8] = { 0 };
+	
+	int newline_len = strlen(LOG_NEWLINE_SIGN);
+	
+    if (is_init_ok != true) {
+        return;
+    }
+    int log_len = 0;
+	
+	/* 增加tag */
+    log_len += log_strcpy(log_len, log_buf + log_len, "[");
+    log_len += log_strcpy(log_len, log_buf + log_len, tag);
+    log_len += log_strcpy(log_len, log_buf + log_len, "]");
+	
+    /* lock output */
+    log_output_lock();
+    for (uint16_t i = 0; i < size; i++) {
+        snprintf(dump_string, sizeof(dump_string), "%02x", buf[i]);
+        log_len += log_strcpy(log_len, log_buf + log_len, dump_string);
+        log_len += log_strcpy(log_len, log_buf + log_len, " ");
+    }
+	
+	/* 校验长度是否合法 */
+    if ((log_len > LOG_LINE_BUF_SIZE)) {
+		log_len = LOG_LINE_BUF_SIZE;
+    }
+	
+	/* 加上换行符之后长度是否合法 */
+    if (log_len + newline_len > LOG_LINE_BUF_SIZE) {
+        /* using max length */
+        log_len = LOG_LINE_BUF_SIZE;
+        /* reserve some space for newline sign */
+        log_len -= newline_len;
+    }
+    log_len += log_strcpy(log_len, log_buf + log_len, LOG_NEWLINE_SIGN);
+	log_port_output(log_buf, log_len);
+    /* unlock output */
+    log_output_unlock();
+}
 /*---------- end of file ----------*/
