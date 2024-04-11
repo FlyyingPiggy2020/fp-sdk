@@ -172,10 +172,13 @@ fp_err_t device_open(device_t *dev, uint16_t oflag)
             result = dev->ops->open(dev);
         }
         else {
+			log_e("To open device :%s failed. can't find open funciton", dev->name);
             dev->open_flag = (oflag & DEVICE_OFLAG_MASK);
         }
     }
-
+	if (result != FP_EOK) {
+		log_e("To open device :%s failed. The error code is %d", dev->name, result);
+	}
     /* 设置打开标志 */
     if (result == FP_EOK || result == -FP_ENOSYS) {
         dev->open_flag |= DEVICE_OFLAG_OPEN;

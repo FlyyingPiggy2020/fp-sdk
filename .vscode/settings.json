@@ -106,7 +106,9 @@
         "pingpong.h": "c",
         "shell.h": "c",
         "types.h": "c",
-        "serial.h": "c"
+        "serial.h": "c",
+        "pin.h": "c",
+        "si446x.h": "c"
     },
     "files.encoding": "utf8",
     "clang-format.executable": "${workspaceRoot}/clang-format.exe",

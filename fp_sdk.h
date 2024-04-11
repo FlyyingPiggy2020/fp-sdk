@@ -39,7 +39,7 @@ SOFTWARE.
  * @brief 是否使用SHELL
  * @return {*}
  */
-#define FP_USE_SHELL 1
+#define FP_USE_SHELL 0
 
 #if (USE_ESP == 1)
 #include "utilities/clists/inc/clists.h" //这条需要放到前面因为后面的文件里用到了链表

@@ -4,7 +4,7 @@
             "name": "SDK",
             "includePath": [
                 "${workspaceFolder}/**"
-            ],
+            ]
         }
     ],
     "version": 4
