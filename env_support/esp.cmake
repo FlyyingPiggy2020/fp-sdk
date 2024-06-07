@@ -28,6 +28,7 @@ idf_component_register(
     ${FPSDK_ROOT_DIR}/../
     REQUIRES
     main
+    driver
 
     LDFRAGMENTS
     "utilities/export/export.lf"

@@ -163,11 +163,6 @@ void shell_prompt_printf_without_cursor(Shell *shell, uint8_t is_cursor_add)
 void shell_prompt_del_from_cursor(Shell *shell)
 {
     shell->shell_write("\b", 1);
-    uint8_t index = 0;
-
-    inputbuff_t *temp = NULL;
-
-    temp = shell->parser.cursor_buff;
 
     // 光标没被移动过
     if (shell->parser.cursor == shell->parser.length) {
