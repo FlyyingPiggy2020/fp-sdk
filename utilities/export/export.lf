@@ -1,0 +1,44 @@
+[sections:fpi_fn1]
+entries:
+    fpi_fn1+
+
+[sections:fpi_fn2]
+entries:
+    fpi_fn2+
+
+[sections:fpi_fn3]
+entries:
+    fpi_fn3+
+
+[sections:fpi_fn4]
+entries:
+    fpi_fn4+
+
+[scheme:fpi_fn1]
+entries:
+    fpi_fn1 -> flash_rodata
+
+[scheme:fpi_fn2]
+entries:
+    fpi_fn2 -> flash_rodata
+
+[scheme:fpi_fn3]
+entries:
+    fpi_fn3 -> flash_rodata
+
+[scheme:fpi_fn4]
+entries:
+    fpi_fn4 -> flash_rodata
+
+[mapping:export]
+archive: *
+entries:
+    * (fpi_fn1);
+        fpi_fn1 -> flash_rodata KEEP() ALIGN(4, pre, post) SURROUND(fpi_fn1)
+    * (fpi_fn2);
+        fpi_fn2 -> flash_rodata KEEP() ALIGN(4, pre, post) SURROUND(fpi_fn2)
+    * (fpi_fn3);
+        fpi_fn3 -> flash_rodata KEEP() ALIGN(4, pre, post) SURROUND(fpi_fn3)
+    * (fpi_fn4);
+        fpi_fn4 -> flash_rodata KEEP() ALIGN(4, pre, post) SURROUND(fpi_fn4)
+

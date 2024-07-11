@@ -16,6 +16,10 @@
 2. [ ] 2.目前没有在多线程下验证(看看多个线程同时调用时输出是否会错乱)
 3. [ ] 3.支持动态调整日志级别
 
+# API说明
+
+`set_log_port_output` 用于注册log的接口
+
 # 参考链接
 
 https://github.com/armink/EasyLogger

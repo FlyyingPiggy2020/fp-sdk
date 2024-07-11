@@ -22,34 +22,26 @@ SOFTWARE.
 
 */
 /*
- * Copyright (c) 2023 by Moorgen Tech. Co, Ltd.
+ * Copyright (c) 2024 by Lu Xianfan.
  * @FilePath     : log.c
  * @Author       : lxf
- * @Date         : 2023-12-08 13:58:19
+ * @Date         : 2024-07-03 17:20:52
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2023-12-08 14:06:50
- * @Brief        :
+ * @LastEditTime : 2024-07-03 17:21:06
+ * @Brief        : This file contains the implementation of the log functionality.
  */
 
 /*---------- includes ----------*/
 
 #include "log.h"
-#include "log_cfg.h"
+
 /*---------- macro ----------*/
 
-/**
- * @brief 定义CSI颜色，更多的信息请查看https://en.wikipedia.org/wiki/ANSI_escape_code
- * @return {*}
- */
 #define CSI_START "\033["
 #define CSI_END   "\033[0m"
 #define CSI_START "\033["
 #define CSI_END   "\033[0m"
 
-/**
- * @brief 字符颜色
- * @return {*}
- */
 #define F_BLACK   "30;"
 #define F_RED     "31;"
 #define F_GREEN   "32;"
@@ -59,10 +51,6 @@ SOFTWARE.
 #define F_CYAN    "36;"
 #define F_WHITE   "37;"
 
-/**
- * @brief 背景颜色
- * @return {*}
- */
 #define B_NULL
 #define B_BLACK     "40;"
 #define B_RED       "41;"
@@ -73,19 +61,11 @@ SOFTWARE.
 #define B_CYAN      "46;"
 #define B_WHITE     "47;"
 
-/**
- * @brief 字符格式：加粗、下划线、闪烁、正常
- * @return {*}
- */
 #define Sz_BOLD     "1m"
 #define S_UNDERLINE "4m"
 #define S_BLINK     "5m"
 #define S_NORMAL    "22m"
 
-/**
- * @brief 默认各个等级的输出颜色和格式
- * @return {*}
- */
 #ifndef LOG_COLOR_ASSERT
 #define LOG_COLOR_ASSERT (F_MAGENTA B_NULL S_NORMAL)
 #endif
@@ -104,36 +84,16 @@ SOFTWARE.
 #ifndef LOG_COLOR_VERBOSE
 #define LOG_COLOR_VERBOSE (F_BLUE B_NULL S_NORMAL)
 #endif
-
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
-
-/**
- * @brief 初始化完成的标志
- * @return {*}
- */
-static bool is_init_ok = false;
-/*---------- function prototype ----------*/
-
-extern void log_port_output(const char *log, size_t size);
-extern void log_output_lock(void);
-extern void log_output_unlock(void);
-extern bool log_port_init(void);
-/**
- * @brief 断言函数
- * @param {char} *expr ：条件
- * @param {char} *func ：函数
- * @param {size_t} line ：行号
- * @return {*}
- */
-void (*log_assert_hook)(const char *expr, const char *func, size_t line);
-/*---------- variable ----------*/
-
-/**
- * @brief 用于日志输出的buffer
- * @return {*}
- */
-static char log_buf[LOG_LINE_BUF_SIZE] = {0};
+static void _log_output_handler(const char *log, int len);
+static void _log_lock_handler(void);
+static void _log_unlock_handler(void);
+static log_info_t s_log_info = {
+    .log_output_handler = _log_output_handler,
+    .log_lock_handler = _log_lock_handler,
+    .log_unlock_handler = _log_unlock_handler,
+};
 
 // clang-format off
 static const char *color_output_info[] = {
@@ -154,37 +114,59 @@ static const char *output_name[] = {
         [LOG_LVL_VERBOSE] = "VERBOSE",
 };
 // clang-format on
+/*---------- function prototype ----------*/
+/*---------- variable ----------*/
 /*---------- function ----------*/
-
-/**
- * @brief 初始化
- * @return {*}
- */
-void log_init(void)
+static void _log_output_handler(const char *log, int len)
 {
-    is_init_ok = log_port_init();
+    return;
+}
+static void _log_lock_handler(void)
+{
+    return;
+}
+static void _log_unlock_handler(void)
+{
+    return;
+}
+/**
+ * Initializes the log module with the provided log information.
+ *
+ * @param log_info Pointer to the log_info_t structure containing the log information.
+ * @return Returns 1 if the initialization is successful, 0 otherwise.
+ */
+unsigned char log_init(log_info_t *log_info)
+{
+    if (log_info == NULL || log_info->log_output_handler == NULL) {
+        return 0;
+    }
+
+    s_log_info.log_output_handler = log_info->log_output_handler;
+
+    if (log_info->log_lock_handler != NULL && log_info->log_unlock_handler != NULL) {
+        s_log_info.log_lock_handler = log_info->log_lock_handler;
+        s_log_info.log_unlock_handler = log_info->log_lock_handler;
+    }
+    return 1;
 }
 
 /**
- * @brief 字符串复制
- * @param {size_t} cur_len
- * @param {char} *dst
- * @param {char} *src
- * @return {*}返回粘贴的长度
+ * Copies a null-terminated string from source to destination.
+ *
+ * @param cur_len The current length of the destination string.
+ * @param dst The destination string where the copied string will be stored.
+ * @param src The source string to be copied.
+ * @return The number of characters copied from the source string.
  */
-size_t log_strcpy(size_t cur_len, char *dst, const char *src)
+unsigned int log_strcpy(unsigned int cur_len, char *dst, const char *src)
 {
     const char *src_old = src;
-
-    assert(dst);
-    assert(src);
 
     while (*src != 0) {
         /* make sure destination has enough space */
         if (cur_len++ < LOG_LINE_BUF_SIZE) {
             *dst++ = *src++;
-        }
-        else {
+        } else {
             break;
         }
     }
@@ -192,24 +174,29 @@ size_t log_strcpy(size_t cur_len, char *dst, const char *src)
 }
 
 /**
- * @brief 日志输出
- * @param {uint8_t} level ：日志输出级别
- * @param {char} *tag ： 日志标志
- * @param {char} *file ：文件名称
- * @param {char} *func ： 函数名称
- * @param {long} line ： 行号
- * @param {char} *format ：格式化不定参
- * @return {*}
+ * @brief Outputs a log message with the specified level, tag, file, function, line number, and format.
+ *
+ * This function constructs a log message with the provided information and outputs it using the registered log output handler.
+ * The log message includes the log level, tag, file, function, line number, and the formatted message.
+ *
+ * @param level The log level of the message.
+ * @param tag The tag associated with the log message.
+ * @param file The name of the source file where the log message is generated.
+ * @param func The name of the function where the log message is generated.
+ * @param line The line number in the source file where the log message is generated.
+ * @param format The format string for the log message.
+ * @param ... Additional arguments to be formatted according to the format string.
  */
-void log_output(uint8_t level, const char *tag, const char *file, const char *func, const long line, const char *format, ...)
+void log_output(unsigned char level, const char *tag, const char *file, const char *func, const long line, const char *format, ...)
 {
-    log_output_lock();
-    size_t log_len = 0, fmt_result = 0, newline_len = strlen(LOG_NEWLINE_SIGN);
-    char line_num[LOG_LINE_NUM_MAX_LEN + 1] = {0};
+
+    s_log_info.log_lock_handler();
+    int log_len = 0, fmt_result = 0;
+    char *log_buf = s_log_info.log_buf;
+    char line_num[LOG_LINE_NUM_MAX_LEN + 1] = { 0 };
+    int newline_len = strlen(LOG_NEWLINE_SIGN);
 
     va_list args;
-
-    LOG_ASSERT(level <= LOG_LVL_VERBOSE);
 
     /* 增加颜色 */
     log_len += log_strcpy(log_len, log_buf + log_len, CSI_START);
@@ -241,14 +228,13 @@ void log_output(uint8_t level, const char *tag, const char *file, const char *fu
 
     va_start(args, format);
     /* 用vsnprintf构建输出的buff */
-    fmt_result = vsnprintf(log_buf + log_len, LOG_LINE_BUF_SIZE - log_len, format, args);
+    fmt_result = vsnprintf(log_buf + log_len, (LOG_LINE_BUF_SIZE - log_len), format, args);
     va_end(args);
 
     /* 校验长度是否合法 */
     if ((log_len + fmt_result <= LOG_LINE_BUF_SIZE) && (fmt_result > -1)) {
         log_len += fmt_result;
-    }
-    else {
+    } else {
         log_len = LOG_LINE_BUF_SIZE;
     }
 
@@ -264,9 +250,9 @@ void log_output(uint8_t level, const char *tag, const char *file, const char *fu
     log_len += log_strcpy(log_len, log_buf + log_len, CSI_END);
     log_len += log_strcpy(log_len, log_buf + log_len, LOG_NEWLINE_SIGN);
 
-    if (is_init_ok == true) {
-        log_port_output(log_buf, log_len);
+    if (s_log_info.log_output_handler != NULL) {
+        s_log_info.log_output_handler(log_buf, log_len);
     }
-    log_output_unlock();
+    s_log_info.log_unlock_handler();
 }
 /*---------- end of file ----------*/
