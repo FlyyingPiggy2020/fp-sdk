@@ -1,25 +1,12 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.6) # 设定版本
-PROJECT(fp-test) # 设定工程名
-set(CMAKE_CXX_COMPILER "gcc") # 设定编译器
-add_definitions("-lwsock32")
+cmake_minimum_required(VERSION 3.12.4)
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(FPSDK_ROOT_DIR ${CMAKE_CURRENT_LIST_DIR})
 
-include_directories("${PROJECT_SOURCE_DIR}/utilities/log/inc")
 
-# 添加子目录
-add_subdirectory(utilities)
+if (ESP_PLATFORM) # ESP-IDF
+    include(${CMAKE_CURRENT_LIST_DIR}/env_support/esp.cmake)
+else()
 
-# add_subdirectory(device_config)
 
-# 添加生成目标
-add_executable(Demo main.c)
-
-# # 添加链接库
-target_link_libraries(Demo fp-sdk)
-
-# target_link_libraries(Demo device_config)
-
+endif()
 # cmake -S ..  -G "Unix Makefiles"
