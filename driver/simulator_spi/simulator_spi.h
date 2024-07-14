@@ -22,52 +22,31 @@ SOFTWARE.
 
 */
 /*
- * Copyright (c) 2023 by Moorgen Tech. Co, Ltd.
- * @FilePath     : fp_sdk.h
+ * Copyright (c) 2024 by Moorgen Tech. Co, Ltd.
+ * @FilePath     : simulator_spi.h
  * @Author       : lxf
- * @Date         : 2023-12-27 18:29:53
+ * @Date         : 2024-03-27 11:43:14
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2023-12-27 18:29:54
- * @Brief        : fp-sdk头文件
+ * @LastEditTime : 2024-03-27 11:43:50
+ * @Brief        :
  */
 
-#ifndef __FP_SDK_H__
-#define __FP_SDK_H__
+#ifndef __SIMULATOR_SPI_H__
+#define __SIMULATOR_SPI_H__
 /*---------- includes ----------*/
-
-/**
- * @brief 是否使用SHELL
- * @return {*}
- */
-#define FP_USE_SHELL 0
-
-#if (USE_ESP == 1)
-#include "utilities/clists/inc/clists.h" //这条需要放到前面因为后面的文件里用到了链表
-#include "utilities/common/inc/fp_def.h"
-#include "device/core/inc/device_manager.h"
-#include "utilities/log/inc/log.h"
-#include "utilities/export/inc/export.h"
-#else
-// #include "utilities/clists/inc/clists.h" //这条需要放到前面因为后面的文件里用到了链表
-// #include "utilities/common/inc/fp_def.h"
-// #include "device/core/inc/device_manager.h"
-#include "utilities/log/log.h"
-#include "driver/si446x/fp_si446x.h"
-#include "driver/simulator_spi/simulator_spi.h"
-// #include "utilities/export/inc/export.h"
-// #include "utilities/pingpong/inc/pingpong.h"
-// #include "utilities/heap/TLSF-2.4.6/src/tlsf.h"
-#if (FP_USE_SHELL == 1)
-#include "utilities/shell/inc/shell.h"
-#endif
-#endif
-
+#include "../spi/fp_spi.h"
 /*---------- macro ----------*/
-
 /*---------- type define ----------*/
+typedef struct simulator_spi_ops {
+    void (*mosi)(unsigned char state);
+    unsigned char (*miso)(void);
+    void (*sck)(unsigned char state);
+    void (*delay_us)(unsigned int us);
+} simulator_spi_ops_t;
+
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
 
-int heap_init(void);
+int simulator_spi_bus_xfer(fp_spi_dev_t *spi_dev, fp_spi_message_t *message);
 /*---------- end of file ----------*/
 #endif
