@@ -22,52 +22,40 @@ SOFTWARE.
 
 */
 /*
- * Copyright (c) 2023 by Moorgen Tech. Co, Ltd.
- * @FilePath     : fp_sdk.h
+ * Copyright (c) 2024 by Lu Xianfan.
+ * @FilePath     : fp_soft_timer.h
  * @Author       : lxf
- * @Date         : 2023-12-27 18:29:53
+ * @Date         : 2024-07-16 11:26:46
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2023-12-27 18:29:54
- * @Brief        : fp-sdk头文件
+ * @LastEditTime : 2024-07-16 11:27:05
+ * @Brief        : 
  */
 
-#ifndef __FP_SDK_H__
-#define __FP_SDK_H__
+#ifndef __FP_SOFT_TIMER_H__
+#define __FP_SOFT_TIMER_H__
 /*---------- includes ----------*/
-
-/**
- * @brief 是否使用SHELL
- * @return {*}
- */
-#define FP_USE_SHELL 0
-
-#if (USE_ESP == 1)
-#include "utilities/clists/inc/clists.h" //这条需要放到前面因为后面的文件里用到了链表
-#include "utilities/common/inc/fp_def.h"
-#include "device/core/inc/device_manager.h"
-#include "utilities/log/inc/log.h"
-#include "utilities/export/inc/export.h"
-#else
-#include "utilities/clists/inc/clists.h"
-// #include "utilities/common/inc/fp_def.h"
-// #include "device/core/inc/device_manager.h"
-#include "utilities/log/log.h"
-#include "driver/si446x/fp_si446x.h"
-#include "driver/simulator_spi/simulator_spi.h"
-// #include "utilities/export/inc/export.h"
-// #include "utilities/pingpong/inc/pingpong.h"
-// #include "utilities/heap/TLSF-2.4.6/src/tlsf.h"
-#if (FP_USE_SHELL == 1)
-#include "utilities/shell/inc/shell.h"
-#endif
-#endif
-
+#include "../../fp_sdk.h"
+#include <stdint.h>
+#include <stdio.h>
 /*---------- macro ----------*/
-
 /*---------- type define ----------*/
+struct _fp_timer_t;
+typedef void (*fp_tiemr_cb_t)(struct _fp_timer_t *);
+
+typedef struct _fp_timer_t {
+    uint32_t period;
+    uint32_t last_run;
+    fp_tiemr_cb_t timer_cb;
+    void *user_data;
+    int32_t repeat_count;
+    uint32_t paused :1;
+    struct list_head list;
+}fp_timer_t;
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
 
-int heap_init(void);
+fp_timer_t *fp_timer_create(fp_tiemr_cb_t timer_xcb,uint32_t period, void *user_data);
+uint32_t fp_timer_handler(void);
+void fp_timer_enable(bool en);
 /*---------- end of file ----------*/
 #endif
