@@ -38,6 +38,8 @@ SOFTWARE.
 #include <stdint.h>
 #include <stdio.h>
 /*---------- macro ----------*/
+
+#define FP_NO_TIMER_READY 0xFFFFFFFF
 /*---------- type define ----------*/
 struct _fp_timer_t;
 typedef void (*fp_tiemr_cb_t)(struct _fp_timer_t *);
@@ -53,8 +55,9 @@ typedef struct _fp_timer_t {
 }fp_timer_t;
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
-
+void _fp_timer_core_init(void);
 fp_timer_t *fp_timer_create(fp_tiemr_cb_t timer_xcb,uint32_t period, void *user_data);
+bool fp_timer_del(fp_timer_t *timer);
 uint32_t fp_timer_handler(void);
 void fp_timer_enable(bool en);
 /*---------- end of file ----------*/

@@ -44,10 +44,12 @@ SOFTWARE.
 #else
     #define TIMER_TRACE(...)
 #endif
+
+#define IDLE_MEAS_PERIOD 500 /*[ms]*/
+#define DEF_PERIOD 500
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
 
-static bool timer_created;
 static bool fp_timer_run = false;
 static uint8_t idle_last = 0;
 static bool timer_deleted;
@@ -97,11 +99,28 @@ static uint32_t fp_timer_time_remaining(fp_timer_t *timer)
     return timer->period - elp;
 }
 
-void fp_timer_del(fp_timer_t *timer)
+bool fp_timer_del(fp_timer_t *timer)
 {
     timer_deleted = true;
-    free(timer);
+    bool ret = false;
+    struct list_head *pos, *tmp;
+    list_for_each_safe(pos, tmp, &_fp_timer_ll){
+        fp_timer_t *entry = list_entry(pos, fp_timer_t, list);
+        if (entry == timer) {
+            list_del(pos);
+            free(entry);
+            ret = true;
+            break;
+        }
+    }
+    return ret;
 }
+
+/**
+ * @brief it will delete timer when over time
+ * @param {fp_timer_t} *timer
+ * @return {*}
+ */
 static bool fp_timer_exec(fp_timer_t *timer)
 {
     if (timer->paused) {
@@ -134,6 +153,7 @@ static bool fp_timer_exec(fp_timer_t *timer)
     }
     return exec;
 }
+
 uint32_t fp_timer_handler(void)
 {
     TIMER_TRACE("begin\n");
@@ -147,7 +167,7 @@ uint32_t fp_timer_handler(void)
 
     if (fp_timer_run == false) {
         already_running = false;
-        return 1;
+        return 2;
     }
 
     static uint32_t idle_period_start = 0;
@@ -164,14 +184,42 @@ uint32_t fp_timer_handler(void)
         }
     }
 
-    fp_timer_t *next;
+    struct list_head *pos, *tmp;
+    uint32_t time_till_next = FP_NO_TIMER_READY;
     do {
-        timer_created = false;
-        timer_deleted = false;
-        _fp_timer_act = NULL;
-    } while (_fp_timer_act);
-    
-    return 0;
+        list_for_each_safe(pos, tmp, &_fp_timer_ll){
+            timer_created = false;
+            timer_deleted = false;
+            _fp_timer_act = list_entry(pos, fp_timer_t, list);
+            if (fp_timer_exec(_fp_timer_act)) {
+                if (timer_created || timer_deleted) {
+                    TIMER_TRACE("Start from the first timer again because a timer was created or deleted");
+                    break;
+                }
+            }
+        }
+    }while(pos != (&_fp_timer_ll));
+
+    list_for_each_safe(pos, tmp, &_fp_timer_ll){
+        _fp_timer_act = list_entry(pos, fp_timer_t, list);
+        if (!_fp_timer_act->paused) {
+            uint32_t delay = fp_timer_time_remaining(_fp_timer_act);
+            if (delay < time_till_next) {
+                time_till_next = delay;
+            }
+        }
+    }
+    busy_time += fp_tick_elaps(handler_start);
+    uint32_t idle_period_time = fp_tick_elaps(handler_start);
+    if (idle_period_time > IDLE_MEAS_PERIOD) {
+        idle_last         = (busy_time * 100) / idle_period_time;  /*Calculate the busy percentage*/
+        idle_last         = idle_last > 100 ? 0 : 100 - idle_last; /*But we need idle time*/
+        busy_time         = 0;
+        idle_period_start = fp_tick_get();
+    }
+    already_running = false;
+    TIMER_TRACE("finished (%d ms until the next timer call)\n", time_till_next);
+    return time_till_next;
 }
 
 fp_timer_t *fp_timer_create(fp_tiemr_cb_t timer_xcb,uint32_t period, void *user_data)
@@ -183,6 +231,7 @@ fp_timer_t *fp_timer_create(fp_tiemr_cb_t timer_xcb,uint32_t period, void *user_
     {
         return NULL;
     }
+    list_add_tail(&new_timer->list, &_fp_timer_ll);
     new_timer->period = period;
     new_timer->timer_cb = timer_xcb;
     new_timer->repeat_count = -1;
@@ -197,6 +246,28 @@ fp_timer_t *fp_timer_create(fp_tiemr_cb_t timer_xcb,uint32_t period, void *user_
 void fp_timer_enable(bool en)
 {
     fp_timer_run = en;
+}
+
+/**
+ * @brief Set the number of times a timer will repeat.
+ * @param {fp_timer_t} *timer pointer to the timer
+ * @param {int32_t} repeat_count -1: infinite repeat, 0: no repeat, >0: repeat n times
+ * @return {*}
+ */
+void fp_timer_set_repeat_count(fp_timer_t *timer, int32_t repeat_count)
+{
+    timer->repeat_count = repeat_count;
+}
+
+/**
+ * @brief Set new period of the timer
+ * @param {fp_timer_t} *timer
+ * @param {uint32_t} period new period
+ * @return {*}
+ */
+void fp_timer_set_period(fp_timer_t *timer, uint32_t period)
+{
+    timer->period = period;
 }
 /*---------- end of file ----------*/
 
