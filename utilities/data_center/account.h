@@ -23,46 +23,75 @@ SOFTWARE.
 */
 /*
  * Copyright (c) 2024 by Lu Xianfan.
- * @FilePath     : fp_soft_timer.h
+ * @FilePath     : account.h
  * @Author       : lxf
- * @Date         : 2024-07-16 11:26:46
+ * @Date         : 2024-07-19 14:29:52
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2024-07-16 11:27:05
+ * @LastEditTime : 2024-07-19 14:32:17
  * @Brief        :
  */
 
-#ifndef __FP_SOFT_TIMER_H__
-#define __FP_SOFT_TIMER_H__
+#ifndef __ACCOUNT_H__
+#define __ACCOUNT_H__
 /*---------- includes ----------*/
-#include "../../fp_sdk.h"
-#include <stdint.h>
-#include <stdio.h>
+
+#include "../pingpong/inc/pingpong.h"
+#include "../soft_timer/fp_soft_timer.h"
+#include "data_center.h"
 /*---------- macro ----------*/
 
-#define FP_NO_TIMER_READY 0xFFFFFFFF
 /*---------- type define ----------*/
-struct _fp_timer_t;
-typedef void (*fp_tiemr_cb_t)(struct _fp_timer_t *);
+typedef enum {
+    ACCOUNT_EVENT_NONE,
+    ACCOUNT_EVENT_PUB_PUBLISH,
+    ACCOUNT_EVENT_SUB_PULL,
+    ACCOUNT_EVENT_NOTIFY,
+    ACCOUNT_EVENT_TIMER,
+    ACCOUNT_EVENT_LAST,
+} account_event_code_t;
 
-typedef struct _fp_timer_t {
-    uint32_t period;
-    uint32_t last_run;
-    fp_tiemr_cb_t timer_cb;
+typedef enum {
+    ACCOUNT_RES_CODE_OK = 0,
+    ACCOUNT_RES_UNKNOW = -1,
+    ACCOUNT_RES_SIZE_MISMATCH = -2,
+    ACCOUNT_RES_UNSUPPORTED_REQUEST = -3,
+    ACCOUNT_RES_CODE_NO_CALLBACK = -4,
+    ACCOUNT_RES_CODE_NO_CACHE = -5,
+    ACCOUNT_RES_NO_COMMITED = -6,
+    ACCOUNT_RES_NOT_FOUND = -7,
+    ACCOUNT_RES_PARAM_ERROR = -8,
+} account_res_code_t;
+
+typedef int (*event_callback_t)(account_t *account, account_event_param_t *param);
+typedef struct account {
+    const char *id;
+    data_center_t *center;
+    unsigned int buff_size;
     void *user_data;
-    int32_t repeat_count;
-    uint32_t paused : 1;
-    struct list_head list;
-} fp_timer_t;
+
+    struct list_head account_pool_node;
+    struct list_head publishers;
+    struct list_head subscribers;
+
+    struct {
+        event_callback_t event_call_back;
+        fp_timer_t *timer;
+        pingpong_buffer_t buffer_manager;
+        unsigned int buffer_size; 
+    }priv;
+    
+}account_t;
+
+typedef struct {
+    account_event_code_t event;
+    account_t *tran;
+    account_t *recv;
+    void *data;
+    unsigned int len;
+} account_event_param_t;
+
+
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
-
-void fp_tick_inc(uint32_t tick_period);
-void _fp_timer_core_init(void);
-fp_timer_t *fp_timer_create(fp_tiemr_cb_t timer_xcb, uint32_t period, void *user_data);
-void fp_timer_set_repeat_count(fp_timer_t *timer, int32_t repeat_count);
-fp_timer_t *fp_timer_get_next(fp_timer_t *timer);
-bool fp_timer_del(fp_timer_t *timer);
-uint32_t fp_timer_handler(void);
-void fp_timer_enable(bool en);
 /*---------- end of file ----------*/
-#endif
+#endif // !__ACCOUNT_H__

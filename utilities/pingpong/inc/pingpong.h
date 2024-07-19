@@ -35,13 +35,13 @@ extern "C" {
 
 /*---------- macro ----------*/
 /*---------- type define ----------*/
-struct pingpong_buffer {
+typedef struct pingpong_buffer {
     void *buffer[2];
     fp_size_t size[2];
     volatile uint8_t write_index;
     volatile uint8_t read_index;
     volatile uint8_t count;
-};
+}pingpong_buffer_t;
 
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/

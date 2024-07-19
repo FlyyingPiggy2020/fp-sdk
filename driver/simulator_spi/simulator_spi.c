@@ -64,21 +64,21 @@ static char ops_spi_send_byte(fp_spi_dev_t *spi_dev, unsigned char data)
     unsigned char out_data = 0;
 
     if (spi_dev->spi_mode == 0) { /* SCKPL = 0; SCKPH = 0 */
-		for (unsigned char i = 0; i < 8; i++) {
-			if (data & 0x80) {
-				ops->mosi(1);
-			} else {
-				ops->mosi(0);
-			}
-			data <<= 1;
-			out_data <<= 1;
-			if (ops->miso()) {
-				out_data |= 0x01;
-			}
-			ops->sck(1);
-			ops->delay_us(tick);
-			ops->sck(0);
-		}
+        for (unsigned char i = 0; i < 8; i++) {
+            if (data & 0x80) {
+                ops->mosi(1);
+            } else {
+                ops->mosi(0);
+            }
+            data <<= 1;
+            out_data <<= 1;
+            if (ops->miso()) {
+                out_data |= 0x01;
+            }
+            ops->sck(1);
+            ops->delay_us(tick);
+            ops->sck(0);
+        }
     } else if (spi_dev->spi_mode == 1) { /* SCKPL = 0; SCKPH = 1*/
         for (unsigned char i = 0; i < 8; i++) {
             ops->delay_us(tick);

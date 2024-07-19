@@ -61,7 +61,7 @@ int heap_init(void)
     free_mem = init_memory_pool(POOL_SIZE, heap_pool);
     return free_mem;
 }
-//INIT_BOARD_EXPORT(heap_init);
+// INIT_BOARD_EXPORT(heap_init);
 
 void *malloc(size_t size)
 {
@@ -99,7 +99,7 @@ SHELL_EXPORT_CMD(heap_used_size, heap_get_used_size);
 #else
 int heap_get_used_size(void)
 {
-	return get_used_size(heap_pool);
+    return get_used_size(heap_pool);
 }
 #endif
 /*---------- end of file ----------*/

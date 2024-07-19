@@ -115,7 +115,6 @@ void _send_cmd(fp_si446x_dev_t *si446x_dev, unsigned int len, unsigned char *buf
     } while (0);
 }
 
-
 static int _set_frequency(fp_si446x_dev_t *si446x_dev, unsigned int cmd, void *arg)
 {
     return 0;
@@ -148,8 +147,8 @@ static fp_si446x_ioctl_cb_t _find_ioctl_cb(unsigned int cmd)
 
 static int _init(fp_si446x_dev_t *si446x_dev, unsigned int cmd, void *arg)
 {
-	si446x_dev->snd(0);
-	si446x_dev->spi_dev->cs(1);
+    si446x_dev->snd(0);
+    si446x_dev->spi_dev->cs(1);
     /* power up */
     si446x_dev->snd(1);
     si446x_dev->delay_ms(10);
@@ -160,7 +159,6 @@ static int _init(fp_si446x_dev_t *si446x_dev, unsigned int cmd, void *arg)
     _read_part_info(si446x_dev, cmd, arg);
     return 0;
 }
-
 
 void si446x_ioctl(fp_si446x_dev_t *si446x_dev, unsigned int cmd, void *arg)
 {

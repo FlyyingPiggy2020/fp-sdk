@@ -31,7 +31,6 @@ SOFTWARE.
  * @Brief        : Implementation of software timers using linked lists.
  */
 
-
 /*---------- includes ----------*/
 
 #include "fp_soft_timer.h"
@@ -40,18 +39,18 @@ SOFTWARE.
 /*---------- macro ----------*/
 
 #if FP_LOG_TRACE_TIMER
-    #define TIMER_TRACE(...) printf(__VA_ARGS__)
+#define TIMER_TRACE(...) printf(__VA_ARGS__)
 #else
-    #define TIMER_TRACE(...)
+#define TIMER_TRACE(...)
 #endif
 
 #define IDLE_MEAS_PERIOD 500 /*[ms]*/
-#define DEF_PERIOD 500
+#define DEF_PERIOD       500
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
 
 static bool fp_timer_run = false;
-//static uint8_t idle_last = 0;
+// static uint8_t idle_last = 0;
 static bool timer_deleted;
 static bool timer_created;
 
@@ -59,7 +58,7 @@ static fp_timer_t *_fp_timer_act;
 
 static uint32_t sys_time = 0;
 static volatile uint8_t tick_irq_flag;
-LIST_HEAD(_fp_timer_ll); //create a list head
+LIST_HEAD(_fp_timer_ll); // create a list head
 
 /*---------- function prototype ----------*/
 
@@ -80,10 +79,10 @@ inline void fp_tick_inc(uint32_t tick_period)
 uint32_t fp_tick_get(void)
 {
     uint32_t result;
-    do{
+    do {
         tick_irq_flag = 1;
         result = sys_time;
-    }while(!tick_irq_flag);
+    } while (!tick_irq_flag);
     return result;
 }
 
@@ -94,8 +93,7 @@ uint32_t fp_tick_elaps(uint32_t prev_tick)
     /* If there is no overflow in sys_time simple subtract */
     if (act_time >= prev_tick) {
         prev_tick = act_time - prev_tick;
-    }
-    else { /* If there is overflow in sys_time, we need to handle it */
+    } else { /* If there is overflow in sys_time, we need to handle it */
         prev_tick = (UINT32_MAX - prev_tick) + act_time + 1;
         prev_tick += act_time;
     }
@@ -122,7 +120,8 @@ bool fp_timer_del(fp_timer_t *timer)
         return ret;
     }
 
-    list_for_each_safe(pos, tmp, &_fp_timer_ll){
+    list_for_each_safe(pos, tmp, &_fp_timer_ll)
+    {
         fp_timer_t *entry = list_entry(pos, fp_timer_t, list);
         if (entry == timer) {
             list_del(pos);
@@ -177,7 +176,7 @@ uint32_t fp_timer_handler(void)
     TIMER_TRACE("begin\n");
 
     static bool already_running = false;
-    if(already_running) {
+    if (already_running) {
         TIMER_TRACE("already running\n");
         return 1;
     }
@@ -188,8 +187,8 @@ uint32_t fp_timer_handler(void)
         return 2;
     }
 
-//    static uint32_t idle_period_start = 0;
-//    static uint32_t busy_time = 0;
+    //    static uint32_t idle_period_start = 0;
+    //    static uint32_t busy_time = 0;
 
     uint32_t handler_start = fp_tick_get();
 
@@ -205,7 +204,8 @@ uint32_t fp_timer_handler(void)
     struct list_head *pos, *tmp;
     uint32_t time_till_next = FP_NO_TIMER_READY;
     do {
-        list_for_each_safe(pos, tmp, &_fp_timer_ll){
+        list_for_each_safe(pos, tmp, &_fp_timer_ll)
+        {
             timer_created = false;
             timer_deleted = false;
             _fp_timer_act = list_entry(pos, fp_timer_t, list);
@@ -216,9 +216,10 @@ uint32_t fp_timer_handler(void)
                 }
             }
         }
-    }while(pos != (&_fp_timer_ll));
+    } while (pos != (&_fp_timer_ll));
 
-    list_for_each_safe(pos, tmp, &_fp_timer_ll){
+    list_for_each_safe(pos, tmp, &_fp_timer_ll)
+    {
         _fp_timer_act = list_entry(pos, fp_timer_t, list);
         if (!_fp_timer_act->paused) {
             uint32_t delay = fp_timer_time_remaining(_fp_timer_act);
@@ -240,13 +241,12 @@ uint32_t fp_timer_handler(void)
     return time_till_next;
 }
 
-fp_timer_t *fp_timer_create(fp_tiemr_cb_t timer_xcb,uint32_t period, void *user_data)
+fp_timer_t *fp_timer_create(fp_tiemr_cb_t timer_xcb, uint32_t period, void *user_data)
 {
     fp_timer_t *new_timer = NULL;
 
     new_timer = (fp_timer_t *)malloc(sizeof(fp_timer_t));
-    if(new_timer == NULL)
-    {
+    if (new_timer == NULL) {
         return NULL;
     }
     list_add_tail(&new_timer->list, &_fp_timer_ll);
@@ -317,5 +317,3 @@ fp_timer_t *fp_timer_get_next(fp_timer_t *timer)
     }
 }
 /*---------- end of file ----------*/
-
-
