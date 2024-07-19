@@ -59,9 +59,9 @@ int heap_init(void)
 {
     int free_mem;
     free_mem = init_memory_pool(POOL_SIZE, heap_pool);
-    return 0;
+    return free_mem;
 }
-INIT_BOARD_EXPORT(heap_init);
+//INIT_BOARD_EXPORT(heap_init);
 
 void *malloc(size_t size)
 {
@@ -96,5 +96,10 @@ int heap_get_used_size(Shell *shell, uint8_t argc, char *argv[])
     return 0;
 }
 SHELL_EXPORT_CMD(heap_used_size, heap_get_used_size);
+#else
+int heap_get_used_size(void)
+{
+	return get_used_size(heap_pool);
+}
 #endif
 /*---------- end of file ----------*/

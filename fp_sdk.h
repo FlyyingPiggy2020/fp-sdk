@@ -57,6 +57,7 @@ SOFTWARE.
 // #include "utilities/export/inc/export.h"
 // #include "utilities/pingpong/inc/pingpong.h"
 // #include "utilities/heap/TLSF-2.4.6/src/tlsf.h"
+#include "utilities/soft_timer/fp_soft_timer.h"
 #if (FP_USE_SHELL == 1)
 #include "utilities/shell/inc/shell.h"
 #endif

@@ -55,8 +55,12 @@ typedef struct _fp_timer_t {
 }fp_timer_t;
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
+
+void fp_tick_inc(uint32_t tick_period);
 void _fp_timer_core_init(void);
 fp_timer_t *fp_timer_create(fp_tiemr_cb_t timer_xcb,uint32_t period, void *user_data);
+void fp_timer_set_repeat_count(fp_timer_t *timer, int32_t repeat_count);
+fp_timer_t *fp_timer_get_next(fp_timer_t *timer);
 bool fp_timer_del(fp_timer_t *timer);
 uint32_t fp_timer_handler(void);
 void fp_timer_enable(bool en);

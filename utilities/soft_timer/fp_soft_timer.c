@@ -51,12 +51,14 @@ SOFTWARE.
 /*---------- variable prototype ----------*/
 
 static bool fp_timer_run = false;
-static uint8_t idle_last = 0;
+//static uint8_t idle_last = 0;
 static bool timer_deleted;
 static bool timer_created;
 
 static fp_timer_t *_fp_timer_act;
 
+static uint32_t sys_time = 0;
+static volatile uint8_t tick_irq_flag;
 LIST_HEAD(_fp_timer_ll); //create a list head
 
 /*---------- function prototype ----------*/
@@ -68,10 +70,21 @@ void _fp_timer_core_init(void)
 {
     fp_timer_enable(true);
 }
+
+inline void fp_tick_inc(uint32_t tick_period)
+{
+    tick_irq_flag = 0;
+    sys_time += tick_period;
+}
+
 uint32_t fp_tick_get(void)
 {
-    //TODO:
-    return 0;
+    uint32_t result;
+    do{
+        tick_irq_flag = 1;
+        result = sys_time;
+    }while(!tick_irq_flag);
+    return result;
 }
 
 uint32_t fp_tick_elaps(uint32_t prev_tick)
@@ -104,6 +117,11 @@ bool fp_timer_del(fp_timer_t *timer)
     timer_deleted = true;
     bool ret = false;
     struct list_head *pos, *tmp;
+
+    if (timer == NULL) {
+        return ret;
+    }
+
     list_for_each_safe(pos, tmp, &_fp_timer_ll){
         fp_timer_t *entry = list_entry(pos, fp_timer_t, list);
         if (entry == timer) {
@@ -170,8 +188,8 @@ uint32_t fp_timer_handler(void)
         return 2;
     }
 
-    static uint32_t idle_period_start = 0;
-    static uint32_t busy_time = 0;
+//    static uint32_t idle_period_start = 0;
+//    static uint32_t busy_time = 0;
 
     uint32_t handler_start = fp_tick_get();
 
@@ -209,14 +227,14 @@ uint32_t fp_timer_handler(void)
             }
         }
     }
-    busy_time += fp_tick_elaps(handler_start);
-    uint32_t idle_period_time = fp_tick_elaps(handler_start);
-    if (idle_period_time > IDLE_MEAS_PERIOD) {
-        idle_last         = (busy_time * 100) / idle_period_time;  /*Calculate the busy percentage*/
-        idle_last         = idle_last > 100 ? 0 : 100 - idle_last; /*But we need idle time*/
-        busy_time         = 0;
-        idle_period_start = fp_tick_get();
-    }
+    // busy_time += fp_tick_elaps(handler_start);
+    // uint32_t idle_period_time = fp_tick_elaps(handler_start);
+    // if (idle_period_time > IDLE_MEAS_PERIOD) {
+    //     idle_last         = (busy_time * 100) / idle_period_time;  /*Calculate the busy percentage*/
+    //     idle_last         = idle_last > 100 ? 0 : 100 - idle_last; /*But we need idle time*/
+    //     busy_time         = 0;
+    //     idle_period_start = fp_tick_get();
+    // }
     already_running = false;
     TIMER_TRACE("finished (%d ms until the next timer call)\n", time_till_next);
     return time_till_next;
@@ -248,6 +266,26 @@ void fp_timer_enable(bool en)
     fp_timer_run = en;
 }
 
+void fp_timer_pasue(fp_timer_t *timer)
+{
+    timer->paused = true;
+}
+
+void fp_timer_resume(fp_timer_t *timer)
+{
+    timer->paused = false;
+}
+
+void fp_timer_ready(fp_timer_t *timer)
+{
+    timer->last_run = fp_tick_get() - timer->period - 1;
+}
+
+void fp_timer_reset(fp_timer_t *timer)
+{
+    timer->last_run = fp_tick_get();
+}
+
 /**
  * @brief Set the number of times a timer will repeat.
  * @param {fp_timer_t} *timer pointer to the timer
@@ -268,6 +306,15 @@ void fp_timer_set_repeat_count(fp_timer_t *timer, int32_t repeat_count)
 void fp_timer_set_period(fp_timer_t *timer, uint32_t period)
 {
     timer->period = period;
+}
+
+fp_timer_t *fp_timer_get_next(fp_timer_t *timer)
+{
+    if (timer == NULL || timer->list.next == NULL) {
+        return NULL;
+    } else {
+        return list_next_entry(timer, fp_timer_t, list);
+    }
 }
 /*---------- end of file ----------*/
 
