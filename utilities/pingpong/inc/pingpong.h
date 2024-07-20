@@ -37,11 +37,10 @@ extern "C" {
 /*---------- type define ----------*/
 typedef struct pingpong_buffer {
     void *buffer[2];
-    fp_size_t size[2];
     volatile uint8_t write_index;
     volatile uint8_t read_index;
-    volatile uint8_t count;
-}pingpong_buffer_t;
+    volatile uint8_t read_avaliable[2];
+} pingpong_buffer_t;
 
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
@@ -60,7 +59,7 @@ extern void pingpong_buffer_init(struct pingpong_buffer *handler, void *buf0, vo
  * @param pread_buf: Pointer to the pointer to the buffer to be read.
  * @retval Returns true if there is a buffer to read.
  */
-extern bool pingpong_buffer_get_read_buf(struct pingpong_buffer *handler, void **pread_buf, fp_size_t *size);
+extern bool pingpong_buffer_get_read_buf(struct pingpong_buffer *handler, void **pread_buf);
 
 /**
  * @brief Notify buffer read completion.
@@ -82,7 +81,7 @@ extern void pingpong_buffer_get_write_buf(struct pingpong_buffer *handler, void 
  * @param handler: Pointer to the ping-pong buffer.
  * @retval None
  */
-extern void pingpong_buffer_set_write_done(struct pingpong_buffer *handler, fp_size_t size);
+extern void pingpong_buffer_set_write_done(struct pingpong_buffer *handler);
 
 #ifdef __cplusplus
 }

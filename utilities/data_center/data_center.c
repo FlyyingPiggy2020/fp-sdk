@@ -28,12 +28,11 @@ SOFTWARE.
  * @Date         : 2024-07-19 14:29:17
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
  * @LastEditTime : 2024-07-19 17:05:54
- * @Brief        : 
+ * @Brief        :
  */
 
-
 /*---------- includes ----------*/
-
+#include "stdlib.h"
 #include "data_center.h"
 /*---------- macro ----------*/
 /*---------- type define ----------*/
@@ -42,27 +41,139 @@ SOFTWARE.
 /*---------- variable ----------*/
 /*---------- function ----------*/
 
+static bool inline __match_by_name(const char *s1, const char *s2)
+{
+    return (strcmp(s1, s2) == 0);
+}
+
 data_center_t *data_center_init(const char *name)
 {
+    if (name == NULL) {
+        return NULL;
+    }
     data_center_t *new = malloc(sizeof(data_center_t));
     new->name = name;
+    INIT_LIST_HEAD(&new->account_pool);
+    new->account_main = account_init(name, new, 0, NULL);
     return new;
 }
 
 void data_center_deinit(data_center_t *center)
 {
-    DATA_CENTER_TRACE("data center[%s] closing.\n", center->name);
-    struct list_head *p, *n;
-    list_for_each_safe(p, n, &center->account_pool) {
-        account_t *account = list_entry(p, account_t, account_pool_node);
-        DATA_CENTER_TRACE("delete:%s",account->id);
-        account_deinit(account);
-        list_del(p);
-        free(account);
+    if (center == NULL) {
+        return;
     }
-    //TODO: free account
+    DATA_CENTER_TRACE("data center[%s] closing.\n", center->name);
+    account_node_t *p, *n;
+    list_for_each_entry_safe(p, n,account_node_t, &center->account_pool, node)
+    {
+        account_t *account = p->account;
+        DATA_CENTER_TRACE("delete:%s", account->id);
+        account_deinit(account);
+        list_del(&p->node);
+        free(p);
+    }
+    account_deinit(center->account_main);
+    memset(center, 0, sizeof(data_center_t));
+    INIT_LIST_HEAD(&center->account_pool);
     free(center);
 }
+
+account_t *_search_account(data_center_t *center, const char *id)
+{
+    account_node_t *p, *n;
+    list_for_each_entry_safe(p, n,account_node_t, &center->account_pool,node)
+    {
+        account_t *account = p->account;
+        if (strcmp(account->id, id) == 0) {
+            return account;
+        }
+    }
+    return NULL;
+}
+
+bool datacenter_add_account(data_center_t *center, account_t *account)
+{
+    bool retval = false;
+    account_node_t *p = NULL;
+    do {
+        if (center == NULL || account == NULL) {
+            break;
+        }
+
+        if (account == center->account_main) {
+            DATA_CENTER_TRACE("account main can't added itself\n");
+            break;
+        }
+        if (_search_account(center, account->id) != NULL) {
+            DATA_CENTER_TRACE("account[%s] already exists.\n", account->id);
+            break;
+        }
+        p = malloc(sizeof(account_node_t));
+        if (p == NULL) {
+            DATA_CENTER_TRACE("malloc account_node_t failed.\n");
+            break;
+        }
+        memset(p, 0, sizeof(account_node_t));
+        p->account = account;
+        list_add_tail(&p->node, &center->account_pool);
+        account_subscribe(center->account_main, account->id);
+        DATA_CENTER_TRACE("add account[%s] to data center[%s].\n", account->id, center->name);
+        retval = true;
+    } while (0);
+    return retval;
+    
+}
+account_t *_datacenter_find(struct list_head *pool, const char *id)
+{
+	account_t *account = NULL;
+	account_node_t *p, *n;
+	list_for_each_entry_safe(p, n, account_node_t, pool, node) {
+		if (__match_by_name(p->account->id, id) == true) {
+			
+		}
+	}
+}
+bool _datacenter_remove(struct list_head *pool, account_t *account)
+{
+    account_node_t *p, *n;
+    bool retval = false;
+
+    do {
+        if (account == NULL || pool == NULL) {
+            break;
+        }
+        list_for_each_entry_safe(p, n, account_node_t, pool, node)
+        {
+            if (__match_by_name(p->account->id, account->id) == true) {
+                list_del(&p->node);
+                free(p);
+                retval = true;
+                break;
+            }
+        }
+        if (retval == false) {
+            DATA_CENTER_TRACE("account[%s] was not found.\n", account->id);
+        }
+    } while (0);
+
+    return retval;
+}
+
+bool datacenter_remove_account(data_center_t *center, account_t *account)
+{
+    return _datacenter_remove(&center->account_pool, account);
+}
+
+uint32_t datacenter_get_account_count(data_center_t *center)
+{
+    uint32_t count = 0;
+    account_node_t *p, *n;
+    if (center != NULL) {
+        list_for_each_entry_safe(p, n,account_node_t, &center->account_pool, node) {
+            count++;
+        }
+    }
+    return count;
+}
 /*---------- end of file ----------*/
-
-

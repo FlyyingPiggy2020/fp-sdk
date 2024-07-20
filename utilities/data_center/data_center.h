@@ -28,7 +28,7 @@ SOFTWARE.
  * @Date         : 2024-07-19 14:29:26
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
  * @LastEditTime : 2024-07-19 15:39:59
- * @Brief        : 
+ * @Brief        :
  */
 
 #ifndef __DATA_CENTER_H__
@@ -44,19 +44,20 @@ SOFTWARE.
 #define DATA_CENTER_TRACE(...)
 #endif
 /*---------- type define ----------*/
+typedef struct data_center data_center_t;
+typedef struct account account_t;
 
 typedef struct data_center {
     const char *name;
-    account_t account_main;
+    account_t *account_main;
     struct list_head account_pool;
-    struct {
-        bool (*add_account)(account_t *account);
-        bool (*remove_account)(account_t *account);
-    }ops;
-    
-}data_center_t;
+} data_center_t;
 
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
+
+data_center_t *data_center_init(const char *name);
+bool datacenter_add_account(data_center_t *center, account_t *account);
+bool datacenter_remove_account(data_center_t *center, account_t *account);
 /*---------- end of file ----------*/
 #endif // !__DATA_CENTER_H__

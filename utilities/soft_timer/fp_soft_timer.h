@@ -64,5 +64,7 @@ fp_timer_t *fp_timer_get_next(fp_timer_t *timer);
 bool fp_timer_del(fp_timer_t *timer);
 uint32_t fp_timer_handler(void);
 void fp_timer_enable(bool en);
+void fp_timer_pasue(fp_timer_t *timer);
+void fp_timer_resume(fp_timer_t *timer);
 /*---------- end of file ----------*/
 #endif

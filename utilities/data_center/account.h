@@ -62,25 +62,8 @@ typedef enum {
     ACCOUNT_RES_PARAM_ERROR = -8,
 } account_res_code_t;
 
-typedef int (*event_callback_t)(account_t *account, account_event_param_t *param);
-typedef struct account {
-    const char *id;
-    data_center_t *center;
-    unsigned int buff_size;
-    void *user_data;
-
-    struct list_head account_pool_node;
-    struct list_head publishers;
-    struct list_head subscribers;
-
-    struct {
-        event_callback_t event_call_back;
-        fp_timer_t *timer;
-        pingpong_buffer_t buffer_manager;
-        unsigned int buffer_size; 
-    }priv;
-    
-}account_t;
+typedef struct data_center data_center_t;
+typedef struct account account_t;
 
 typedef struct {
     account_event_code_t event;
@@ -90,8 +73,43 @@ typedef struct {
     unsigned int len;
 } account_event_param_t;
 
+typedef int (*event_callback_t)(account_t *account, account_event_param_t *param);
+
+typedef struct account {
+    const char *id;
+    data_center_t *center;
+    unsigned int buff_size;
+    void *user_data;
+
+    struct list_head followers_list; // 关注者列表
+    struct list_head fans_list;      // 粉丝列表
+    struct {
+        event_callback_t event_call_back;
+        fp_timer_t *timer;
+        pingpong_buffer_t buffer_manager;
+        unsigned int buffer_size;
+    } priv;
+} account_t;
+
+typedef struct account_node {
+    account_t *account;
+    struct list_head node;
+} account_node_t;
 
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
+account_t *account_init(const char *id, data_center_t *center, unsigned int buffer_size, void *user_data);
+void account_deinit(account_t *account);
+account_t *account_subscribe(account_t *account, const char *pub_id);
+bool account_unsubscribe(account_t *account, const char *pub_id);
+bool account_commit(account_t *account, const void *data, unsigned int size);
+int account_pubilsh(account_t *account);
+int account_pull_from_account(account_t *account, account_t *pub, void *data, unsigned int size);
+int account_pull_from_id(account_t *account, const char *pub_id, void *data, unsigned int size);
+int account_notify_from_account(account_t *account, account_t *pub, void *data, unsigned int size);
+int account_notify_from_id(account_t *account, const char *pub_id, void *data, unsigned int size);
+void account_set_event_callback(account_t *account, event_callback_t cb);
+void account_set_timer_period(account_t *account, uint32_t period);
+void account_set_timer_enable(account_t *account, bool en);
 /*---------- end of file ----------*/
 #endif // !__ACCOUNT_H__

@@ -37,46 +37,34 @@ void pingpong_buffer_init(struct pingpong_buffer *handler, void *buf0, void *buf
     handler->buffer[1] = buf1;
 }
 
-bool pingpong_buffer_get_read_buf(struct pingpong_buffer *handler, void **pread_buf, fp_size_t *size)
+bool pingpong_buffer_get_read_buf(struct pingpong_buffer *handler, void **pread_buf)
 {
-    if (handler->count == 0) {
+    if (handler->read_avaliable[0]) {
+        handler->read_index = 0;
+    } else if (handler->read_avaliable[1]) {
+        handler->read_index = 1;
+    } else {
         return false;
     }
-
     *pread_buf = handler->buffer[handler->read_index];
-
-    *size = handler->size[handler->read_index];
     return true;
 }
 
 void pingpong_buffer_set_read_done(struct pingpong_buffer *handler)
 {
-    if (handler->count == 0) {
-        return;
-    }
-
-    DISABLE_IRQ();
-    handler->read_index++;
-    if (handler->read_index == 2) {
-        handler->read_index = 0;
-    }
-    handler->count--;
-    ENABLE_IRQ();
+    handler->read_avaliable[handler->read_index] = false;
 }
 
 void pingpong_buffer_get_write_buf(struct pingpong_buffer *handler, void **pwrite_buf)
 {
+    if (handler->write_index == handler->read_index) {
+        handler->write_index = !handler->read_index;
+    }
     *pwrite_buf = handler->buffer[handler->write_index];
 }
 
-void pingpong_buffer_set_write_done(struct pingpong_buffer *handler, fp_size_t size)
+void pingpong_buffer_set_write_done(struct pingpong_buffer *handler)
 {
-    DISABLE_IRQ();
-    handler->size[handler->write_index] = size;
-    handler->write_index++;
-    if (handler->write_index == 2) {
-        handler->write_index = 0;
-    }
-    handler->count++;
-    ENABLE_IRQ();
+    handler->read_avaliable[handler->write_index] = true;
+    handler->write_index = !handler->write_index;
 }

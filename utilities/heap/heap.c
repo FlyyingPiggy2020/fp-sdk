@@ -49,7 +49,6 @@ __asm(".global __use_no_heap_region\n\t"); // AC6申明不使用C库的堆
 /*---------- type define ----------*/
 
 static char heap_pool[POOL_SIZE];
-static void *shell_malloc_ptr = NULL;
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
 /*---------- variable ----------*/
