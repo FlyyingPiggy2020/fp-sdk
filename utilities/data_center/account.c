@@ -41,9 +41,9 @@ SOFTWARE.
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
-
 extern bool _datacenter_remove(struct list_head *pool, account_t *account);
 extern account_t *_search_account(data_center_t *center, const char *id);
+extern account_t *_datacenter_find(struct list_head *pool, const char *id);
 /*---------- variable ----------*/
 /*---------- function ----------*/
 
@@ -62,6 +62,7 @@ account_t *account_init(const char *id, data_center_t *center, unsigned int buff
             break;
         }
 
+        error = true;
         memset(&new->priv, 0, sizeof(new->priv));
         new->id = id;
         new->center = center;
@@ -72,7 +73,6 @@ account_t *account_init(const char *id, data_center_t *center, unsigned int buff
             unsigned char *buffer = malloc(buffer_size);
             if (buffer == NULL) {
                 DATA_CENTER_TRACE("account[%s] buffer malloc failed\n", id);
-                error = true;
                 break;
             }
             memset(buffer, 0, buffer_size * sizeof(unsigned char) * 2);
@@ -80,11 +80,14 @@ account_t *account_init(const char *id, data_center_t *center, unsigned int buff
             unsigned char *buf1 = buffer + buffer_size;
             pingpong_buffer_init(&new->priv.buffer_manager, buf0, buf1);
             new->priv.buffer_size = buffer_size;
-            DATA_CENTER_TRACE("account[%s] cached %d x2 bytes", id, buffer_size);
+            DATA_CENTER_TRACE("account[%s] cached %dx2 bytes\n", id, buffer_size);
         }
-
-        datacenter_add_account(center, new);
-        DATA_CENTER_TRACE("account[%s] created", id);
+        if (datacenter_add_account(center, new) == false) {
+            DATA_CENTER_TRACE("account[%s] add to center[%s] failed\n", id, center->name);
+            break;
+        }
+        DATA_CENTER_TRACE("account[%s] create success.\n", id);
+        error = false;
     } while (0);
 
     if (error == true) {
@@ -116,12 +119,12 @@ void account_deinit(account_t *account)
     /* ask the publisher to delete this fans */
     list_for_each_entry_safe(p,n,account_node_t,&account->followers_list,node) {
         _datacenter_remove(&p->account->fans_list, account);
-        DATA_CENTER_TRACE("account[%s] unfollowed %s\n",account->id, p->account->id, );
+        DATA_CENTER_TRACE("account[%s] unfollowed %s\n",account->id, p->account->id);
     }   
     /* let the data center delete the account */
     datacenter_remove_account(account->center, account);
-    free(account);
     DATA_CENTER_TRACE("account[%s] deleted\n", account->id);
+    free(account);
 }
 
 /**
@@ -134,6 +137,7 @@ account_t *account_subscribe(account_t *account, const char *pub_id)
 {
     account_t *publisher = NULL;
 	account_node_t *pub = NULL, *sub = NULL;
+    uint8_t error_flag = 0;
     do {
         if (account == NULL || pub_id == NULL) {
             break;
@@ -149,16 +153,16 @@ account_t *account_subscribe(account_t *account, const char *pub_id)
             DATA_CENTER_TRACE("malloc pub node[%s] failed\n", pub_id);
             break;
         }
-
+        error_flag = 1;
         sub = malloc(sizeof(account_node_t));
         if (sub == NULL) {
             DATA_CENTER_TRACE("malloc sub node[%s] failed\n", account->id);
             break;
         }
-
-        publisher = _search_account(account->center, pub_id);
+        error_flag = 2;
+        publisher = _datacenter_find(&account->followers_list, pub_id);
         if (publisher != NULL) {
-            DATA_CENTER_TRACE("multi subscribe pub[%s]\n", account->id, pub_id);
+            DATA_CENTER_TRACE("account [%s] multi subscribe pub[%s]\n", account->id, pub_id);
             break;
         }
 
@@ -177,9 +181,22 @@ account_t *account_subscribe(account_t *account, const char *pub_id)
         sub->account = account;
         list_add_tail(&sub->node, &publisher->fans_list);
 
-        DATA_CENTER_TRACE("account[%s] following %s\n", account->id, pub_id);
+        DATA_CENTER_TRACE("fans[%s] following uploader[%s] success\n", account->id, pub_id);
+        error_flag = 0;
     } while (0);
 
+    switch (error_flag)
+    {
+        case 1:
+            free(pub);
+            break;
+        case 2:
+            free(pub);
+            free(sub);
+            break;
+        default:
+            break;
+    }
     return publisher;
 }
 

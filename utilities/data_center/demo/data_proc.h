@@ -23,42 +23,30 @@ SOFTWARE.
 */
 /*
  * Copyright (c) 2024 by Lu Xianfan.
- * @FilePath     : data_center.h
+ * @FilePath     : data_proc.h
  * @Author       : lxf
- * @Date         : 2024-07-19 14:29:26
+ * @Date         : 2024-07-30 15:02:15
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2024-07-19 15:39:59
- * @Brief        :
+ * @LastEditTime : 2024-07-30 15:26:34
+ * @Brief        : 
  */
 
-#ifndef __DATA_CENTER_H__
-#define __DATA_CENTER_H__
+#ifndef __DATA_PROC_H
+#define __DATA_PROC_H
+
 /*---------- includes ----------*/
-#include "../../fp_sdk.h"
-#include "account.h"
+
+#include "../data_center.h"
+#include "data_proc_def.h"
 /*---------- macro ----------*/
-
-#if FP_LOG_TRACE_DATA_CENTER
-#define DATA_CENTER_TRACE(...) printf(__VA_ARGS__)
-#else
-#define DATA_CENTER_TRACE(...)
-#endif
 /*---------- type define ----------*/
-typedef struct data_center data_center_t;
-typedef struct account account_t;
-
-typedef struct data_center {
-    const char *name;
-    account_t *account_main;
-    struct list_head account_pool;
-} data_center_t;
-
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
 
-data_center_t *data_center_init(const char *name);
-void data_center_deinit(data_center_t *center);
-bool datacenter_add_account(data_center_t *center, account_t *account);
-bool datacenter_remove_account(data_center_t *center, account_t *account);
+
+#define DATA_PROC_INIT_DEF(name)	void _data_proc_##name##_init(account_t *account)
+#define DATA_PROC_INIT_STRUCT(sct)	memset(&sct, 0, sizeof(sct))
+void data_proc_init(void);
+data_center_t *data_proc_get_center(void);
 /*---------- end of file ----------*/
-#endif // !__DATA_CENTER_H__
+#endif

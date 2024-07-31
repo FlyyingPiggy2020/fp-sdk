@@ -23,42 +23,47 @@ SOFTWARE.
 */
 /*
  * Copyright (c) 2024 by Lu Xianfan.
- * @FilePath     : data_center.h
+ * @FilePath     : data_proc.c
  * @Author       : lxf
- * @Date         : 2024-07-19 14:29:26
+ * @Date         : 2024-07-30 15:01:12
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2024-07-19 15:39:59
- * @Brief        :
+ * @LastEditTime : 2024-07-30 15:08:37
+ * @Brief        : 
  */
 
-#ifndef __DATA_CENTER_H__
-#define __DATA_CENTER_H__
+
 /*---------- includes ----------*/
-#include "../../fp_sdk.h"
-#include "account.h"
+#include "data_proc.h"
 /*---------- macro ----------*/
-
-#if FP_LOG_TRACE_DATA_CENTER
-#define DATA_CENTER_TRACE(...) printf(__VA_ARGS__)
-#else
-#define DATA_CENTER_TRACE(...)
-#endif
 /*---------- type define ----------*/
-typedef struct data_center data_center_t;
-typedef struct account account_t;
-
-typedef struct data_center {
-    const char *name;
-    account_t *account_main;
-    struct list_head account_pool;
-} data_center_t;
-
 /*---------- variable prototype ----------*/
-/*---------- function prototype ----------*/
 
-data_center_t *data_center_init(const char *name);
-void data_center_deinit(data_center_t *center);
-bool datacenter_add_account(data_center_t *center, account_t *account);
-bool datacenter_remove_account(data_center_t *center, account_t *account);
+static data_center_t *data_center = NULL;
+
+#define DATA_PROC_DEF(name, buffer_size)                        account_t *act_##name
+#include "dp_list.inc"
+#undef DATA_PROC_DEF
+/*---------- function prototype ----------*/
+/*---------- variable ----------*/
+/*---------- function ----------*/
+void data_proc_init(void)
+{
+    data_center = data_center_init("center");
+#define DATA_PROC_DEF(name, buffer_size) act_##name=account_init(#name, data_center, buffer_size, NULL);
+#include "dp_list.inc"
+#undef DATA_PROC_DEF
+
+#define DATA_PROC_DEF(name, buffer_size)\
+do{\
+    extern void _data_proc_##name##_init(account_t *account);\
+    _data_proc_##name##_init(act_##name);\
+}while(0)
+#include "dp_list.inc"
+#undef DATA_PROC_DEF
+}
+
+data_center_t *data_proc_get_center(void)
+{
+    return data_center;
+}
 /*---------- end of file ----------*/
-#endif // !__DATA_CENTER_H__

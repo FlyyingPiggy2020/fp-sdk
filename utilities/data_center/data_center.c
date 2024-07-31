@@ -52,6 +52,11 @@ data_center_t *data_center_init(const char *name)
         return NULL;
     }
     data_center_t *new = malloc(sizeof(data_center_t));
+    memset(new, 0, sizeof(data_center_t));
+    if (new == NULL) {
+        DATA_CENTER_TRACE("malloc new data center failed\n");
+        return NULL;
+    }
     new->name = name;
     INIT_LIST_HEAD(&new->account_pool);
     new->account_main = account_init(name, new, 0, NULL);
@@ -68,28 +73,29 @@ void data_center_deinit(data_center_t *center)
     list_for_each_entry_safe(p, n,account_node_t, &center->account_pool, node)
     {
         account_t *account = p->account;
-        DATA_CENTER_TRACE("delete:%s", account->id);
+        DATA_CENTER_TRACE("delete:%s\n", account->id);
         account_deinit(account);
-        list_del(&p->node);
-        free(p);
     }
-    account_deinit(center->account_main);
     memset(center, 0, sizeof(data_center_t));
     INIT_LIST_HEAD(&center->account_pool);
     free(center);
 }
 
-account_t *_search_account(data_center_t *center, const char *id)
+account_t *_datacenter_find(struct list_head *pool, const char *id)
 {
-    account_node_t *p, *n;
-    list_for_each_entry_safe(p, n,account_node_t, &center->account_pool,node)
-    {
-        account_t *account = p->account;
-        if (strcmp(account->id, id) == 0) {
-            return account;
+    account_t *account = NULL;
+    account_node_t *p = NULL;
+    list_for_each_entry(p, account_node_t, pool, node) {
+        if(__match_by_name(id, p->account->id) == true) {
+            account = p->account;
+            break;
         }
     }
-    return NULL;
+    return account;
+}
+account_t *_search_account(data_center_t *center, const char *id)
+{
+    return _datacenter_find(&center->account_pool, id);
 }
 
 bool datacenter_add_account(data_center_t *center, account_t *account)
@@ -122,18 +128,8 @@ bool datacenter_add_account(data_center_t *center, account_t *account)
         retval = true;
     } while (0);
     return retval;
-    
 }
-account_t *_datacenter_find(struct list_head *pool, const char *id)
-{
-	account_t *account = NULL;
-	account_node_t *p, *n;
-	list_for_each_entry_safe(p, n, account_node_t, pool, node) {
-		if (__match_by_name(p->account->id, id) == true) {
-			
-		}
-	}
-}
+
 bool _datacenter_remove(struct list_head *pool, account_t *account)
 {
     account_node_t *p, *n;

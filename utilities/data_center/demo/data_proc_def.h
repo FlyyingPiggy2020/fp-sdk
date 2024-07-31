@@ -23,42 +23,30 @@ SOFTWARE.
 */
 /*
  * Copyright (c) 2024 by Lu Xianfan.
- * @FilePath     : data_center.h
+ * @FilePath     : data_proc_def.h
  * @Author       : lxf
- * @Date         : 2024-07-19 14:29:26
+ * @Date         : 2024-07-30 15:03:48
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2024-07-19 15:39:59
- * @Brief        :
+ * @LastEditTime : 2024-07-30 15:14:33
+ * @Brief        : 
  */
 
-#ifndef __DATA_CENTER_H__
-#define __DATA_CENTER_H__
+#ifndef __DATA_PROC_DEF_H
+#define __DATA_PROC_DEF_H
 /*---------- includes ----------*/
-#include "../../fp_sdk.h"
-#include "account.h"
+#include <stdint.h>
 /*---------- macro ----------*/
-
-#if FP_LOG_TRACE_DATA_CENTER
-#define DATA_CENTER_TRACE(...) printf(__VA_ARGS__)
-#else
-#define DATA_CENTER_TRACE(...)
-#endif
 /*---------- type define ----------*/
-typedef struct data_center data_center_t;
-typedef struct account account_t;
 
-typedef struct data_center {
-    const char *name;
-    account_t *account_main;
-    struct list_head account_pool;
-} data_center_t;
+typedef struct {
+    enum {
+        DP_BLE_START,
+        DP_BLE_STOP,
+    } cmd;
+    char *name;
+}dp_ble_info_t;
 
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
-
-data_center_t *data_center_init(const char *name);
-void data_center_deinit(data_center_t *center);
-bool datacenter_add_account(data_center_t *center, account_t *account);
-bool datacenter_remove_account(data_center_t *center, account_t *account);
 /*---------- end of file ----------*/
-#endif // !__DATA_CENTER_H__
+#endif
