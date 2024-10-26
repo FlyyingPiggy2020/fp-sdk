@@ -52,7 +52,7 @@ typedef int (*init_fn_t)(void);
 
 void fp_components_board_init(void);
 void fp_components_init(void);
-#if (USE_ESP == 1)
+#if defined(__GNUC__)
 void submain(void);
 #endif
 /*---------- end of file ----------*/

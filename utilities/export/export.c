@@ -64,7 +64,7 @@ INIT_EXPORT(fpi_end, "4.end");
 void fp_components_board_init(void)
 {
     volatile const init_fn_t *fn_ptr;
-#if (USE_ESP == 1)
+#if defined(__GNUC__)
     extern const unsigned int _fpi_fn1_start;
     extern const unsigned int _fpi_fn1_end;
     for (fn_ptr = (void *)(&_fpi_fn1_start); fn_ptr < (void *)(&_fpi_fn1_end); fn_ptr++) {
@@ -84,7 +84,7 @@ void fp_components_board_init(void)
 void fp_components_init(void)
 {
     volatile const init_fn_t *fn_ptr;
-#if (USE_ESP == 1)
+#if defined(__GNUC__)
     extern const unsigned int _fpi_fn2_start;
     extern const unsigned int _fpi_fn2_end;
     extern const unsigned int _fpi_fn3_start;
@@ -117,7 +117,7 @@ void $Sub$$main(void)
 }
 #endif
 
-#if (USE_ESP == 1)
+#if defined(__GNUC__)
 // your need to add this funciton int to app_mian()
 void submain(void)
 {
