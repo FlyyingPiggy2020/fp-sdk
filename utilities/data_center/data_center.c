@@ -70,7 +70,7 @@ void data_center_deinit(data_center_t *center)
     }
     DATA_CENTER_TRACE("data center[%s] closing.\n", center->name);
     account_node_t *p, *n;
-    list_for_each_entry_safe(p, n,account_node_t, &center->account_pool, node)
+    list_for_each_entry_safe(p, n, account_node_t, &center->account_pool, node)
     {
         account_t *account = p->account;
         DATA_CENTER_TRACE("delete:%s\n", account->id);
@@ -85,8 +85,9 @@ account_t *_datacenter_find(struct list_head *pool, const char *id)
 {
     account_t *account = NULL;
     account_node_t *p = NULL;
-    list_for_each_entry(p, account_node_t, pool, node) {
-        if(__match_by_name(id, p->account->id) == true) {
+    list_for_each_entry(p, account_node_t, pool, node)
+    {
+        if (__match_by_name(id, p->account->id) == true) {
             account = p->account;
             break;
         }
@@ -166,7 +167,8 @@ uint32_t datacenter_get_account_count(data_center_t *center)
     uint32_t count = 0;
     account_node_t *p, *n;
     if (center != NULL) {
-        list_for_each_entry_safe(p, n,account_node_t, &center->account_pool, node) {
+        list_for_each_entry_safe(p, n, account_node_t, &center->account_pool, node)
+        {
             count++;
         }
     }

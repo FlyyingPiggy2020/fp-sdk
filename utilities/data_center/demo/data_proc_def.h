@@ -28,7 +28,7 @@ SOFTWARE.
  * @Date         : 2024-07-30 15:03:48
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
  * @LastEditTime : 2024-07-30 15:14:33
- * @Brief        : 
+ * @Brief        :
  */
 
 #ifndef __DATA_PROC_DEF_H
@@ -44,7 +44,7 @@ typedef struct {
         DP_BLE_STOP,
     } cmd;
     char *name;
-}dp_ble_info_t;
+} dp_ble_info_t;
 
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/

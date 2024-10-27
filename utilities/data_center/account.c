@@ -101,7 +101,7 @@ void account_deinit(account_t *account)
 {
     DATA_CENTER_TRACE("account[%s] deleting...\n", account->id);
 
-    account_node_t *p,*n;
+    account_node_t *p, *n;
     /* release cache */
     if (account->priv.buffer_size) {
         free(account->priv.buffer_manager.buffer[0]);
@@ -112,15 +112,17 @@ void account_deinit(account_t *account)
         DATA_CENTER_TRACE("account[%s] task deleted\n", account->id);
     }
     /* let fans unfollow */
-    list_for_each_entry_safe(p,n,account_node_t,&account->fans_list,node) {
+    list_for_each_entry_safe(p, n, account_node_t, &account->fans_list, node)
+    {
         account_unsubscribe(p->account, account->id);
         DATA_CENTER_TRACE("account[%s] unfollowed %s\n", p->account->id, account->id);
     }
     /* ask the publisher to delete this fans */
-    list_for_each_entry_safe(p,n,account_node_t,&account->followers_list,node) {
+    list_for_each_entry_safe(p, n, account_node_t, &account->followers_list, node)
+    {
         _datacenter_remove(&p->account->fans_list, account);
-        DATA_CENTER_TRACE("account[%s] unfollowed %s\n",account->id, p->account->id);
-    }   
+        DATA_CENTER_TRACE("account[%s] unfollowed %s\n", account->id, p->account->id);
+    }
     /* let the data center delete the account */
     datacenter_remove_account(account->center, account);
     DATA_CENTER_TRACE("account[%s] deleted\n", account->id);
@@ -136,7 +138,7 @@ void account_deinit(account_t *account)
 account_t *account_subscribe(account_t *account, const char *pub_id)
 {
     account_t *publisher = NULL;
-	account_node_t *pub = NULL, *sub = NULL;
+    account_node_t *pub = NULL, *sub = NULL;
     uint8_t error_flag = 0;
     do {
         if (account == NULL || pub_id == NULL) {
@@ -185,8 +187,7 @@ account_t *account_subscribe(account_t *account, const char *pub_id)
         error_flag = 0;
     } while (0);
 
-    switch (error_flag)
-    {
+    switch (error_flag) {
         case 1:
             free(pub);
             break;
@@ -322,7 +323,7 @@ int account_pull_from_account(account_t *account, account_t *pub, void *data, un
                     DATA_CENTER_TRACE("pub[%s] has not commit\n", pub->id);
                 }
             } else {
-                DATA_CENTER_TRACE("data size pub[%s]:%d != sub[%s]:%d\n", pub->id,pub->priv.buffer_size, account->id, size);
+                DATA_CENTER_TRACE("data size pub[%s]:%d != sub[%s]:%d\n", pub->id, pub->priv.buffer_size, account->id, size);
             }
         }
     } while (0);
@@ -333,7 +334,7 @@ int account_pull_from_id(account_t *account, const char *pub_id, void *data, uns
 {
     account_t *pub = _search_account(account->center, pub_id);
     if (pub == NULL) {
-        DATA_CENTER_TRACE("account[%s] was not followed [%s]\n", account->id,pub_id);
+        DATA_CENTER_TRACE("account[%s] was not followed [%s]\n", account->id, pub_id);
         return ACCOUNT_RES_NOT_FOUND;
     }
     return account_pull_from_account(account, pub, data, size);
@@ -363,7 +364,7 @@ int account_notify_from_account(account_t *account, account_t *pub, void *data, 
             DATA_CENTER_TRACE("pub[%s] has not registed notify callback\n", pub->id);
             retval = ACCOUNT_RES_CODE_NO_CALLBACK;
         }
-    } while(0);
+    } while (0);
     return retval;
 }
 
@@ -419,6 +420,6 @@ void account_set_timer_enable(account_t *account, bool en)
     if (timer == NULL) {
         return;
     }
-    en ? fp_timer_resume(timer): fp_timer_pasue(timer);
+    en ? fp_timer_resume(timer) : fp_timer_pasue(timer);
 }
 /*---------- end of file ----------*/
