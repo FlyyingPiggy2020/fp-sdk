@@ -33,7 +33,7 @@ SOFTWARE.
 
 /*---------- includes ----------*/
 
-#include "log.h"
+#include "fplog.h"
 
 /*---------- macro ----------*/
 

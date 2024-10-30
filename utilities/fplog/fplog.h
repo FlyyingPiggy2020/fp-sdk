@@ -31,8 +31,8 @@ SOFTWARE.
  * @Brief        : This file contains the implementation of the log functionality.
  */
 
-#ifndef __LOG_H__
-#define __LOG_H__
+#ifndef __FPLOG_H__
+#define __FPLOG_H__
 /*---------- includes ----------*/
 
 #include <stddef.h>
