@@ -32,7 +32,7 @@ SOFTWARE.
  */
 
 /*---------- includes ----------*/
-#include "../soft_timer/fp_soft_timer.h"
+#include "fp_soft_timer.h"
 #include "account.h"
 #include "stdlib.h"
 /*---------- macro ----------*/

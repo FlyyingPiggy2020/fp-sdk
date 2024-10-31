@@ -1,9 +1,0 @@
-{
-    "files.associations": {
-        "SConstruct": "python",
-        "data_proc": "c",
-        "data_center.h": "c",
-        "data_proc.h": "c",
-        "account.h": "c"
-    }
-}

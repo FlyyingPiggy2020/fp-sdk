@@ -34,7 +34,7 @@ SOFTWARE.
 #ifndef __FP_SOFT_TIMER_H__
 #define __FP_SOFT_TIMER_H__
 /*---------- includes ----------*/
-#include "../../fp_sdk.h"
+#include "clists.h"
 #include <stdint.h>
 #include <stdio.h>
 /*---------- macro ----------*/
