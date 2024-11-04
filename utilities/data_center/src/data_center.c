@@ -33,6 +33,7 @@ SOFTWARE.
 
 /*---------- includes ----------*/
 #include "stdlib.h"
+#include "string.h"
 #include "data_center.h"
 /*---------- macro ----------*/
 /*---------- type define ----------*/
@@ -51,7 +52,7 @@ data_center_t *data_center_init(const char *name)
     if (name == NULL) {
         return NULL;
     }
-    data_center_t *new = malloc(sizeof(data_center_t));
+    data_center_t *new = __malloc(sizeof(data_center_t));
     memset(new, 0, sizeof(data_center_t));
     if (new == NULL) {
         DATA_CENTER_TRACE("malloc new data center failed\n");
@@ -78,7 +79,7 @@ void data_center_deinit(data_center_t *center)
     }
     memset(center, 0, sizeof(data_center_t));
     INIT_LIST_HEAD(&center->account_pool);
-    free(center);
+    __free(center);
 }
 
 account_t *_datacenter_find(struct list_head *pool, const char *id)
@@ -87,6 +88,16 @@ account_t *_datacenter_find(struct list_head *pool, const char *id)
     account_node_t *p = NULL;
     list_for_each_entry(p, account_node_t, pool, node)
     {
+        if (p->account == NULL) {
+            DATA_CENTER_TRACE("account is null\n");
+            continue;
+        } else if (p->account->id == NULL){
+            DATA_CENTER_TRACE("account:%p id is null\n",p->account);
+            continue;
+        }else {
+            DATA_CENTER_TRACE("account id:%s,%p\n",p->account->id, p->account);
+        }
+
         if (__match_by_name(id, p->account->id) == true) {
             account = p->account;
             break;
@@ -116,14 +127,18 @@ bool datacenter_add_account(data_center_t *center, account_t *account)
             DATA_CENTER_TRACE("account[%s] already exists.\n", account->id);
             break;
         }
-        p = malloc(sizeof(account_node_t));
+        
+        p = __malloc(sizeof(account_node_t));
         if (p == NULL) {
             DATA_CENTER_TRACE("malloc account_node_t failed.\n");
             break;
         }
         memset(p, 0, sizeof(account_node_t));
         p->account = account;
+        DATA_CENTER_TRACE("add[%s:%p] to account pool.node:%p\n", p->account->id, p->account, p);
         list_add_tail(&p->node, &center->account_pool);
+        // _search_account(account->center, account->id);
+        
         account_subscribe(center->account_main, account->id);
         DATA_CENTER_TRACE("add account[%s] to data center[%s].\n", account->id, center->name);
         retval = true;
@@ -144,7 +159,7 @@ bool _datacenter_remove(struct list_head *pool, account_t *account)
         {
             if (__match_by_name(p->account->id, account->id) == true) {
                 list_del(&p->node);
-                free(p);
+                __free(p);
                 retval = true;
                 break;
             }

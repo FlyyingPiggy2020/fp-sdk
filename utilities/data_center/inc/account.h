@@ -35,8 +35,8 @@ SOFTWARE.
 #define __ACCOUNT_H__
 /*---------- includes ----------*/
 
-#include "../pingpong/inc/pingpong.h"
-#include "../soft_timer/fp_soft_timer.h"
+#include "pingpong.h"
+#include "fp_soft_timer.h"
 #include "data_center.h"
 /*---------- macro ----------*/
 

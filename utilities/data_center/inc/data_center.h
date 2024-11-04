@@ -34,14 +34,28 @@ SOFTWARE.
 #ifndef __DATA_CENTER_H__
 #define __DATA_CENTER_H__
 /*---------- includes ----------*/
-#include "../../fp_sdk.h"
+#include "data_center.h"
 #include "account.h"
 /*---------- macro ----------*/
 
 #if FP_LOG_TRACE_DATA_CENTER
-#define DATA_CENTER_TRACE(...) printf(__VA_ARGS__)
+#undef LOG_TAG
+#define LOG_TAG "DATA_CENTER"
+#include "fplog.h"
+#define DATA_CENTER_TRACE(...) log_i(__VA_ARGS__)
 #else
-#define DATA_CENTER_TRACE(...)
+#define DATA_CENTER_TRACE(...) printf(__VA_ARGS__)
+#endif
+
+#if defined(CONF_BOARD_NAME_BL60X)
+#include "tlsf.h"
+#define __malloc tlsf_malloc
+#define __free tlsf_free
+
+// #include "FreeRTOS.h"
+// #define __malloc pvPortMalloc
+// #define __free vPortFree
+
 #endif
 /*---------- type define ----------*/
 typedef struct data_center data_center_t;

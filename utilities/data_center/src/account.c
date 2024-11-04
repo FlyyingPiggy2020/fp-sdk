@@ -34,10 +34,12 @@ SOFTWARE.
 /*---------- includes ----------*/
 #include "fp_soft_timer.h"
 #include "account.h"
-#include "stdlib.h"
+#include "string.h"
 /*---------- macro ----------*/
 
 #define ACCOUNT_MAX_ID_LENGTH 16
+
+
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
@@ -54,7 +56,7 @@ static bool inline __match_by_name(const char *s1, const char *s2)
 
 account_t *account_init(const char *id, data_center_t *center, unsigned int buffer_size, void *user_data)
 {
-    account_t *new = malloc(sizeof(account_t));
+    account_t *new = __malloc(sizeof(account_t));
     bool error = false;
     do {
         if (new == NULL) {
@@ -70,7 +72,7 @@ account_t *account_init(const char *id, data_center_t *center, unsigned int buff
         INIT_LIST_HEAD(&new->fans_list);
         INIT_LIST_HEAD(&new->followers_list);
         if (buffer_size != 0) {
-            unsigned char *buffer = malloc(buffer_size);
+            unsigned char *buffer = __malloc(buffer_size);
             if (buffer == NULL) {
                 DATA_CENTER_TRACE("account[%s] buffer malloc failed\n", id);
                 break;
@@ -86,12 +88,11 @@ account_t *account_init(const char *id, data_center_t *center, unsigned int buff
             DATA_CENTER_TRACE("account[%s] add to center[%s] failed\n", id, center->name);
             break;
         }
-        DATA_CENTER_TRACE("account[%s] create success.\n", id);
         error = false;
     } while (0);
 
     if (error == true) {
-        free(new);
+        __free(new);
         new = NULL;
     }
     return new;
@@ -104,7 +105,7 @@ void account_deinit(account_t *account)
     account_node_t *p, *n;
     /* release cache */
     if (account->priv.buffer_size) {
-        free(account->priv.buffer_manager.buffer[0]);
+        __free(account->priv.buffer_manager.buffer[0]);
     }
     /* delete timer */
     if (account->priv.timer) {
@@ -126,7 +127,7 @@ void account_deinit(account_t *account)
     /* let the data center delete the account */
     datacenter_remove_account(account->center, account);
     DATA_CENTER_TRACE("account[%s] deleted\n", account->id);
-    free(account);
+    __free(account);
 }
 
 /**
@@ -140,6 +141,7 @@ account_t *account_subscribe(account_t *account, const char *pub_id)
     account_t *publisher = NULL;
     account_node_t *pub = NULL, *sub = NULL;
     uint8_t error_flag = 0;
+    
     do {
         if (account == NULL || pub_id == NULL) {
             break;
@@ -149,31 +151,34 @@ account_t *account_subscribe(account_t *account, const char *pub_id)
             DATA_CENTER_TRACE("account[%s] can't subscribe to itself\n", account->id);
             break;
         }
-
-        pub = malloc(sizeof(account_node_t));
+        pub = __malloc(sizeof(account_node_t));
         if (pub == NULL) {
             DATA_CENTER_TRACE("malloc pub node[%s] failed\n", pub_id);
             break;
         }
+        _search_account(account->center, pub_id);
+        while(1){
+            
+        }
         error_flag = 1;
-        sub = malloc(sizeof(account_node_t));
+        sub = __malloc(sizeof(account_node_t));
         if (sub == NULL) {
             DATA_CENTER_TRACE("malloc sub node[%s] failed\n", account->id);
             break;
         }
         error_flag = 2;
+        DATA_CENTER_TRACE("_datacenter_find");
         publisher = _datacenter_find(&account->followers_list, pub_id);
         if (publisher != NULL) {
             DATA_CENTER_TRACE("account [%s] multi subscribe pub[%s]\n", account->id, pub_id);
             break;
         }
-
+        DATA_CENTER_TRACE("_search_account");
         publisher = _search_account(account->center, pub_id);
         if (publisher == NULL) {
             DATA_CENTER_TRACE("account[%s] was not found\n", pub_id);
             break;
         }
-
         /* add the publisher to the subscription list */
         memset(pub, 0, sizeof(account_node_t));
         pub->account = publisher;
@@ -189,11 +194,11 @@ account_t *account_subscribe(account_t *account, const char *pub_id)
 
     switch (error_flag) {
         case 1:
-            free(pub);
+            __free(pub);
             break;
         case 2:
-            free(pub);
-            free(sub);
+            __free(pub);
+            __free(sub);
             break;
         default:
             break;
