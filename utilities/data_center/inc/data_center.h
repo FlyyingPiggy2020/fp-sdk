@@ -44,7 +44,7 @@ SOFTWARE.
 #include "fplog.h"
 #define DATA_CENTER_TRACE(...) log_i(__VA_ARGS__)
 #else
-#define DATA_CENTER_TRACE(...) printf(__VA_ARGS__)
+#define DATA_CENTER_TRACE(...) 
 #endif
 
 #if defined(CONF_BOARD_NAME_BL60X)
@@ -55,7 +55,10 @@ SOFTWARE.
 // #include "FreeRTOS.h"
 // #define __malloc pvPortMalloc
 // #define __free vPortFree
-
+#else
+#include "tlsf.h"
+#define __malloc tlsf_malloc
+#define __free tlsf_free
 #endif
 /*---------- type define ----------*/
 typedef struct data_center data_center_t;

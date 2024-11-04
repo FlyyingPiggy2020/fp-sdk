@@ -62,26 +62,27 @@ int heap_init(void)
 }
 INIT_BOARD_EXPORT(heap_init);
 
-// void *malloc(size_t size)
-// {
-//     return tlsf_malloc(size);
-// }
+#if defined(__ARMCC_VERSION)
+void *malloc(size_t size)
+{
+ return tlsf_malloc(size);
+}
 
-// void free(void *p)
-// {
-//     tlsf_free(p);
-// }
+void free(void *p)
+{
+ tlsf_free(p);
+}
 
-// void *realloc(void *p, size_t want)
-// {
-//     return tlsf_realloc(p, want);
-// }
+void *realloc(void *p, size_t want)
+{
+ return tlsf_realloc(p, want);
+}
 
-// void *calloc(size_t nmemb, size_t size)
-// {
-//     return tlsf_calloc(nmemb, size);
-// }
-
+void *calloc(size_t nmemb, size_t size)
+{
+ return tlsf_calloc(nmemb, size);
+}
+#endif
 #if (FP_USE_SHELL == 1)
 /**
  * @brief 获取已使用的heap size

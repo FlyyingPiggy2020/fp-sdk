@@ -72,12 +72,12 @@ account_t *account_init(const char *id, data_center_t *center, unsigned int buff
         INIT_LIST_HEAD(&new->fans_list);
         INIT_LIST_HEAD(&new->followers_list);
         if (buffer_size != 0) {
-            unsigned char *buffer = __malloc(buffer_size);
+            unsigned char *buffer = __malloc(buffer_size * 2);
             if (buffer == NULL) {
                 DATA_CENTER_TRACE("account[%s] buffer malloc failed\n", id);
                 break;
             }
-            memset(buffer, 0, buffer_size * sizeof(unsigned char) * 2);
+            memset(buffer, 0, buffer_size * 2);
             unsigned char *buf0 = buffer;
             unsigned char *buf1 = buffer + buffer_size;
             pingpong_buffer_init(&new->priv.buffer_manager, buf0, buf1);
@@ -156,10 +156,10 @@ account_t *account_subscribe(account_t *account, const char *pub_id)
             DATA_CENTER_TRACE("malloc pub node[%s] failed\n", pub_id);
             break;
         }
-        _search_account(account->center, pub_id);
-        while(1){
-            
-        }
+//        _search_account(account->center, pub_id);
+//        while(1){
+//            
+//        }
         error_flag = 1;
         sub = __malloc(sizeof(account_node_t));
         if (sub == NULL) {

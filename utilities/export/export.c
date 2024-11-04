@@ -64,14 +64,14 @@ INIT_EXPORT(fpi_end, "4.end");
 void fp_components_board_init(void)
 {
     volatile const init_fn_t *fn_ptr;
-#if defined(__GNUC__)
+#if defined(__ARMCC_VERSION)
+    for (fn_ptr = &__fp_init_fpi_board_start; fn_ptr < &__fp_init_fpi_board_end; fn_ptr++) {
+        (*fn_ptr)();
+    }
+#elif defined(__GNUC__)
     extern const unsigned int _fpi_fn1_start;
     extern const unsigned int _fpi_fn1_end;
     for (fn_ptr = (void *)(&_fpi_fn1_start); fn_ptr < (void *)(&_fpi_fn1_end); fn_ptr++) {
-        (*fn_ptr)();
-    }
-#else
-    for (fn_ptr = &__fp_init_fpi_board_start; fn_ptr < &__fp_init_fpi_board_end; fn_ptr++) {
         (*fn_ptr)();
     }
 #endif
@@ -84,7 +84,11 @@ void fp_components_board_init(void)
 void fp_components_init(void)
 {
     volatile const init_fn_t *fn_ptr;
-#if defined(__GNUC__)
+#if defined(__ARMCC_VERSION)
+    for (fn_ptr = &__fp_init_fpi_board_end; fn_ptr < &__fp_init_fpi_end; fn_ptr++) {
+        (*fn_ptr)();
+    }
+#elif defined(__GNUC__)
     extern const unsigned int _fpi_fn2_start;
     extern const unsigned int _fpi_fn2_end;
     extern const unsigned int _fpi_fn3_start;
@@ -98,10 +102,6 @@ void fp_components_init(void)
         (*fn_ptr)();
     }
     for (fn_ptr = (void *)(&_fpi_fn4_start); fn_ptr < (void *)(&_fpi_fn4_end); fn_ptr++) {
-        (*fn_ptr)();
-    }
-#else
-    for (fn_ptr = &__fp_init_fpi_board_end; fn_ptr < &__fp_init_fpi_end; fn_ptr++) {
         (*fn_ptr)();
     }
 #endif
