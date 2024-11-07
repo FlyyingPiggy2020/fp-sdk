@@ -189,11 +189,9 @@ unsigned int log_strcpy(unsigned int cur_len, char *dst, const char *src)
  */
 void log_output(unsigned char level, const char *tag, const char *file, const char *func, const long line, const char *format, ...)
 {
-
     s_log_info.log_lock_handler();
     int log_len = 0, fmt_result = 0;
     char *log_buf = s_log_info.log_buf;
-    char line_num[LOG_LINE_NUM_MAX_LEN + 1] = { 0 };
     int newline_len = strlen(LOG_NEWLINE_SIGN);
 
     va_list args;
@@ -201,30 +199,13 @@ void log_output(unsigned char level, const char *tag, const char *file, const ch
     /* 增加颜色 */
     log_len += log_strcpy(log_len, log_buf + log_len, CSI_START);
     log_len += log_strcpy(log_len, log_buf + log_len, color_output_info[level]);
+
     /* 增加level */
-    log_len += log_strcpy(log_len, log_buf + log_len, "[");
-    log_len += log_strcpy(log_len, log_buf + log_len, output_name[level]);
-    log_len += log_strcpy(log_len, log_buf + log_len, "]");
-    /* 增加tag */
-    log_len += log_strcpy(log_len, log_buf + log_len, "[");
-    log_len += log_strcpy(log_len, log_buf + log_len, tag);
-    log_len += log_strcpy(log_len, log_buf + log_len, "]");
-
-    /* 增加function */
-    log_len += log_strcpy(log_len, log_buf + log_len, "[");
-    log_len += log_strcpy(log_len, log_buf + log_len, func);
-    log_len += log_strcpy(log_len, log_buf + log_len, "(); ");
-    /* 增加file */
-
-    log_len += log_strcpy(log_len, log_buf + log_len, file);
-    log_len += log_strcpy(log_len, log_buf + log_len, ":");
-    /* 增加line */
-    snprintf(line_num, LOG_LINE_NUM_MAX_LEN, "%ld", line);
-    log_len += log_strcpy(log_len, log_buf + log_len, line_num);
-    log_len += log_strcpy(log_len, log_buf + log_len, ":");
-
-    log_len += log_strcpy(log_len, log_buf + log_len, "]");
-    log_len += log_strcpy(log_len, log_buf + log_len, " - ");
+    log_len += snprintf(log_buf + log_len, LOG_LINE_BUF_SIZE - log_len, "[%s]", output_name[level]); // 固定宽度
+    /* 增加tag function file line */
+    char func_with_brackets[LOG_TAG_BUFF_SIZE];
+    snprintf(func_with_brackets, sizeof(func_with_brackets), "[%s][%s();%s:%ld]", tag, func, file, line);
+    log_len += snprintf(log_buf + log_len, LOG_LINE_BUF_SIZE - log_len, "%-*s\t", LOG_TAG_BUFF_SIZE, func_with_brackets); // 固定宽度
 
     va_start(args, format);
     /* 用vsnprintf构建输出的buff */

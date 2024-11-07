@@ -91,11 +91,11 @@ account_t *_datacenter_find(struct list_head *pool, const char *id)
         if (p->account == NULL) {
             DATA_CENTER_TRACE("account is null\n");
             continue;
-        } else if (p->account->id == NULL){
-            DATA_CENTER_TRACE("account:%p id is null\n",p->account);
+        } else if (p->account->id == NULL) {
+            DATA_CENTER_TRACE("account:%p id is null\n", p->account);
             continue;
-        }else {
-            DATA_CENTER_TRACE("account id:%s,%p\n",p->account->id, p->account);
+        } else {
+            DATA_CENTER_TRACE("account id:%s,%p\n", p->account->id, p->account);
         }
 
         if (__match_by_name(id, p->account->id) == true) {
@@ -127,7 +127,7 @@ bool datacenter_add_account(data_center_t *center, account_t *account)
             DATA_CENTER_TRACE("account[%s] already exists.\n", account->id);
             break;
         }
-        
+
         p = __malloc(sizeof(account_node_t));
         if (p == NULL) {
             DATA_CENTER_TRACE("malloc account_node_t failed.\n");
@@ -138,7 +138,7 @@ bool datacenter_add_account(data_center_t *center, account_t *account)
         DATA_CENTER_TRACE("add[%s:%p] to account pool.node:%p\n", p->account->id, p->account, p);
         list_add_tail(&p->node, &center->account_pool);
         // _search_account(account->center, account->id);
-        
+
         account_subscribe(center->account_main, account->id);
         DATA_CENTER_TRACE("add account[%s] to data center[%s].\n", account->id, center->name);
         retval = true;

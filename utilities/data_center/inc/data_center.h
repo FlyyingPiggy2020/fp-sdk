@@ -41,24 +41,20 @@ SOFTWARE.
 #if FP_LOG_TRACE_DATA_CENTER
 #undef LOG_TAG
 #define LOG_TAG "DATA_CENTER"
-#include "fplog.h"
+#include "log_port.h"
 #define DATA_CENTER_TRACE(...) log_i(__VA_ARGS__)
 #else
-#define DATA_CENTER_TRACE(...) 
+#define DATA_CENTER_TRACE(...)
 #endif
 
 #if defined(CONF_BOARD_NAME_BL60X)
-#include "tlsf.h"
-#define __malloc tlsf_malloc
-#define __free tlsf_free
-
-// #include "FreeRTOS.h"
-// #define __malloc pvPortMalloc
-// #define __free vPortFree
+#include "FreeRTOS.h"
+#define __malloc pvPortMalloc
+#define __free   vPortFree
 #else
 #include "tlsf.h"
 #define __malloc tlsf_malloc
-#define __free tlsf_free
+#define __free   tlsf_free
 #endif
 /*---------- type define ----------*/
 typedef struct data_center data_center_t;

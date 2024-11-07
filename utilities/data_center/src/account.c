@@ -39,7 +39,6 @@ SOFTWARE.
 
 #define ACCOUNT_MAX_ID_LENGTH 16
 
-
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
@@ -141,7 +140,7 @@ account_t *account_subscribe(account_t *account, const char *pub_id)
     account_t *publisher = NULL;
     account_node_t *pub = NULL, *sub = NULL;
     uint8_t error_flag = 0;
-    
+
     do {
         if (account == NULL || pub_id == NULL) {
             break;
@@ -156,10 +155,6 @@ account_t *account_subscribe(account_t *account, const char *pub_id)
             DATA_CENTER_TRACE("malloc pub node[%s] failed\n", pub_id);
             break;
         }
-//        _search_account(account->center, pub_id);
-//        while(1){
-//            
-//        }
         error_flag = 1;
         sub = __malloc(sizeof(account_node_t));
         if (sub == NULL) {
