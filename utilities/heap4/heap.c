@@ -39,10 +39,10 @@
 
 /* heap port macro defition */
 #ifndef CONFIG_HEAP_BYTE_ALIGNMENT
-#define CONFIG_HEAP_BYTE_ALIGNMENT      (8)
+#define CONFIG_HEAP_BYTE_ALIGNMENT (8)
 #endif
 
-#define HEAP_BYTE_ALIGNMENT_MASK        (CONFIG_HEAP_BYTE_ALIGNMENT - 1)
+#define HEAP_BYTE_ALIGNMENT_MASK (CONFIG_HEAP_BYTE_ALIGNMENT - 1)
 #if (HEAP_BYTE_ALIGNMENT_MASK & CONFIG_HEAP_BYTE_ALIGNMENT) || (CONFIG_HEAP_BYTE_ALIGNMENT > 32)
 #error "CONFIG_HEAP_BYTE_ALIGNMENT must be one of the following values: 1, 2, 4, 8, 16 or 32"
 #endif
@@ -52,16 +52,16 @@
 #endif
 
 /* Assumes 8bit bytes! */
-#define HEAP_BITS_PER_BYTE              ((size_t)8)
+#define HEAP_BITS_PER_BYTE      ((size_t)8)
 /* Block sizes must not get too small. */
-#define HEAP_MINIMUM_BLOCK_SIZE         ((size_t)(heap_struct_size << 1))
+#define HEAP_MINIMUM_BLOCK_SIZE ((size_t)(heap_struct_size << 1))
 
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
 /*---------- type define ----------*/
 typedef struct a_block_link {
-    struct a_block_link *pnext_free_block;  /*<< The next free block in the list. */
-    size_t block_size;                      /*<< The size of the free block. */
+    struct a_block_link *pnext_free_block; /*<< The next free block in the list. */
+    size_t block_size;                     /*<< The size of the free block. */
 } block_link_t;
 
 /*---------- variable ----------*/
@@ -91,7 +91,7 @@ static void heap_init(void)
     size_t total_heap_size = CONFIG_HEAP_TOTAL_SIZE;
 
     address = (size_t)heap;
-    if(0 != (address & HEAP_BYTE_ALIGNMENT_MASK)) {
+    if (0 != (address & HEAP_BYTE_ALIGNMENT_MASK)) {
         address += (CONFIG_HEAP_BYTE_ALIGNMENT - 1);
         address &= ~((size_t)HEAP_BYTE_ALIGNMENT_MASK);
         total_heap_size -= address - (size_t)heap;
@@ -126,17 +126,17 @@ static void heap_insert_block_into_free_list(block_link_t *pblock_insert)
     block_link_t *pinterator = NULL;
     uint8_t *p = NULL;
 
-    for(pinterator = &start; pinterator->pnext_free_block < pblock_insert; 
-        pinterator = pinterator->pnext_free_block) {
+    for (pinterator = &start; pinterator->pnext_free_block < pblock_insert;
+         pinterator = pinterator->pnext_free_block) {
     }
     p = (uint8_t *)pinterator;
-    if((p + pinterator->block_size) == (uint8_t *)pblock_insert) {
+    if ((p + pinterator->block_size) == (uint8_t *)pblock_insert) {
         pinterator->block_size += pblock_insert->block_size;
         pblock_insert = pinterator;
     }
     p = (uint8_t *)pblock_insert;
-    if((p + pblock_insert->block_size) == (uint8_t *)pinterator->pnext_free_block) {
-        if(pinterator->pnext_free_block != pend) {
+    if ((p + pblock_insert->block_size) == (uint8_t *)pinterator->pnext_free_block) {
+        if (pinterator->pnext_free_block != pend) {
             pblock_insert->block_size += pinterator->pnext_free_block->block_size;
             pblock_insert->pnext_free_block = pinterator->pnext_free_block->pnext_free_block;
         } else {
@@ -145,7 +145,7 @@ static void heap_insert_block_into_free_list(block_link_t *pblock_insert)
     } else {
         pblock_insert->pnext_free_block = pinterator->pnext_free_block;
     }
-    if(pinterator != pblock_insert) {
+    if (pinterator != pblock_insert) {
         pinterator->pnext_free_block = pblock_insert;
     }
 }
@@ -157,45 +157,44 @@ void *heap_malloc(size_t wanted_size)
 
     CONFIG_HEAP_LOCK();
     {
-        if(NULL == pend) {
+        if (NULL == pend) {
             heap_init();
         }
         /* Check the requested block size is not so large that the top bit is
          * set.  The top bit of the block size member of the BlockLink_t structure
          * is used to determine who owns the block - the application or the
          * kernel, so it must be free. */
-        if(0 == (wanted_size & block_allocate_bit)) {
-            if(0 < wanted_size) {
+        if (0 == (wanted_size & block_allocate_bit)) {
+            if (0 < wanted_size) {
                 wanted_size += heap_struct_size;
                 /* Ensure that blocks are always aligned to the required number
                  * of bytes. */
-                if(0x00 != (wanted_size & HEAP_BYTE_ALIGNMENT_MASK)) {
+                if (0x00 != (wanted_size & HEAP_BYTE_ALIGNMENT_MASK)) {
                     wanted_size += (CONFIG_HEAP_BYTE_ALIGNMENT - (wanted_size & HEAP_BYTE_ALIGNMENT_MASK));
                 }
             }
-            if((0 < wanted_size) && (wanted_size <= free_bytes_remaining)) {
+            if ((0 < wanted_size) && (wanted_size <= free_bytes_remaining)) {
                 /* Traverse the list from the start	(lowest address) block until
                  * one	of adequate size is found. */
                 pblock_previous = &start;
                 pblock = start.pnext_free_block;
-                while((pblock->block_size < wanted_size) &&
-                      (pblock->pnext_free_block != NULL)) {
+                while ((pblock->block_size < wanted_size) && (pblock->pnext_free_block != NULL)) {
                     pblock_previous = pblock;
                     pblock = pblock->pnext_free_block;
                 }
-                if(pblock != pend) {
+                if (pblock != pend) {
                     preturn = (void *)(((uint8_t *)pblock_previous->pnext_free_block) + heap_struct_size);
                     pblock_previous->pnext_free_block = pblock->pnext_free_block;
                     /* If the block is larger than required it can be split into
                      * two. */
-                    if((pblock->block_size - wanted_size) > HEAP_MINIMUM_BLOCK_SIZE) {
+                    if ((pblock->block_size - wanted_size) > HEAP_MINIMUM_BLOCK_SIZE) {
                         pblock_new = (void *)(((uint8_t *)pblock) + wanted_size);
                         pblock_new->block_size = pblock->block_size - wanted_size;
                         pblock->block_size = wanted_size;
                         heap_insert_block_into_free_list(pblock_new);
                     }
                     free_bytes_remaining -= pblock->block_size;
-                    if(minimum_free_bytes_remaining > free_bytes_remaining) {
+                    if (minimum_free_bytes_remaining > free_bytes_remaining) {
                         minimum_free_bytes_remaining = free_bytes_remaining;
                     }
                     pblock->block_size |= block_allocate_bit;
@@ -214,11 +213,11 @@ void heap_free(void *pfree)
     uint8_t *p = (uint8_t *)pfree;
     block_link_t *plink = NULL;
 
-    if(NULL != pfree) {
+    if (NULL != pfree) {
         p -= heap_struct_size;
         plink = (void *)p;
-        if(0 != (plink->block_size & block_allocate_bit)) {
-            if(NULL == plink->pnext_free_block) {
+        if (0 != (plink->block_size & block_allocate_bit)) {
+            if (NULL == plink->pnext_free_block) {
                 /* The block is being returned to the heap - it is no longer
                  * allocated. */
                 plink->block_size &= ~block_allocate_bit;

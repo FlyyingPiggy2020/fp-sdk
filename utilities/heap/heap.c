@@ -65,22 +65,22 @@ INIT_BOARD_EXPORT(heap_init);
 #if defined(__ARMCC_VERSION)
 void *malloc(size_t size)
 {
- return tlsf_malloc(size);
+    return tlsf_malloc(size);
 }
 
 void free(void *p)
 {
- tlsf_free(p);
+    tlsf_free(p);
 }
 
 void *realloc(void *p, size_t want)
 {
- return tlsf_realloc(p, want);
+    return tlsf_realloc(p, want);
 }
 
 void *calloc(size_t nmemb, size_t size)
 {
- return tlsf_calloc(nmemb, size);
+    return tlsf_calloc(nmemb, size);
 }
 #endif
 #if (FP_USE_SHELL == 1)

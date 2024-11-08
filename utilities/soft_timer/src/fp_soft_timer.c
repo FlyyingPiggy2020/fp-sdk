@@ -40,7 +40,7 @@ SOFTWARE.
 
 #if FP_LOG_TRACE_TIMER
 #define LOG_TAG "SOFT_TIME_KERNEL"
-#include "fplog.h"
+#include "log_port.h"
 #define TIMER_TRACE(...) log_d(__VA_ARGS__)
 #else
 #define TIMER_TRACE(...)
