@@ -162,13 +162,11 @@ account_t *account_subscribe(account_t *account, const char *pub_id)
             break;
         }
         error_flag = 2;
-        DATA_CENTER_TRACE("_datacenter_find");
         publisher = _datacenter_find(&account->followers_list, pub_id);
         if (publisher != NULL) {
             DATA_CENTER_TRACE("account [%s] multi subscribe pub[%s]\n", account->id, pub_id);
             break;
         }
-        DATA_CENTER_TRACE("_search_account");
         publisher = _search_account(account->center, pub_id);
         if (publisher == NULL) {
             DATA_CENTER_TRACE("account[%s] was not found\n", pub_id);

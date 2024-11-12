@@ -236,4 +236,67 @@ void log_output(unsigned char level, const char *tag, const char *file, const ch
     }
     s_log_info.log_unlock_handler();
 }
+
+/**
+ * @brief dump the hex format data to log(port from easylogger https://github.com/armink/EasyLogger/blob/cd93d9c768415f4b7279f2d3ef2366ce15ea087c/easylogger/src/elog.c#L863)
+ * @param {char} *name
+ * @param {uint8_t} width
+ * @param {void} *buf
+ * @param {uint16_t} size
+ * @return {*}
+ */
+void log_hex_dump(const char *name, uint8_t width, const void *buf, uint16_t size)
+{
+#define __is_print(ch) ((unsigned int)((ch) - ' ') < 127u - ' ')
+
+    uint16_t i, j;
+    uint16_t log_len = 0;
+    const uint8_t *buf_p = buf;
+    char dump_string[8] = { 0 };
+    int fmt_result;
+    char *log_buf = s_log_info.log_buf;
+    /* lock output */
+    s_log_info.log_lock_handler();
+
+    for (i = 0; i < size; i += width) {
+        /* package header */
+        fmt_result = snprintf(log_buf, LOG_LINE_BUF_SIZE, "D/HEX %s: %04X-%04X: ", name, i, i + width - 1);
+        /* calculate log length */
+        if ((fmt_result > -1) && (fmt_result <= LOG_LINE_BUF_SIZE)) {
+            log_len = fmt_result;
+        } else {
+            log_len = LOG_LINE_BUF_SIZE;
+        }
+        /* dump hex */
+        for (j = 0; j < width; j++) {
+            if (i + j < size) {
+                snprintf(dump_string, sizeof(dump_string), "%02X ", buf_p[i + j]);
+            } else {
+                strncpy(dump_string, "   ", sizeof(dump_string));
+            }
+            log_len += log_strcpy(log_len, log_buf + log_len, dump_string);
+            if ((j + 1) % 8 == 0) {
+                log_len += log_strcpy(log_len, log_buf + log_len, " ");
+            }
+        }
+        log_len += log_strcpy(log_len, log_buf + log_len, "  ");
+        /* dump char for hex */
+        for (j = 0; j < width; j++) {
+            if (i + j < size) {
+                snprintf(dump_string, sizeof(dump_string), "%c", __is_print(buf_p[i + j]) ? buf_p[i + j] : '.');
+                log_len += log_strcpy(log_len, log_buf + log_len, dump_string);
+            }
+        }
+        /* overflow check and reserve some space for newline sign */
+        if (log_len + strlen(LOG_NEWLINE_SIGN) > LOG_LINE_BUF_SIZE) {
+            log_len = LOG_LINE_BUF_SIZE - strlen(LOG_NEWLINE_SIGN);
+        }
+        /* package newline sign */
+        log_len += log_strcpy(log_len, log_buf + log_len, LOG_NEWLINE_SIGN);
+        /* do log output */
+        s_log_info.log_output_handler(log_buf, log_len);
+    }
+    /* unlock output */
+    s_log_info.log_unlock_handler();
+}
 /*---------- end of file ----------*/

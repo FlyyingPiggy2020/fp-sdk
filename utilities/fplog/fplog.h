@@ -151,5 +151,6 @@ typedef struct log_info_t {
 
 unsigned char log_init(log_info_t *log_info);
 void log_output(unsigned char level, const char *tag, const char *file, const char *func, const long line, const char *format, ...);
+void log_hex_dump(const char *name, uint8_t width, const void *buf, uint16_t size);
 /*---------- end of file ----------*/
 #endif

@@ -4,7 +4,7 @@
  * @Author       : lxf
  * @Date         : 2024-11-06 16:55:23
  * @LastEditors  : flyyingpiggy2020 154562451@qq.com
- * @LastEditTime : 2024-11-08 14:19:17
+ * @LastEditTime : 2024-11-09 14:13:14
  * @Brief        :
  */
 
@@ -41,8 +41,6 @@ typedef enum {
     AT_ERROR_MEMORY_ALLOCATION = 0x05, /*!< memory allocation failed */
     AT_SUB_PARA_INVALID = 0x06,        /*!< the parameter is invalid */
 
-    // AT_SUB_NO_TERMINATOR = 0x02,        /*!< terminator character not found ("\r\n" expected) */
-    // AT_SUB_NO_AT = 0x03,                /*!< Starting "AT" not found (or at, At or aT entered) */
     // AT_SUB_PARA_LENGTH_MISMATCH = 0x04, /*!< parameter length mismatch */
     // AT_SUB_PARA_TYPE_MISMATCH = 0x05,   /*!< parameter type mismatch */
     // AT_SUB_PARA_NUM_MISMATCH = 0x06,    /*!< parameter number mismatch */

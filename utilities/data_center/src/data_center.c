@@ -88,16 +88,6 @@ account_t *_datacenter_find(struct list_head *pool, const char *id)
     account_node_t *p = NULL;
     list_for_each_entry(p, account_node_t, pool, node)
     {
-        if (p->account == NULL) {
-            DATA_CENTER_TRACE("account is null\n");
-            continue;
-        } else if (p->account->id == NULL) {
-            DATA_CENTER_TRACE("account:%p id is null\n", p->account);
-            continue;
-        } else {
-            DATA_CENTER_TRACE("account id:%s,%p\n", p->account->id, p->account);
-        }
-
         if (__match_by_name(id, p->account->id) == true) {
             account = p->account;
             break;
