@@ -37,16 +37,6 @@ SOFTWARE.
 #include "data_center.h"
 #include "account.h"
 /*---------- macro ----------*/
-
-#if FP_LOG_TRACE_DATA_CENTER
-#undef LOG_TAG
-#define LOG_TAG "DATA_CENTER"
-#include "log_port.h"
-#define DATA_CENTER_TRACE(...) log_i(__VA_ARGS__)
-#else
-#define DATA_CENTER_TRACE(...)
-#endif
-
 #if defined(CONF_BOARD_NAME_BL60X)
 #include "FreeRTOS.h"
 #define __malloc pvPortMalloc

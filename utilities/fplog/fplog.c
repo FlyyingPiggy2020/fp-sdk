@@ -145,7 +145,7 @@ unsigned char log_init(log_info_t *log_info)
 
     if (log_info->log_lock_handler != NULL && log_info->log_unlock_handler != NULL) {
         s_log_info.log_lock_handler = log_info->log_lock_handler;
-        s_log_info.log_unlock_handler = log_info->log_lock_handler;
+        s_log_info.log_unlock_handler = log_info->log_unlock_handler;
     }
     return 1;
 }
