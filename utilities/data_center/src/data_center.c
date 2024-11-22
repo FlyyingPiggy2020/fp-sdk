@@ -36,7 +36,7 @@ SOFTWARE.
 #undef LOG_TAG
 #define LOG_TAG "DATA_CENTER"
 #include "log_port.h"
-#define DATA_CENTER_TRACE(...) log_i(__VA_ARGS__)
+#define DATA_CENTER_TRACE(...) log_w(__VA_ARGS__)
 #else
 #define DATA_CENTER_TRACE(...)
 #endif
@@ -78,12 +78,12 @@ void data_center_deinit(data_center_t *center)
     if (center == NULL) {
         return;
     }
-    DATA_CENTER_TRACE("data center[%s] closing.\n", center->name);
+    DATA_CENTER_TRACE("data center[%s] closing.", center->name);
     account_node_t *p, *n;
     list_for_each_entry_safe(p, n, account_node_t, &center->account_pool, node)
     {
         account_t *account = p->account;
-        DATA_CENTER_TRACE("delete:%s\n", account->id);
+        DATA_CENTER_TRACE("delete:%s", account->id);
         account_deinit(account);
     }
     memset(center, 0, sizeof(data_center_t));
@@ -119,27 +119,27 @@ bool datacenter_add_account(data_center_t *center, account_t *account)
         }
 
         if (account == center->account_main) {
-            DATA_CENTER_TRACE("account main can't added itself\n");
+            DATA_CENTER_TRACE("account main can't added itself");
             break;
         }
         if (_search_account(center, account->id) != NULL) {
-            DATA_CENTER_TRACE("account[%s] already exists.\n", account->id);
+            DATA_CENTER_TRACE("account[%s] already exists.", account->id);
             break;
         }
 
         p = __malloc(sizeof(account_node_t));
         if (p == NULL) {
-            DATA_CENTER_TRACE("malloc account_node_t failed.\n");
+            DATA_CENTER_TRACE("malloc account_node_t failed.");
             break;
         }
         memset(p, 0, sizeof(account_node_t));
         p->account = account;
-        DATA_CENTER_TRACE("add[%s:%p] to account pool.node:%p\n", p->account->id, p->account, p);
+        DATA_CENTER_TRACE("add[%s:%p] to account pool.node:%p", p->account->id, p->account, p);
         list_add_tail(&p->node, &center->account_pool);
         // _search_account(account->center, account->id);
 
         account_subscribe(center->account_main, account->id);
-        DATA_CENTER_TRACE("add account[%s] to data center[%s].\n", account->id, center->name);
+        DATA_CENTER_TRACE("add account[%s] to data center[%s].", account->id, center->name);
         retval = true;
     } while (0);
     return retval;
