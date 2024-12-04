@@ -23,42 +23,48 @@ SOFTWARE.
 */
 /*
  * Copyright (c) 2024 by Lu Xianfan.
- * @FilePath     : data_center.h
+ * @FilePath     : fp_soft_timer.h
  * @Author       : lxf
- * @Date         : 2024-07-19 14:29:26
+ * @Date         : 2024-07-16 11:26:46
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2024-07-19 15:39:59
+ * @LastEditTime : 2024-07-16 11:27:05
  * @Brief        :
  */
 
-#ifndef __DATA_CENTER_H__
-#define __DATA_CENTER_H__
+#ifndef __FP_SOFT_TIMER_H__
+#define __FP_SOFT_TIMER_H__
 /*---------- includes ----------*/
-#include "../../fp_sdk.h"
-#include "account.h"
+#include "clists.h"
+#include <stdint.h>
+#include <stdio.h>
 /*---------- macro ----------*/
 
-#if FP_LOG_TRACE_DATA_CENTER
-#define DATA_CENTER_TRACE(...) printf(__VA_ARGS__)
-#else
-#define DATA_CENTER_TRACE(...)
-#endif
+#define FP_NO_TIMER_READY 0xFFFFFFFF
 /*---------- type define ----------*/
-typedef struct data_center data_center_t;
-typedef struct account account_t;
+struct _fp_timer_t;
+typedef void (*fp_tiemr_cb_t)(struct _fp_timer_t *);
 
-typedef struct data_center {
-    const char *name;
-    account_t *account_main;
-    struct list_head account_pool;
-} data_center_t;
-
+typedef struct _fp_timer_t {
+    uint32_t period;
+    uint32_t last_run;
+    fp_tiemr_cb_t timer_cb;
+    void *user_data;
+    int32_t repeat_count;
+    uint32_t paused : 1;
+    struct list_head list;
+} fp_timer_t;
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
 
-data_center_t *data_center_init(const char *name);
-void data_center_deinit(data_center_t *center);
-bool datacenter_add_account(data_center_t *center, account_t *account);
-bool datacenter_remove_account(data_center_t *center, account_t *account);
+void fp_tick_inc(uint32_t tick_period);
+void _fp_timer_core_init(void);
+fp_timer_t *fp_timer_create(fp_tiemr_cb_t timer_xcb, uint32_t period, void *user_data);
+void fp_timer_set_repeat_count(fp_timer_t *timer, int32_t repeat_count);
+fp_timer_t *fp_timer_get_next(fp_timer_t *timer);
+bool fp_timer_del(fp_timer_t *timer);
+uint32_t fp_timer_handler(void);
+void fp_timer_enable(bool en);
+void fp_timer_pasue(fp_timer_t *timer);
+void fp_timer_resume(fp_timer_t *timer);
 /*---------- end of file ----------*/
-#endif // !__DATA_CENTER_H__
+#endif

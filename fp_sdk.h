@@ -48,16 +48,16 @@ SOFTWARE.
 #include "utilities/log/inc/log.h"
 #include "utilities/export/inc/export.h"
 #else
-#include "utilities/clists/inc/clists.h"
+//#include "utilities/clists/inc/clists.h"
 // #include "utilities/common/inc/fp_def.h"
 // #include "device/core/inc/device_manager.h"
-#include "utilities/log/log.h"
-#include "driver/si446x/fp_si446x.h"
-#include "driver/simulator_spi/simulator_spi.h"
+//#include "utilities/log/log.h"
+//#include "driver/si446x/fp_si446x.h"
+//#include "driver/simulator_spi/simulator_spi.h"
 // #include "utilities/export/inc/export.h"
 // #include "utilities/pingpong/inc/pingpong.h"
 // #include "utilities/heap/TLSF-2.4.6/src/tlsf.h"
-#include "utilities/soft_timer/fp_soft_timer.h"
+//#include "utilities/soft_timer/fp_soft_timer.h"
 #if (FP_USE_SHELL == 1)
 #include "utilities/shell/inc/shell.h"
 #endif

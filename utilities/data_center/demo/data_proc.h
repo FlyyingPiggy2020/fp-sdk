@@ -28,7 +28,7 @@ SOFTWARE.
  * @Date         : 2024-07-30 15:02:15
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
  * @LastEditTime : 2024-07-30 15:26:34
- * @Brief        : 
+ * @Brief        :
  */
 
 #ifndef __DATA_PROC_H
@@ -43,9 +43,8 @@ SOFTWARE.
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
 
-
-#define DATA_PROC_INIT_DEF(name)	void _data_proc_##name##_init(account_t *account)
-#define DATA_PROC_INIT_STRUCT(sct)	memset(&sct, 0, sizeof(sct))
+#define DATA_PROC_INIT_DEF(name)   void _data_proc_##name##_init(account_t *account)
+#define DATA_PROC_INIT_STRUCT(sct) memset(&sct, 0, sizeof(sct))
 void data_proc_init(void);
 data_center_t *data_proc_get_center(void);
 /*---------- end of file ----------*/

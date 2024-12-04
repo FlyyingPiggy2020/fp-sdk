@@ -39,7 +39,9 @@ SOFTWARE.
 /*---------- macro ----------*/
 
 #if FP_LOG_TRACE_TIMER
-#define TIMER_TRACE(...) printf(__VA_ARGS__)
+#define LOG_TAG "SOFT_TIME_KERNEL"
+#include "log_port.h"
+#define TIMER_TRACE(...) log_d(__VA_ARGS__)
 #else
 #define TIMER_TRACE(...)
 #endif
@@ -65,11 +67,20 @@ LIST_HEAD(_fp_timer_ll); // create a list head
 /*---------- variable ----------*/
 /*---------- function ----------*/
 
+/**
+ * @brief 软件定时器使能
+ * @return {*}
+ */
 void _fp_timer_core_init(void)
 {
     fp_timer_enable(true);
 }
 
+/**
+ * @brief 软件定时器tick 增加
+ * @param {uint32_t} tick_period
+ * @return {*}
+ */
 inline void fp_tick_inc(uint32_t tick_period)
 {
     tick_irq_flag = 0;
@@ -173,8 +184,6 @@ static bool fp_timer_exec(fp_timer_t *timer)
 
 uint32_t fp_timer_handler(void)
 {
-    TIMER_TRACE("begin\n");
-
     static bool already_running = false;
     if (already_running) {
         TIMER_TRACE("already running\n");
@@ -186,9 +195,6 @@ uint32_t fp_timer_handler(void)
         already_running = false;
         return 2;
     }
-
-    //    static uint32_t idle_period_start = 0;
-    //    static uint32_t busy_time = 0;
 
     uint32_t handler_start = fp_tick_get();
 
@@ -228,19 +234,19 @@ uint32_t fp_timer_handler(void)
             }
         }
     }
-    // busy_time += fp_tick_elaps(handler_start);
-    // uint32_t idle_period_time = fp_tick_elaps(handler_start);
-    // if (idle_period_time > IDLE_MEAS_PERIOD) {
-    //     idle_last         = (busy_time * 100) / idle_period_time;  /*Calculate the busy percentage*/
-    //     idle_last         = idle_last > 100 ? 0 : 100 - idle_last; /*But we need idle time*/
-    //     busy_time         = 0;
-    //     idle_period_start = fp_tick_get();
-    // }
+
     already_running = false;
-    TIMER_TRACE("finished (%d ms until the next timer call)\n", time_till_next);
+    // TIMER_TRACE("finished (%ld ms until the next timer call)\n", time_till_next);
     return time_till_next;
 }
 
+/**
+ * @brief 创建一个软件定时器
+ * @param {fp_tiemr_cb_t} timer_xcb 控制块
+ * @param {uint32_t} period 周期
+ * @param {void} *user_data 用户数据
+ * @return {*}
+ */
 fp_timer_t *fp_timer_create(fp_tiemr_cb_t timer_xcb, uint32_t period, void *user_data)
 {
     fp_timer_t *new_timer = NULL;

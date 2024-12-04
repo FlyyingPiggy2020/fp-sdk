@@ -28,9 +28,8 @@ SOFTWARE.
  * @Date         : 2024-07-30 15:01:12
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
  * @LastEditTime : 2024-07-30 15:08:37
- * @Brief        : 
+ * @Brief        :
  */
-
 
 /*---------- includes ----------*/
 #include "data_proc.h"
@@ -40,7 +39,7 @@ SOFTWARE.
 
 static data_center_t *data_center = NULL;
 
-#define DATA_PROC_DEF(name, buffer_size)                        account_t *act_##name
+#define DATA_PROC_DEF(name, buffer_size) account_t *act_##name
 #include "dp_list.inc"
 #undef DATA_PROC_DEF
 /*---------- function prototype ----------*/
@@ -49,15 +48,15 @@ static data_center_t *data_center = NULL;
 void data_proc_init(void)
 {
     data_center = data_center_init("center");
-#define DATA_PROC_DEF(name, buffer_size) act_##name=account_init(#name, data_center, buffer_size, NULL);
+#define DATA_PROC_DEF(name, buffer_size) act_##name = account_init(#name, data_center, buffer_size, NULL);
 #include "dp_list.inc"
 #undef DATA_PROC_DEF
 
-#define DATA_PROC_DEF(name, buffer_size)\
-do{\
-    extern void _data_proc_##name##_init(account_t *account);\
-    _data_proc_##name##_init(act_##name);\
-}while(0)
+#define DATA_PROC_DEF(name, buffer_size)                          \
+    do {                                                          \
+        extern void _data_proc_##name##_init(account_t *account); \
+        _data_proc_##name##_init(act_##name);                     \
+    } while (0)
 #include "dp_list.inc"
 #undef DATA_PROC_DEF
 }

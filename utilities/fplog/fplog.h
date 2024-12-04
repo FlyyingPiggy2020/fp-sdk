@@ -31,8 +31,8 @@ SOFTWARE.
  * @Brief        : This file contains the implementation of the log functionality.
  */
 
-#ifndef __LOG_H__
-#define __LOG_H__
+#ifndef __FPLOG_H__
+#define __FPLOG_H__
 /*---------- includes ----------*/
 
 #include <stddef.h>
@@ -47,6 +47,10 @@ SOFTWARE.
 #define LOG_LVL_DEBUG   4
 #define LOG_LVL_VERBOSE 5
 
+#ifndef LOG_TAG_BUFF_SIZE
+#define LOG_TAG_BUFF_SIZE 66
+#endif
+
 /**
  * @brief The size of the line buffer used for logging.
  *
@@ -56,20 +60,12 @@ SOFTWARE.
  *
  * @note If this macro is not defined, a default value will be used.
  */
-#ifndef LOG_LINE_BUF_SIZE
-#define LOG_LINE_BUF_SIZE 256
+#ifndef LOG_CONTENT_SZIE
+#define LOG_CONTENT_SZIE 256
 #endif
 
-/**
- * @brief Defines the maximum length of the line number in the log.
- *
- * This macro is used to specify the maximum length of the line number in the log.
- * It is used in the log module to format the log messages.
- *
- * @note This macro should be defined before including this header file.
- */
-#ifndef LOG_LINE_NUM_MAX_LEN
-#define LOG_LINE_NUM_MAX_LEN 5
+#ifndef LOG_LINE_BUF_SIZE
+#define LOG_LINE_BUF_SIZE (LOG_TAG_BUFF_SIZE + LOG_CONTENT_SZIE)
 #endif
 
 /**
@@ -155,5 +151,6 @@ typedef struct log_info_t {
 
 unsigned char log_init(log_info_t *log_info);
 void log_output(unsigned char level, const char *tag, const char *file, const char *func, const long line, const char *format, ...);
+void log_hex_dump(const char *name, uint8_t width, const void *buf, uint16_t size);
 /*---------- end of file ----------*/
 #endif

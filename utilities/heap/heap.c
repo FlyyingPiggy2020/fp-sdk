@@ -40,7 +40,7 @@ __asm(".global __use_no_heap_region\n\t"); // AC6申明不使用C库的堆
 /*---------- includes ----------*/
 #define LOG_TAG "heap"
 #include "TLSF-2.4.6/src/tlsf.h"
-#include "fp_sdk.h"
+#include "export.h"
 
 #include "stdlib.h"
 /*---------- macro ----------*/
@@ -48,7 +48,7 @@ __asm(".global __use_no_heap_region\n\t"); // AC6申明不使用C库的堆
 #define POOL_SIZE 1024 * 10 // 实际上的P0OL_SIZE有3224字节做位图了.可用size比这个小。
 /*---------- type define ----------*/
 
-static char heap_pool[POOL_SIZE];
+static char heap_pool[POOL_SIZE] __attribute__((aligned(4)));
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
 /*---------- variable ----------*/
@@ -60,8 +60,9 @@ int heap_init(void)
     free_mem = init_memory_pool(POOL_SIZE, heap_pool);
     return free_mem;
 }
-// INIT_BOARD_EXPORT(heap_init);
+INIT_BOARD_EXPORT(heap_init);
 
+#if defined(__ARMCC_VERSION)
 void *malloc(size_t size)
 {
     return tlsf_malloc(size);
@@ -81,7 +82,7 @@ void *calloc(size_t nmemb, size_t size)
 {
     return tlsf_calloc(nmemb, size);
 }
-
+#endif
 #if (FP_USE_SHELL == 1)
 /**
  * @brief 获取已使用的heap size

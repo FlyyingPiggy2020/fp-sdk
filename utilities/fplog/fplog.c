@@ -33,7 +33,7 @@ SOFTWARE.
 
 /*---------- includes ----------*/
 
-#include "log.h"
+#include "fplog.h"
 
 /*---------- macro ----------*/
 
@@ -145,7 +145,7 @@ unsigned char log_init(log_info_t *log_info)
 
     if (log_info->log_lock_handler != NULL && log_info->log_unlock_handler != NULL) {
         s_log_info.log_lock_handler = log_info->log_lock_handler;
-        s_log_info.log_unlock_handler = log_info->log_lock_handler;
+        s_log_info.log_unlock_handler = log_info->log_unlock_handler;
     }
     return 1;
 }
@@ -189,11 +189,9 @@ unsigned int log_strcpy(unsigned int cur_len, char *dst, const char *src)
  */
 void log_output(unsigned char level, const char *tag, const char *file, const char *func, const long line, const char *format, ...)
 {
-
     s_log_info.log_lock_handler();
     int log_len = 0, fmt_result = 0;
     char *log_buf = s_log_info.log_buf;
-    char line_num[LOG_LINE_NUM_MAX_LEN + 1] = { 0 };
     int newline_len = strlen(LOG_NEWLINE_SIGN);
 
     va_list args;
@@ -201,30 +199,13 @@ void log_output(unsigned char level, const char *tag, const char *file, const ch
     /* 增加颜色 */
     log_len += log_strcpy(log_len, log_buf + log_len, CSI_START);
     log_len += log_strcpy(log_len, log_buf + log_len, color_output_info[level]);
+
     /* 增加level */
-    log_len += log_strcpy(log_len, log_buf + log_len, "[");
-    log_len += log_strcpy(log_len, log_buf + log_len, output_name[level]);
-    log_len += log_strcpy(log_len, log_buf + log_len, "]");
-    /* 增加tag */
-    log_len += log_strcpy(log_len, log_buf + log_len, "[");
-    log_len += log_strcpy(log_len, log_buf + log_len, tag);
-    log_len += log_strcpy(log_len, log_buf + log_len, "]");
-
-    /* 增加function */
-    log_len += log_strcpy(log_len, log_buf + log_len, "[");
-    log_len += log_strcpy(log_len, log_buf + log_len, func);
-    log_len += log_strcpy(log_len, log_buf + log_len, "(); ");
-    /* 增加file */
-
-    log_len += log_strcpy(log_len, log_buf + log_len, file);
-    log_len += log_strcpy(log_len, log_buf + log_len, ":");
-    /* 增加line */
-    snprintf(line_num, LOG_LINE_NUM_MAX_LEN, "%ld", line);
-    log_len += log_strcpy(log_len, log_buf + log_len, line_num);
-    log_len += log_strcpy(log_len, log_buf + log_len, ":");
-
-    log_len += log_strcpy(log_len, log_buf + log_len, "]");
-    log_len += log_strcpy(log_len, log_buf + log_len, " - ");
+    log_len += snprintf(log_buf + log_len, LOG_LINE_BUF_SIZE - log_len, "[%s]", output_name[level]); // 固定宽度
+    /* 增加tag function file line */
+    char func_with_brackets[LOG_TAG_BUFF_SIZE];
+    snprintf(func_with_brackets, sizeof(func_with_brackets), "[%s][%s();%s:%ld]", tag, func, file, line);
+    log_len += snprintf(log_buf + log_len, LOG_LINE_BUF_SIZE - log_len, "%-*s\t", LOG_TAG_BUFF_SIZE, func_with_brackets); // 固定宽度
 
     va_start(args, format);
     /* 用vsnprintf构建输出的buff */
@@ -253,6 +234,69 @@ void log_output(unsigned char level, const char *tag, const char *file, const ch
     if (s_log_info.log_output_handler != NULL) {
         s_log_info.log_output_handler(log_buf, log_len);
     }
+    s_log_info.log_unlock_handler();
+}
+
+/**
+ * @brief dump the hex format data to log(port from easylogger https://github.com/armink/EasyLogger/blob/cd93d9c768415f4b7279f2d3ef2366ce15ea087c/easylogger/src/elog.c#L863)
+ * @param {char} *name
+ * @param {uint8_t} width
+ * @param {void} *buf
+ * @param {uint16_t} size
+ * @return {*}
+ */
+void log_hex_dump(const char *name, uint8_t width, const void *buf, uint16_t size)
+{
+#define __is_print(ch) ((unsigned int)((ch) - ' ') < 127u - ' ')
+
+    uint16_t i, j;
+    uint16_t log_len = 0;
+    const uint8_t *buf_p = buf;
+    char dump_string[8] = { 0 };
+    int fmt_result;
+    char *log_buf = s_log_info.log_buf;
+    /* lock output */
+    s_log_info.log_lock_handler();
+
+    for (i = 0; i < size; i += width) {
+        /* package header */
+        fmt_result = snprintf(log_buf, LOG_LINE_BUF_SIZE, "D/HEX %s: %04X-%04X: ", name, i, i + width - 1);
+        /* calculate log length */
+        if ((fmt_result > -1) && (fmt_result <= LOG_LINE_BUF_SIZE)) {
+            log_len = fmt_result;
+        } else {
+            log_len = LOG_LINE_BUF_SIZE;
+        }
+        /* dump hex */
+        for (j = 0; j < width; j++) {
+            if (i + j < size) {
+                snprintf(dump_string, sizeof(dump_string), "%02X ", buf_p[i + j]);
+            } else {
+                strncpy(dump_string, "   ", sizeof(dump_string));
+            }
+            log_len += log_strcpy(log_len, log_buf + log_len, dump_string);
+            if ((j + 1) % 8 == 0) {
+                log_len += log_strcpy(log_len, log_buf + log_len, " ");
+            }
+        }
+        log_len += log_strcpy(log_len, log_buf + log_len, "  ");
+        /* dump char for hex */
+        for (j = 0; j < width; j++) {
+            if (i + j < size) {
+                snprintf(dump_string, sizeof(dump_string), "%c", __is_print(buf_p[i + j]) ? buf_p[i + j] : '.');
+                log_len += log_strcpy(log_len, log_buf + log_len, dump_string);
+            }
+        }
+        /* overflow check and reserve some space for newline sign */
+        if (log_len + strlen(LOG_NEWLINE_SIGN) > LOG_LINE_BUF_SIZE) {
+            log_len = LOG_LINE_BUF_SIZE - strlen(LOG_NEWLINE_SIGN);
+        }
+        /* package newline sign */
+        log_len += log_strcpy(log_len, log_buf + log_len, LOG_NEWLINE_SIGN);
+        /* do log output */
+        s_log_info.log_output_handler(log_buf, log_len);
+    }
+    /* unlock output */
     s_log_info.log_unlock_handler();
 }
 /*---------- end of file ----------*/

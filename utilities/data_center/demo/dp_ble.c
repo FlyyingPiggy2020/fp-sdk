@@ -28,22 +28,21 @@ SOFTWARE.
  * @Date         : 2024-07-30 15:30:20
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
  * @LastEditTime : 2024-07-30 15:30:58
- * @Brief        : 
+ * @Brief        :
  */
-
 
 /*---------- includes ----------*/
 #include "data_proc.h"
 /*---------- macro ----------*/
 
-#define ARRAY_SIZE(x)                   (sizeof(x) / sizeof((x)[0]))
+#define ARRAY_SIZE(x)       (sizeof(x) / sizeof((x)[0]))
 /*---------- type define ----------*/
 #define BLE_NAME_MAX_LENGTH 12
 /*---------- variable prototype ----------*/
 typedef struct {
     uint32_t type;
     void (*cb)(account_event_param_t *);
-}protocol_callback_t;
+} protocol_callback_t;
 
 static char ble_name[BLE_NAME_MAX_LENGTH] = "ARMFLY";
 /*---------- function prototype ----------*/
@@ -52,9 +51,9 @@ static void _on_event_publish(account_event_param_t *param);
 static void _on_event_nofity(account_event_param_t *param);
 /*---------- variable ----------*/
 static protocol_callback_t act_evt_cbs[] = {
-    {ACCOUNT_EVENT_SUB_PULL, _on_event_sub_pull},
-    {ACCOUNT_EVENT_PUB_PUBLISH, _on_event_publish},
-    {ACCOUNT_EVENT_NOTIFY,_on_event_nofity},
+    { ACCOUNT_EVENT_SUB_PULL, _on_event_sub_pull },
+    { ACCOUNT_EVENT_PUB_PUBLISH, _on_event_publish },
+    { ACCOUNT_EVENT_NOTIFY, _on_event_nofity },
 };
 /*---------- function ----------*/
 
@@ -62,12 +61,12 @@ static void _on_event_sub_pull(account_event_param_t *param)
 {
     dp_ble_info_t *info = (dp_ble_info_t *)param->data;
     info->name = ble_name;
-	return;
+    return;
 }
 
 static void _on_event_publish(account_event_param_t *param)
 {
-	return;
+    return;
 }
 
 static void _on_event_nofity(account_event_param_t *param)
@@ -106,5 +105,3 @@ DATA_PROC_INIT_DEF(ble)
     account_set_event_callback(account, on_event);
 }
 /*---------- end of file ----------*/
-
-
