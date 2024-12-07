@@ -34,7 +34,7 @@ SOFTWARE.
 #ifndef __FPLOG_H__
 #define __FPLOG_H__
 /*---------- includes ----------*/
-
+#include <stdint.h>
 #include <stddef.h>
 #include <string.h>
 #include <stdarg.h>

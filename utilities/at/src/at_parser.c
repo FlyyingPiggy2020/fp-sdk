@@ -95,10 +95,10 @@ at_error_code at_cmd_executor(uint8_t *recv_buf, uint16_t recv_len, at_cmd_set_r
         /* 将\r\n替换为\0 */
         recv_buf[recv_len - 2] = '\0';
         recv_buf[recv_len - 1] = '\0';
-        void *param = strtok((char *)recv_buf, "="); //按照"="分割字符串
+        void *param = strtok((char *)recv_buf, "="); // 按照"="分割字符串
         if (param != NULL) {
-            param++;                   //跳过'='字符
-            param = strtok(NULL, ","); //按照","分割字符串
+            param++;                   // 跳过'='字符
+            param = strtok(NULL, ","); // 按照","分割字符串
             while (param != NULL) {
                 argv = realloc(argv, sizeof(void *) * (argc + 1));
                 if (argv == NULL) {

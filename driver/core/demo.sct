@@ -1,0 +1,20 @@
+; 当使用MDK编译时采用的分散加载文件
+
+LR_IROM1 0x08000000 0x00020000  {    ; load region size_region
+  ER_IROM1 0x08000000 0x00020000  {  ; load address = execution address
+   *.o (RESET, +First)
+   *(InRoot$$Sections)
+   .ANY (+RO)
+   .ANY (+XO)
+  }
+  RW_IRAM1 0x20000000 0x00004800  {  ; RW data
+   .ANY (+RW +ZI)
+  }
+  DEV_REGION 0x20004800 0x00000400  {  ; RW data
+   *(.dev_defined)
+  }
+  DRV_REGION 0x20004C00 0x00000400  {  ; RW data
+   *(.drv_defined)
+  }
+}
+
