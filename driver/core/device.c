@@ -4,7 +4,7 @@
  * @Author       : lxf
  * @Date         : 2024-12-05 13:10:51
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2024-12-05 16:47:28
+ * @LastEditTime : 2024-12-09 11:14:01
  * @Brief        : 从岑老板的代码中抄袭
  */
 
@@ -56,7 +56,6 @@ void *device_open(char *name)
             break;
         }
     }
-
     return ((dev == __end_dev) || (DRV_ERR_OK != result)) ? NULL : dev;
 }
 

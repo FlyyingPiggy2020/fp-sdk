@@ -3,8 +3,8 @@
  * @FilePath     : i2c_bus.h
  * @Author       : lxf
  * @Date         : 2024-12-08 11:54:38
- * @LastEditors  : lxf 154562451@qq.com
- * @LastEditTime : 2024-12-08 18:19:54
+ * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
+ * @LastEditTime : 2024-12-09 14:55:33
  * @Brief        :
  */
 
@@ -21,16 +21,7 @@ extern "C" {
 #include "device.h"
 
 /*---------- macro ----------*/
-#define IOCTL_I2CBUS_VCCENABLE   (IOCTL_USER_START + 0X00)
-#define IOCTL_I2CBUS_VCCDISABLE  (IOCTL_USER_START + 0X01)
-#define IOCTL_I2CBUS_WPENABLE    (IOCTL_USER_START + 0X02)
-#define IOCTL_I2CBUS_WPDISABLE   (IOCTL_USER_START + 0X03)
-#define IOCTL_I2CBUS_START       (IOCTL_USER_START + 0X04)
-#define IOCTL_I2CBUS_STOP        (IOCTL_USER_START + 0X05)
-#define IOCTL_I2CBUS_WAITACK     (IOCTL_USER_START + 0X06)
-#define IOCTL_I2CBUS_ACK         (IOCTL_USER_START + 0X07)
-#define IOCTL_I2CBUS_NACK        (IOCTL_USER_START + 0X08)
-#define IOCTL_I2CBUS_CHECKDEVICE (IOCTL_USER_START + 0X09)
+#define IOCTL_I2CBUS_CTRL_RW   (IOCTL_USER_START + 0X00)
 
 #define I2C_BUS_WR               0X0000
 #define I2C_BUS_RD               (1u << 0)
@@ -65,6 +56,12 @@ typedef struct {
     uint16_t len;
     uint8_t *buf;
 } i2c_msg_t;
+
+typedef struct {
+    i2c_msg_t *msgs;
+    int32_t number;
+} i2c_priv_data_t;
+
 /*---------- variable prototype ----------*/
 
 /*---------- function prototype ----------*/

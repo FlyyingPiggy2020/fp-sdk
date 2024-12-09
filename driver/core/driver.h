@@ -17,6 +17,7 @@ extern "C" {
 
 /*---------- includes ----------*/
 #include "bsp_config.h" //该头文件来自于board组件
+#include "clists.h"
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
@@ -34,6 +35,17 @@ extern "C" {
 
 #define ARRAY_SIZE(x)      (sizeof(x) / sizeof((x)[0]))
 #define FIELD_SIZEOF(t, f) (sizeof(((t *)0)->f))
+
+#if DRIVER_DEBUG
+#undef LOG_TAG
+#define LOG_TAG "DRIVER"
+#include "log_port.h"
+#define TRACE(...)  log_w(__VA_ARGS__)
+#define ASSERT(...) LOG_ASSERT(__VA_ARGS__)
+#else
+#define TRACE(...)
+#define ASSERT(...)
+#endif
 /*---------- type define ----------*/
 typedef struct st_driver {
     char drv_name[10];

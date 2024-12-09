@@ -4,26 +4,15 @@
  * @Author       : lxf
  * @Date         : 2024-12-05 14:37:46
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2024-12-06 14:36:10
+ * @LastEditTime : 2024-12-09 13:16:14
  * @Brief        :
  */
 
 /*---------- includes ----------*/
-#include "clists.h"
 #include "pwmc.h"
 #include "driver.h"
 #include "drv_err.h"
 /*---------- macro ----------*/
-#if DRIVER_DEBUG
-#undef LOG_TAG
-#define LOG_TAG "DATA_CENTER"
-#include "log_port.h"
-#define TRACE(...)  log_w(__VA_ARGS__)
-#define ASSERT(...) LOG_ASSERT(__VA_ARGS__)
-#else
-#define TRACE(...)
-#define ASSERT(...)
-#endif
 
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
@@ -101,7 +90,7 @@ static void pwmc_close(driver_t **pdrv)
 static int32_t pwmc_ioctl(driver_t **pdrv, uint32_t cmd, void *args)
 {
     pwmc_describe_t *pdesc = NULL;
-    int32_t err = -6;
+    int32_t err = DRV_ERR_WRONG_ARGS;
     int32_t (*cb)(pwmc_describe_t *, void *) = NULL;
 
     ASSERT(pdrv);
