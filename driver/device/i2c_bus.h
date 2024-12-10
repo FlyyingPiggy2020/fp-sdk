@@ -21,15 +21,15 @@ extern "C" {
 #include "device.h"
 
 /*---------- macro ----------*/
-#define IOCTL_I2CBUS_CTRL_RW   (IOCTL_USER_START + 0X00)
+#define IOCTL_I2CBUS_CTRL_RW (IOCTL_USER_START + 0X00)
 
-#define I2C_BUS_WR               0X0000
-#define I2C_BUS_RD               (1u << 0)
-#define I2C_ADDR_10BIT           (1u << 2)
-#define I2C_NO_START             (1u << 4)
-#define I2C_IGNORE_NACK          (1u << 5)
-#define I2C_NO_READ_ACK          (1u << 6)
-#define I2C_NO_STOP              (1u << 7)
+#define I2C_BUS_WR           0X0000
+#define I2C_BUS_RD           (1u << 0)
+#define I2C_ADDR_10BIT       (1u << 2)
+#define I2C_NO_START         (1u << 4)
+#define I2C_IGNORE_NACK      (1u << 5)
+#define I2C_NO_READ_ACK      (1u << 6)
+#define I2C_NO_STOP          (1u << 7)
 /*---------- type define ----------*/
 
 typedef struct {

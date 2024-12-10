@@ -68,7 +68,7 @@ static int32_t pwmc_open(driver_t **pdrv)
         err = DRV_ERR_OK;
         if (pdesc->ops.init) {
             if (!pdesc->ops.init()) {
-                err = -1;
+                err = DRV_ERR_ERROR;
             }
         }
     } while (0);

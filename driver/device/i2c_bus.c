@@ -4,7 +4,7 @@
  * @Author       : lxf
  * @Date         : 2024-12-08 11:54:33
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2024-12-09 14:36:30
+ * @LastEditTime : 2024-12-10 10:30:50
  * @Brief        :
  */
 
@@ -30,11 +30,13 @@ static int32_t i2c_open(driver_t **pdrv);
 static void i2c_close(driver_t **pdrv);
 static int32_t i2c_ioctl(driver_t **pdrv, uint32_t cmd, void *args);
 
-
 static int32_t i2c_master_send(i2cbus_describe_t *bus, uint16_t addr, uint16_t flags, const uint8_t *buf, uint32_t count);
 static int32_t i2c_master_recv(i2cbus_describe_t *bus, uint16_t addr, uint16_t flags, uint8_t *buf, uint32_t count);
 static int32_t i2c_bus_device_control(i2cbus_describe_t *bus, void *arg);
 static int32_t i2c_transfer(i2cbus_describe_t *bus, i2c_msg_t msgs[], uint32_t num);
+
+//
+static void i2c_stop(i2c_bit_ops_t *ops);
 /*---------- variable ----------*/
 DRIVER_DEFINED(i2c_bus, i2c_open, i2c_close, NULL, NULL, i2c_ioctl, NULL);
 
@@ -60,6 +62,7 @@ static int32_t i2c_open(driver_t **pdrv)
                 err = DRV_ERR_ERROR;
                 break;
             }
+            i2c_stop(pdesc->ops);
         }
     } while (0);
     return err;
@@ -97,7 +100,7 @@ static int32_t i2c_read(driver_t **pdrv, void *buf, uint32_t addition, uint32_t 
     uint16_t flags;
     i2cbus_describe_t *pdesc = NULL;
     int32_t err = DRV_ERR_WRONG_ARGS;
-    
+
     pdesc = container_of(pdrv, device_t, pdrv)->pdesc;
     ASSERT(pdrv);
 
@@ -114,7 +117,7 @@ static int32_t i2c_ioctl(driver_t **pdrv, uint32_t cmd, void *args)
     ASSERT(pdrv);
 
     pdesc = container_of(pdrv, device_t, pdrv)->pdesc;
-    
+
     do {
         if (!pdesc) {
             break;
@@ -133,7 +136,7 @@ static int32_t i2c_ctrl_rw(i2cbus_describe_t *bus, void *args)
 {
     int32_t err;
     i2c_priv_data_t *priv_data = args;
-    err = i2c_transfer(bus,priv_data->msgs, priv_data->number);
+    err = i2c_transfer(bus, priv_data->msgs, priv_data->number);
     return (err == priv_data->number) ? DRV_ERR_OK : err;
 }
 
@@ -181,7 +184,7 @@ static void i2c_start(i2c_bit_ops_t *ops)
 static void i2c_stop(i2c_bit_ops_t *ops)
 {
     SDA_L(ops);
-    SCL_L(ops);
+    SCL_H(ops);
     i2c_delay(ops);
     SDA_H(ops);
 }
@@ -480,11 +483,17 @@ static int32_t i2c_master_recv(i2cbus_describe_t *bus, uint16_t addr, uint16_t f
     msg.flags = flags | I2C_BUS_RD;
     msg.len = count;
     msg.buf = buf;
-    
+
     ret = i2c_transfer(bus, &msg, 1);
     return (ret == 1) ? count : ret;
 }
 
+/**
+ * @brief 
+ * @param {i2cbus_describe_t} *bus
+ * @param {void} *arg
+ * @return {*} 返回值 实际执行的msg number
+ */
 static int32_t i2c_bus_device_control(i2cbus_describe_t *bus, void *arg)
 {
     i2c_bit_ops_t *ops = bus->ops;
@@ -493,10 +502,8 @@ static int32_t i2c_bus_device_control(i2cbus_describe_t *bus, void *arg)
     ASSERT(ops);
 
     priv_data = arg;
+    
     ret = i2c_transfer(bus, priv_data->msgs, priv_data->number);
-    if (ret < 0) {
-        return ret;
-    }
-    return DRV_ERR_OK;
+    return (ret == priv_data->number) ? DRV_ERR_OK : DRV_ERR_ERROR;
 }
 /*---------- end of file ----------*/
