@@ -4,7 +4,7 @@
  * @Author       : lxf
  * @Date         : 2024-12-08 11:54:33
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2024-12-10 10:30:50
+ * @LastEditTime : 2024-12-10 11:55:23
  * @Brief        :
  */
 
@@ -76,37 +76,6 @@ static void i2c_close(driver_t **pdrv)
     if (pdesc->ops->deinit) {
         pdesc->ops->deinit();
     }
-}
-
-static int32_t i2c_write(driver_t **pdrv, void *buf, uint32_t addition, uint32_t len)
-{
-    uint16_t addr;
-    uint16_t flags;
-    i2cbus_describe_t *pdesc = NULL;
-    int32_t err = DRV_ERR_WRONG_ARGS;
-
-    pdesc = container_of(pdrv, device_t, pdrv)->pdesc;
-    ASSERT(pdesc != NULL);
-    ASSERT(buf != NULL);
-
-    addr = addition & 0xffff;
-    flags = addition >> 16 & 0xffff;
-    return i2c_master_send(pdesc, addr, flags, (const uint8_t *)buf, len);
-}
-
-static int32_t i2c_read(driver_t **pdrv, void *buf, uint32_t addition, uint32_t len)
-{
-    uint16_t addr;
-    uint16_t flags;
-    i2cbus_describe_t *pdesc = NULL;
-    int32_t err = DRV_ERR_WRONG_ARGS;
-
-    pdesc = container_of(pdrv, device_t, pdrv)->pdesc;
-    ASSERT(pdrv);
-
-    addr = addition & 0xffff;
-    flags = addition >> 16;
-    return i2c_master_recv(pdesc, addr, flags, (uint8_t *)buf, len);
 }
 
 static int32_t i2c_ioctl(driver_t **pdrv, uint32_t cmd, void *args)
@@ -336,7 +305,7 @@ static int32_t i2c_send_address(i2cbus_describe_t *bus, uint8_t addr, int32_t re
 
     int32_t i;
     int32_t ret = DRV_ERR_TIME_OUT;
-
+    
     for (i = 0; i <= retries; i++) {
         i2c_writeb(bus, addr);
         ret = i2c_waitack(ops);
@@ -489,7 +458,7 @@ static int32_t i2c_master_recv(i2cbus_describe_t *bus, uint16_t addr, uint16_t f
 }
 
 /**
- * @brief 
+ * @brief
  * @param {i2cbus_describe_t} *bus
  * @param {void} *arg
  * @return {*} 返回值 实际执行的msg number
@@ -502,7 +471,7 @@ static int32_t i2c_bus_device_control(i2cbus_describe_t *bus, void *arg)
     ASSERT(ops);
 
     priv_data = arg;
-    
+
     ret = i2c_transfer(bus, priv_data->msgs, priv_data->number);
     return (ret == priv_data->number) ? DRV_ERR_OK : DRV_ERR_ERROR;
 }

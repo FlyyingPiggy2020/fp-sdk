@@ -21,8 +21,8 @@ extern "C" {
 #include "device.h"
 /*---------- macro ----------*/
 
-//TODO:让用户去配置config参数是危险的，如果参数不对驱动无法正常工作
-//日后修改直接提供下面几种选项给用户，让用户直接选择。
+// TODO:让用户去配置config参数是危险的，如果参数不对驱动无法正常工作
+// 日后修改直接提供下面几种选项给用户，让用户直接选择。
 
 // #ifdef AT24C32
 // #define EE_MODEL_NAME "AT24C32"
@@ -67,8 +67,8 @@ extern "C" {
 /*---------- type define ----------*/
 typedef struct {
     struct {
-        uint32_t ee_size;/* 总容量(字节) */
-        uint32_t ee_page_size;  /* 页面大小(字节) */
+        uint32_t ee_size;      /* 总容量(字节) */
+        uint32_t ee_page_size; /* 页面大小(字节) */
         uint8_t ee_dev_addr;   /* 设备地址 */
         uint8_t ee_addr_btyes; /* 地址字节个数 */
     } config;

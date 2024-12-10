@@ -42,7 +42,7 @@ static int32_t at24cxx_open(driver_t **pdrv)
     int32_t err = DRV_ERR_WRONG_ARGS;
     void *bus = NULL;
     pdesc = container_of(pdrv, device_t, pdrv)->pdesc;
-    
+
     ASSERT(pdrv != NULL);
 
     do {
@@ -58,12 +58,12 @@ static int32_t at24cxx_open(driver_t **pdrv)
         }
         /* 绑定i2c总线 */
         if (NULL == (bus = device_open(pdesc->bus_name))) {
-           TRACE("%s bind %s failed!\n",container_of(pdrv, device_t, pdrv)->dev_name, pdesc->bus_name);
-           if (pdesc->ops.deinit) {
-               pdesc->ops.deinit();
-           }
-           err = DRV_ERR_ERROR;
-           break;
+            TRACE("%s bind %s failed!\n", container_of(pdrv, device_t, pdrv)->dev_name, pdesc->bus_name);
+            if (pdesc->ops.deinit) {
+                pdesc->ops.deinit();
+            }
+            err = DRV_ERR_ERROR;
+            break;
         }
         if (pdesc->ops.vcc_enable) {
             pdesc->ops.vcc_enable(1);
@@ -103,7 +103,7 @@ static int32_t at24cxx_write(driver_t **pdrv, void *buf, uint32_t addition, uint
 {
     at24cxx_describe_t *pdesc = NULL;
     int32_t err = DRV_ERR_OK;
-    
+
     pdesc = container_of(pdrv, device_t, pdrv)->pdesc;
     uint16_t pageWriteSize = pdesc->config.ee_page_size - addition % pdesc->config.ee_page_size;
     uint8_t *ptr = buf;
@@ -121,7 +121,7 @@ static int32_t at24cxx_write(driver_t **pdrv, void *buf, uint32_t addition, uint
         if (pdesc->ops.unlock) {
             pdesc->ops.unlock(pdesc);
         }
-        while(len) {
+        while (len) {
             if (len > pageWriteSize) {
                 if (_at_24cxx_wrtie_page(pdrv, ptr, addition, pageWriteSize)) {
                     err = DRV_ERR_ERROR;
@@ -171,7 +171,7 @@ static int32_t at24cxx_read(driver_t **pdrv, void *buf, uint32_t addition, uint3
         if (pdesc->ops.unlock) {
             pdesc->ops.unlock(pdesc);
         }
-        while(len) {
+        while (len) {
             if (len > pageReadSize) {
                 if (_at_24cxx_read_page(pdrv, ptr, addition, pageReadSize)) {
                     err = DRV_ERR_ERROR;
