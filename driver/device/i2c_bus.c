@@ -153,9 +153,11 @@ static void i2c_start(i2c_bit_ops_t *ops)
 static void i2c_stop(i2c_bit_ops_t *ops)
 {
     SDA_L(ops);
+    i2c_delay(ops);
     SCL_H(ops);
     i2c_delay(ops);
     SDA_H(ops);
+    i2c_delay(ops);
 }
 
 /**
@@ -305,7 +307,7 @@ static int32_t i2c_send_address(i2cbus_describe_t *bus, uint8_t addr, int32_t re
 
     int32_t i;
     int32_t ret = DRV_ERR_TIME_OUT;
-    
+
     for (i = 0; i <= retries; i++) {
         i2c_writeb(bus, addr);
         ret = i2c_waitack(ops);

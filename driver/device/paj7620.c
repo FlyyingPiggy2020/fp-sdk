@@ -4,7 +4,7 @@
  * @Author       : lxf
  * @Date         : 2024-12-10 11:43:23
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2024-12-10 17:09:44
+ * @LastEditTime : 2024-12-11 14:54:17
  * @Brief        :
  */
 
@@ -49,10 +49,10 @@
 // 手势识别效果
 #define BIT(x)                    1 << (x)
 
-#define GES_LEFT                  BIT(0) // 向上
-#define GES_RIGHT                 BIT(1) // 向下
-#define GES_DOWM                  BIT(2) // 向左
-#define GES_UP                    BIT(3) // 向右
+#define GES_UP                    BIT(0) // 向上
+#define GES_DOWN                  BIT(1) // 向下
+#define GES_LEFT                  BIT(2) // 向左
+#define GES_RIGHT                 BIT(3) // 向右
 #define GES_FORWARD               BIT(4) // 向前
 #define GES_BACKWARD              BIT(5) // 向后
 #define GES_CLOCKWISE             BIT(6) // 顺时针
@@ -254,21 +254,27 @@ static int32_t paj7620_ioctl(driver_t **pdrv, uint32_t cmd, void *args)
     return err;
 }
 
-static paj7620_evt_t _status_to_evt(uint16_t status)
+static paj7620_evt_t _status_to_evt(paj7620_describe_t *pdesc, uint16_t status)
 {
     paj7620_evt_t evt = PAJ7620_EVT_NONE;
+#define DIR(x) ((x + pdesc->config.dir) % 4)
+    paj7620_evt_t table[4] = { PAJ7620_EVT_UP, PAJ7620_EVT_RIGHT, PAJ7620_EVT_DOWN, PAJ7620_EVT_LEFT };
+    uint8_t test = 0;
     switch (status) {
-        case GES_LEFT:
-            evt = PAJ7620_EVT_LEFT;
+        case GES_UP:
+            evt = table[DIR(0)];
             break;
         case GES_RIGHT:
-            evt = PAJ7620_EVT_RIGHT;
+            evt = table[DIR(1)];
             break;
-        case GES_DOWM:
-            evt = PAJ7620_EVT_DOWN;
+        case GES_DOWN:
+            evt = table[DIR(2)];
+            ;
             break;
-        case GES_UP:
-            evt = PAJ7620_EVT_UP;
+        case GES_LEFT:
+            test = DIR(3);
+            evt = table[DIR(3)];
+            ;
             break;
         case GES_FORWARD:
             evt = PAJ7620_EVT_FORWARD;
@@ -299,16 +305,18 @@ static int32_t paj7620_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *
     ASSERT(args);
 
     pdesc = container_of(pdrv, device_t, pdrv)->pdesc;
-    if (pdesc && pdesc->cb.event) {
+    if (pdesc) {
         // 1. check bank0
         _paj7620_select_bank(pdesc, BANK0);
         status = _gs_read_bytes(pdesc, PAJ_GET_INT_FLAG2);
         status <<= 8;
         status += _gs_read_bytes(pdesc, PAJ_GET_INT_FLAG1);
         if (status) {
-            evt = _status_to_evt(status);
-            pdesc->cb.event(evt);
-            return DRV_ERR_OK;
+            evt = _status_to_evt(pdesc, status);
+            if (pdesc->cb.event) {
+                pdesc->cb.event(evt);
+                return DRV_ERR_OK;
+            }
         } else {
             return DRV_ERR_ERROR;
         }
@@ -373,11 +381,10 @@ static uint8_t _gs_read_bytes(paj7620_describe_t *pdesc, uint8_t reg_address)
 static uint8_t _gs_weakup(paj7620_describe_t *pdesc)
 {
     i2c_msg_t msgs[2];
-
-    uint8_t buf[2] = { PAJ_REGITER_BANK_SEL, PAJ_BANK0};
+    uint8_t txbuf[2] = { PAJ_REGITER_BANK_SEL, PAJ_BANK0 };
     msgs[0].addr = pdesc->config.ee_dev_addr;
-    msgs[0].flags = I2C_BUS_WR | I2C_IGNORE_NACK;
-    msgs[0].buf = buf;
+    msgs[0].flags = I2C_BUS_WR;
+    msgs[0].buf = txbuf;
     msgs[0].len = 2;
 
     i2c_priv_data_t arg = {
@@ -411,7 +418,7 @@ static int32_t paj7620u2_weakup(paj7620_describe_t *pdesc)
     _paj7620_select_bank(pdesc, BANK0); // 进入BANK0
     data = _gs_read_bytes(pdesc, 0x01); // 读取状态
     data <<= 8;
-    data += _gs_read_bytes(pdesc, 0x02); // 读取状态
+    data += _gs_read_bytes(pdesc, 0x00); // 读取状态
     if (data != 0x7620) {
         return DRV_ERR_ERROR;
     }

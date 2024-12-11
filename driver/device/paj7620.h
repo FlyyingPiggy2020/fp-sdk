@@ -6,6 +6,7 @@
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
  * @LastEditTime : 2024-12-10 13:48:05
  * @Brief        :
+ * 默认G_INT低电平使能
  */
 
 #ifndef __PAJ7620__
@@ -37,6 +38,12 @@ typedef enum {
     PAJ7620_EVT_WAVE,
 } paj7620_evt_t;
 
+typedef enum {
+    PAJ7620_DIR_0,
+    PAJ7620_DIR_90,
+    PAJ7620_DIR_180,
+    PAJ7620_DIR_270,
+} paj7620_dir_t;
 typedef struct {
     struct {
         bool en;
@@ -54,6 +61,7 @@ typedef struct {
     } ops;
     struct {
         uint8_t ee_dev_addr;
+        uint8_t dir; // 传感器安装的方向(顺时针)
     } config;
     char *bus_name;
     void *bus;
