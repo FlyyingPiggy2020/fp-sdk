@@ -1,17 +1,7 @@
-`components`组件
-
-`driver`驱动程序
-
-`device `实际的硬件设备，一个设备可以对应多个驱动程序
-
-`utilities`公共库
-
-`protocol`协议
-
-# 使用说明
-
-esp32 把fp-sdk目录放到对应工程`components`下
-
-CmakeList.txt里面根据 `ESP_PLATFORM 来判断是否为ESP-IDF环境。`
-
-增加 `add_definitions(-DUSE_ESP=1)` 宏定义去预编译代码
+| 名称        | 备注                                                        |
+| ----------- | ----------------------------------------------------------- |
+| components  | 通用业务逻辑的组件                                          |
+| driver      | 设备IO驱动                                                  |
+| env_support | espidf环境支持（因为整体sdk重构过，所以不再适用，目前废弃） |
+| Unity       | 单元测试组件 (因为整体sdk重构过，所以不再适用，目前废弃)    |
+| utilities   | 一些实用的基础组件为整个sdk提供支持                         |
