@@ -188,7 +188,7 @@ void half_duplex_bus_handle(half_duplex_bus_t *bus)
 }
 
 /**
- * @brief 带重发和优先级的传输函数
+ * @brief 带重发和优先级的传输函数(注：优先级为0时不会传输,最低的优先级为1)
  * @param {unsigned char} *buf
  * @param {unsigned short} len
  * @param {unsigned char} retrans
