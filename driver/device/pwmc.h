@@ -59,7 +59,7 @@ union pwmc_ioctl_param {
     } duty_raw;
     struct {
         uint32_t channel;
-        float duty;
+        float duty; // 取值范围[0,1];
     } duty;
 };
 
