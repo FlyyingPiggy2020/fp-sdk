@@ -26,14 +26,11 @@
 
 /*---------- macro ----------*/
 #ifdef USE_HALF_DUPLEX_BUS_DEBUG
-#define TRACE(fmt, ...) log_info(fmt, ##__VA_ARGS__)
-// #define ASSERT(expr)
-#define ASSERT(expr)                          \
-    if (!(expr)) {                            \
-        TRACE("Assertion failed: %s", #expr); \
-        while (1)                             \
-            ;                                 \
-    }
+#undef LOG_TAG
+#define LOG_TAG "HALF_DUPLEX"
+#include "fplog_port.h"
+#define TRACE(fmt, ...) log_i(fmt, ##__VA_ARGS__)
+#define ASSERT(expr)
 #else
 #define TRACE(...)
 #define ASSERT(expr)
@@ -61,7 +58,6 @@ half_duplex_bus_t *half_duplex_bus_new(half_duplex_bus_ops_t *ops, unsigned shor
         }
         self = malloc(sizeof(half_duplex_bus_t) + recv_capacity);
         if (self == NULL) {
-            TRACE("malloc failed.Used memory= %d.Total memory size = %d.", heap_get_used_size(), MEMORY_POOL_SIZE);
             break;
         }
         memset(self, 0, sizeof(half_duplex_bus_t) + recv_capacity);
@@ -70,7 +66,6 @@ half_duplex_bus_t *half_duplex_bus_new(half_duplex_bus_ops_t *ops, unsigned shor
         self->ops = ops;
         INIT_LIST_HEAD(&self->trans.root);
         TRACE("malloc bus success. ptr:%p", self);
-        TRACE("Used memory= %d.Total memory size = %d.", heap_get_used_size(), MEMORY_POOL_SIZE);
     } while (0);
     return self;
 }
@@ -89,7 +84,6 @@ void half_duplex_bus_destory(half_duplex_bus_t *self)
         free(n);
     }
     free(self);
-    TRACE("bus%p destory.Used memory= %d.Total memory size = %d.", self, heap_get_used_size(), MEMORY_POOL_SIZE);
 }
 
 /**
@@ -218,7 +212,6 @@ void half_duplex_bus_transmitter_cache(half_duplex_bus_t *bus, unsigned char *bu
     }
 
     memcpy(txbuf + sizeof(half_duplex_bus_trans_node_t), buf, len);
-    TRACE("[half_duplex_bus_transmitter_cache]Used memory= %d.Total memory size = %d.", heap_get_used_size(), MEMORY_POOL_SIZE);
 }
 
 /**
