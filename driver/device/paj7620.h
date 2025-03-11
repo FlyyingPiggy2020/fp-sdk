@@ -4,9 +4,47 @@
  * @Author       : lxf
  * @Date         : 2024-12-10 11:43:31
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2024-12-10 13:48:05
+ * @LastEditTime : 2025-03-11 17:40:10
  * @Brief        :
- * 默认G_INT低电平使能
+ * [-] paj7620 is a gesure sensor developed by PixArt.
+ * the datasheet of paj7620 is :https://files.seeedstudio.com/wiki/Grove_Gesture_V_1.0/res/PAJ7620U2_Datasheet_V0.8_20140611.pdf
+ * 
+ * ATTENTTION:G_INT default is low level active.
+ * 
+ * this driver enables real-time detection for 9 gestures: up, down, left, right,
+ * forward,backward,clockwise,counter-clockwise and wave. It utilizes i2c communication
+ * (defalut address: 0x73).
+ * 
+ * [-] How to use:
+ *   (++)1.register i2c bus name, init, delay_ms api in paj7620_describe_t.then use marco DEVICE_DEFINE.
+ *   for example:
+ *   static paj7620_describe_t paj_ops = {
+ *      .bus_name = "i2c2",
+ *      .ops = {
+ *          .init = _init,
+ *         .delay_ms = bsp_DelayMS,
+ *     },
+ *     .config = {
+ *         .ee_dev_addr = 0x73,
+ *         .dir = PAJ7620_DIR_0,
+ *     },
+ *   };
+ *   DEVICE_DEFINED(paj_name, paj7620, &paj_ops);
+ * 
+ *   (++)2. register event callback.
+ *   for example:
+ *   device_t *dev_gesture = devcie_open("paj_name");
+ *   device_ioctl(dev_gesture, IOCTL_PAJ7620_SET_EVT_CB, _call_back);
+ * 
+ *   (++)3. implement your logic in event callback.
+ *   static void _call_back(paj7620_evt_t evt)
+ *   {
+ *       switch(evt) {
+ *           case PAJ7620_EVT_UP:
+ *           break;
+ *           ....
+ *       }
+ *   }
  */
 
 #ifndef __PAJ7620__
