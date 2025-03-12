@@ -4,7 +4,7 @@
  * @Author       : lxf
  * @Date         : 2024-12-05 14:37:46
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2024-12-09 13:16:14
+ * @LastEditTime : 2025-03-12 10:51:23
  * @Brief        :
  */
 
@@ -122,7 +122,6 @@ static int32_t pwmc_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *arg
 
     return err;
 }
-///* ioctl callback function */
 
 static int32_t _ioctl_enable(pwmc_describe_t *pdesc, void *args)
 {
@@ -153,12 +152,14 @@ static int32_t _ioctl_disable(pwmc_describe_t *pdesc, void *args)
 static int32_t _ioctl_get_freq(pwmc_describe_t *pdesc, void *args)
 {
     int32_t err = DRV_ERR_WRONG_ARGS;
-    uint32_t *freq = (uint32_t *)args;
-
-    if (freq) {
-        *freq = pdesc->freq;
-        err = DRV_ERR_OK;
-    }
+    union pwmc_ioctl_param *param = (union pwmc_ioctl_param *)args;
+    do {
+        if (!param) {
+            break;
+        }
+        param->freq.freq = pdesc->freq;
+        err = DRV_ERR_EOK;
+    } while (0);
 
     return err;
 }
@@ -166,18 +167,14 @@ static int32_t _ioctl_get_freq(pwmc_describe_t *pdesc, void *args)
 static int32_t _ioctl_set_freq(pwmc_describe_t *pdesc, void *args)
 {
     int32_t err = DRV_ERR_WRONG_ARGS;
-    uint32_t *freq = (uint32_t *)args;
-
-    if (freq && *freq != pdesc->freq) {
-        pdesc->freq = *freq;
-        if (pdesc->ops.deinit) {
-            pdesc->ops.deinit();
+    union pwmc_ioctl_param *param = (union pwmc_ioctl_param *)args;
+    do {
+        if (!param) {
+            break;
         }
-        if (pdesc->ops.init) {
-            pdesc->ops.init();
-        }
-        err = DRV_ERR_OK;
-    }
+        pdesc->freq = param->freq.freq;
+        err = DRV_ERR_EOK;
+    } while (0);
 
     return err;
 }
@@ -185,12 +182,14 @@ static int32_t _ioctl_set_freq(pwmc_describe_t *pdesc, void *args)
 static int32_t _ioctl_get_number_of_channel(pwmc_describe_t *pdesc, void *args)
 {
     int32_t err = DRV_ERR_WRONG_ARGS;
-    uint32_t *num = (uint32_t *)args;
-
-    if (num) {
-        *num = pdesc->number_of_channel;
-        err = DRV_ERR_OK;
-    }
+    union pwmc_ioctl_param *param = (union pwmc_ioctl_param *)args;
+    do {
+        if (!param) {
+            break;
+        }
+        param->number_of_channel.channel = pdesc->number_of_channel;
+        err = DRV_ERR_EOK;
+    } while (0);
 
     return err;
 }
