@@ -23,6 +23,7 @@ extern "C" {
 
 // TODO:让用户去配置config参数是危险的，如果参数不对驱动无法正常工作
 // 日后修改直接提供下面几种选项给用户，让用户直接选择。
+// 我们地址表现为0x50
 
 // #ifdef AT24C32
 // #define EE_MODEL_NAME "AT24C32"

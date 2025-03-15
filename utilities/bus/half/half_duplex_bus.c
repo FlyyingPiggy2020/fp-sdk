@@ -135,8 +135,8 @@ void half_duplex_bus_handle(half_duplex_bus_t *bus)
         if (bus->ops->is_allowed_sending() != true) {
             break;
         }
-        /* 1.如果当前未在发送，则查找优先级最高的报文 */
-        if (bus->trans.cur_node == NULL && list_empty(&bus->trans.root) == false) {
+        /* 1.查找优先级最高的报文 */
+        if (list_empty(&bus->trans.root) == false) {
 
             half_duplex_bus_trans_node_t *pos = NULL, *n = NULL;
             unsigned char priority = 0;
@@ -164,7 +164,7 @@ void half_duplex_bus_handle(half_duplex_bus_t *bus)
             translen = node->len;
             bus->ops->write_buf(transbuf, translen);
             if (node->random_ms != NULL) {
-                unsigned short ms = node->random_ms(bus->trans.cur_node);
+                unsigned short ms = node->random_ms();
                 bus->ops->send_delay(ms);
             } else {
                 bus->ops->send_delay(60 + 40 * node->retrans_count);
@@ -189,7 +189,7 @@ void half_duplex_bus_handle(half_duplex_bus_t *bus)
  * @param {unsigned char} priority
  * @return {*}
  */
-void half_duplex_bus_transmitter_cache(half_duplex_bus_t *bus, unsigned char *buf, unsigned short len, unsigned char retrans, unsigned char priority)
+void half_duplex_bus_transmitter_cache(half_duplex_bus_t *bus, unsigned char *buf, unsigned short len, unsigned char retrans, unsigned char priority, void *random_ms)
 {
     ASSERT(bus);
     ASSERT(buf);
@@ -201,7 +201,7 @@ void half_duplex_bus_transmitter_cache(half_duplex_bus_t *bus, unsigned char *bu
         return;
     }
     memset(txbuf, 0, len + sizeof(half_duplex_bus_trans_node_t));
-    ((half_duplex_bus_trans_node_t *)(txbuf))->random_ms = NULL;
+    ((half_duplex_bus_trans_node_t *)(txbuf))->random_ms = (unsigned short (*)(void))random_ms;
     ((half_duplex_bus_trans_node_t *)(txbuf))->len = len;
     ((half_duplex_bus_trans_node_t *)(txbuf))->priority = priority;
     ((half_duplex_bus_trans_node_t *)(txbuf))->retrans_max = retrans;
