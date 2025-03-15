@@ -28,7 +28,6 @@ static int32_t at24xx_ioctl(driver_t **pdrv, uint32_t cmd, void *args);
 //
 static int32_t _at_24cxx_wrtie_page(driver_t **pdrv, uint8_t *buf, uint32_t addition, uint32_t len);
 static int32_t _at_24cxx_read_page(driver_t **pdrv, uint8_t *buf, uint32_t addition, uint32_t len);
-
 /*---------- variable ----------*/
 DRIVER_DEFINED(at24cxx, at24cxx_open, at24cxx_close, at24cxx_write, at24cxx_read, at24xx_ioctl, NULL);
 
@@ -107,10 +106,16 @@ static int32_t at24cxx_write(driver_t **pdrv, void *buf, uint32_t addition, uint
     pdesc = container_of(pdrv, device_t, pdrv)->pdesc;
     uint16_t pageWriteSize = pdesc->config.ee_page_size - addition % pdesc->config.ee_page_size;
     uint8_t *ptr = buf;
+    uint8_t compare_buf[128] = { 0 };
+    uint8_t *compare_ptr = compare_buf;
     ASSERT(pdesc);
     ASSERT(pdesc->bus);
 
     if (addition + len > pdesc->config.ee_size) {
+        err = DRV_ERR_WRONG_ARGS;
+        return err;
+    }
+    if (pdesc->config.ee_page_size > 128) {
         err = DRV_ERR_WRONG_ARGS;
         return err;
     }
@@ -127,12 +132,28 @@ static int32_t at24cxx_write(driver_t **pdrv, void *buf, uint32_t addition, uint
                     err = DRV_ERR_ERROR;
                     break;
                 }
+                if (_at_24cxx_read_page(pdrv, compare_ptr, addition, pageWriteSize)) {
+                    err = DRV_ERR_ERROR;
+                    break;
+                }
+                if (memcmp(compare_ptr, ptr, pageWriteSize)) {
+                    err = DRV_ERR_ERROR;
+                    break;
+                }
                 addition += pageWriteSize;
                 ptr += pageWriteSize;
                 len -= pageWriteSize;
                 pageWriteSize = pdesc->config.ee_page_size;
             } else {
                 if (_at_24cxx_wrtie_page(pdrv, ptr, addition, len)) {
+                    err = DRV_ERR_ERROR;
+                    break;
+                }
+                if (_at_24cxx_read_page(pdrv, compare_ptr, addition, len)) {
+                    err = DRV_ERR_ERROR;
+                    break;
+                }
+                if (memcmp(compare_ptr, ptr, len)) {
                     err = DRV_ERR_ERROR;
                     break;
                 }
@@ -293,4 +314,5 @@ static int32_t _at_24cxx_wrtie_page(driver_t **pdrv, uint8_t *buf, uint32_t addi
     };
     return device_ioctl(pdesc->bus, IOCTL_I2CBUS_CTRL_RW, &arg);
 }
+
 /*---------- end of file ----------*/
