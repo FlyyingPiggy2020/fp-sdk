@@ -77,7 +77,7 @@ typedef struct half_duplex_bus_trans_node {
      * @param {half_duplex_bus_trans_node_t} *self
      * @return {*}
      */
-    unsigned short (*random_ms)(half_duplex_bus_trans_node_t *self);
+    unsigned short (*random_ms)(void);
     unsigned char priority; // 数值越大，优先级越高
     struct list_head node;
 } half_duplex_bus_trans_node_t;
@@ -101,7 +101,7 @@ typedef struct half_duplex_bus {
 /*---------- function prototype ----------*/
 half_duplex_bus_t *half_duplex_bus_new(half_duplex_bus_ops_t *ops, unsigned short recv_capacity);
 void half_duplex_bus_destory(half_duplex_bus_t *self);
-void half_duplex_bus_transmitter_cache(half_duplex_bus_t *bus, unsigned char *buf, unsigned short len, unsigned char retrans, unsigned char priority);
+void half_duplex_bus_transmitter_cache(half_duplex_bus_t *bus, unsigned char *buf, unsigned short len, unsigned char retrans, unsigned char priority, void *random_ms);
 void half_duplex_bus_transmit_cache_complete(half_duplex_bus_t *bus);
 void half_duplex_bus_handle(half_duplex_bus_t *bus);
 
