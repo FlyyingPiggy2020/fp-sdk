@@ -131,11 +131,10 @@ SHELL_EXPORT_CMD(heap_used_size, heap_get_used_size);
 int heap_get_used_size(void)
 {
 #if (CONFIG_TLSF_HEAP_SIZE == 0)
-return get_used_size(HEAP_BEGIN);
+    return get_used_size(HEAP_BEGIN);
 #else
-return get_used_size(heap_pool);
+    return get_used_size(heap_pool);
 #endif
-    
 }
 #endif
 /*---------- end of file ----------*/
