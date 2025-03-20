@@ -338,7 +338,7 @@ static int32_t _ioctl_set_freq_duty(pwmc_describe_t *pdesc, void *args)
             err = DRV_ERR_EOK;
             break;
         }
-        
+
         if (param->freq < 100) {
             pdesc->priv.prescaler = 10000 - 1;
             pdesc->priv.arr = (pdesc->clock / 10000) / param->freq - 1;

@@ -29,25 +29,25 @@ extern "C" {
 #include "device.h"
 
 /*---------- macro ----------*/
-#define IOCTL_PWMC_ENABLE                (IOCTL_USER_START + 0x00)
-#define IOCTL_PWMC_DISABLE               (IOCTL_USER_START + 0x01)
-#define IOCTL_PWMC_GET_FREQ              (IOCTL_USER_START + 0x02)
-#define IOCTL_PWMC_SET_FREQ              (IOCTL_USER_START + 0x03)
-#define IOCTL_PWMC_GET_DUTY              (IOCTL_USER_START + 0x05)
-#define IOCTL_PWMC_SET_DUTY              (IOCTL_USER_START + 0x06)
-#define IOCTL_PWMC_GET_DUTY_RAW          (IOCTL_USER_START + 0x07)
-#define IOCTL_PWMC_SET_DUTY_RAW          (IOCTL_USER_START + 0x08)
-#define IOCTL_PWMC_SET_IRQ_HANDLER       (IOCTL_USER_START + 0x09)
-#define IOCTL_PWMC_SET_FREQ_DUTY         (IOCTL_USER_START + 0x0A)
+#define IOCTL_PWMC_ENABLE          (IOCTL_USER_START + 0x00)
+#define IOCTL_PWMC_DISABLE         (IOCTL_USER_START + 0x01)
+#define IOCTL_PWMC_GET_FREQ        (IOCTL_USER_START + 0x02)
+#define IOCTL_PWMC_SET_FREQ        (IOCTL_USER_START + 0x03)
+#define IOCTL_PWMC_GET_DUTY        (IOCTL_USER_START + 0x05)
+#define IOCTL_PWMC_SET_DUTY        (IOCTL_USER_START + 0x06)
+#define IOCTL_PWMC_GET_DUTY_RAW    (IOCTL_USER_START + 0x07)
+#define IOCTL_PWMC_SET_DUTY_RAW    (IOCTL_USER_START + 0x08)
+#define IOCTL_PWMC_SET_IRQ_HANDLER (IOCTL_USER_START + 0x09)
+#define IOCTL_PWMC_SET_FREQ_DUTY   (IOCTL_USER_START + 0x0A)
 /*---------- type define ----------*/
 typedef int32_t (*pwmc_irq_handler_fn)(uint32_t irq_handler, void *args, uint32_t len);
 
 // this struct is describe one channel
 typedef struct {
-    bool is_enable; //true:enable; false:disable
-    uint32_t clock;//timer clock. unit:hz
-    uint32_t frequence;//timer frequence
-    float duty;//duty per unit
+    bool is_enable;     // true:enable; false:disable
+    uint32_t clock;     // timer clock. unit:hz
+    uint32_t frequence; // timer frequence
+    float duty;         // duty per unit
     struct {
         uint32_t prescaler;
         uint32_t arr;
@@ -86,7 +86,7 @@ typedef struct {
 struct pwmc_ioctl_param {
     uint32_t freq;
     uint32_t crr; // ccr value.
-    float duty; // duty per unit.取值范围[0,1];
+    float duty;   // duty per unit.取值范围[0,1];
 };
 
 struct pwmc_irq_param {
