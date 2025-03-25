@@ -4,7 +4,7 @@
  * @Author       : lxf
  * @Date         : 2024-12-05 14:37:46
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2025-03-17 09:19:42
+ * @LastEditTime : 2025-03-25 09:20:49
  * @Brief        :
  */
 
@@ -70,8 +70,8 @@ static int32_t pwmc_open(driver_t **pdrv)
         if (pdesc->frequence < 100) {
             pdesc->priv.prescaler = 10000 - 1;
             pdesc->priv.arr = (pdesc->clock / 10000) / pdesc->frequence - 1;
-        } else if (pdesc->frequence < 3000) {
-            pdesc->priv.prescaler = 100 - 1;
+        } else if (pdesc->frequence < 1100) {
+            pdesc->priv.prescaler = 1;
             pdesc->priv.arr = (pdesc->clock / 100) / pdesc->frequence - 1;
         } else {
             pdesc->priv.prescaler = 0;
@@ -314,7 +314,6 @@ static int32_t _ioctl_set_irq(pwmc_describe_t *pdesc, void *args)
 
     return DRV_ERR_OK;
 }
-
 static int32_t _ioctl_set_freq_duty(pwmc_describe_t *pdesc, void *args)
 {
     int32_t err = DRV_ERR_WRONG_ARGS;
