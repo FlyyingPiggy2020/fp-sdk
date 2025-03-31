@@ -36,11 +36,14 @@ extern "C" {
 #define IOCTL_LIGHTC_CONTINUE_BRIGHTNESS_DEC (IOCTL_USER_START + 0x07)
 #define IOCTL_LIGHTC_LIGHT_ADJUSTMENT_FINISH (IOCTL_USER_START + 0x08)
 #define IOCTL_LIGHTC_LOOP_LIGHT_ADJ_START    (IOCTL_USER_START + 0x09)
-#define IOCTL_LIGHTC_LOOP_LIGHT_ADJ_STOP     (IOCTL_USER_START + 0x10)
-#define IOCTL_LIGHTC_REVERSE                 (IOCTL_USER_START + 0x11) // if light brigness is 50% now, first brightness goto 0%, then goto 50%
-#define IOCTL_LIGHTC_SET_BRIGHTNESS_BY_TIME  (IOCTL_USER_START + 0x12)
-#define IOCTL_LIGHTC_REVERSE_EXT             (IOCTL_USER_START + 0x13) // if light brigness is 50% now, first brightness goto 0%, then goto 100%
-#define IOCTL_LIGHTC_REVERSE_BRIGHTNESS      (IOCTL_USER_START + 0x14) // if light brigness is 50% now, first brightness goto 100%, then goto 0%
+#define IOCTL_LIGHTC_LOOP_LIGHT_ADJ_STOP     (IOCTL_USER_START + 0x0A)
+#define IOCTL_LIGHTC_REVERSE                 (IOCTL_USER_START + 0x0B) // if light brigness is 50% now, first brightness goto 0%, then goto 50%
+#define IOCTL_LIGHTC_SET_BRIGHTNESS_BY_TIME  (IOCTL_USER_START + 0x0C)
+#define IOCTL_LIGHTC_REVERSE_EXT             (IOCTL_USER_START + 0x0D) // if light brigness is 50% now, first brightness goto 0%, then goto 100%
+#define IOCTL_LIGHTC_REVERSE_BRIGHTNESS      (IOCTL_USER_START + 0x0E) // if light brigness is 50% now, first brightness goto 100%, then goto 0%
+#define IOCTL_LIGHTC_START                   (IOCTL_USER_START + 0x0F)
+#define IOCTL_LIGHTC_PARAM_READ              (IOCTL_USER_START + 0x10)
+#define IOCTL_LIGHTC_PARAM_WRITE             (IOCTL_USER_START + 0x11)
 /*---------- type define ----------*/
 typedef enum {
     LIGHTC_MAP_MODE_NORMAL,                 // normal mode
@@ -115,6 +118,23 @@ typedef struct {
 struct lightc_map_param {
     uint8_t brightness;
     uint16_t move_time; // unit: second
+    struct {
+        uint8_t start;
+        uint8_t size;
+        struct {
+            uint8_t light_type;          // default:0xff; reserve
+            uint8_t dimming_start_point; // default:0;    unit:%
+            uint8_t dimming_end_point;   // default:100;  unit:%
+            uint8_t cut_start_point;     // default:0;    unit:%
+            uint8_t cut_end_pint;        // default:100;  unit:%
+            uint8_t start_delay;         // default:8;    unit:100ms (the time it taskes for brightness to go form 0% to 1%)
+            uint8_t stop_delay;          // default:8;    unit:100ms (the time it taskes for brightness to go form 1% to 0%)
+            uint8_t charge_duty;         // default:20;   unit:% (charge crr is [1% brightness crr value * charge duty])
+            uint8_t fade_in_time;        // default:8;    unit:second (the time it taskes for brightness to go form 1% to 100%)
+            uint8_t fade_out_time;       // default:8;    unit:second (the time it taskes for brightness to go form 100% to 1%)
+            uint8_t start_state;         // default:0;    unit:0->off 1->on
+        } param;
+    } param;
 };
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
