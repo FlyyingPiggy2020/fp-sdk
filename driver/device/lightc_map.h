@@ -44,11 +44,13 @@ extern "C" {
 #define IOCTL_LIGHTC_START                   (IOCTL_USER_START + 0x0F)
 #define IOCTL_LIGHTC_PARAM_READ              (IOCTL_USER_START + 0x10)
 #define IOCTL_LIGHTC_PARAM_WRITE             (IOCTL_USER_START + 0x11)
+#define IOCTL_LIGHTC_LOOP_LIGHT_ADJ_START_BY_TIME (IOCTL_USER_START + 0x12)
 /*---------- type define ----------*/
 typedef enum {
     LIGHTC_MAP_MODE_NORMAL,                 // normal mode
     LIGHTC_MAP_MODE_SET_BRIGHTNESS_BY_TIME, //
     LIGHTC_MAP_MODE_LOOP,                   // loop mode
+    LIGHTC_MAP_MODE_LOOP_BY_TIME,
 } lightc_mode_e;
 
 typedef enum {
