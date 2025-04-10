@@ -440,6 +440,15 @@ static int32_t __light_set_brightness_by_time(lightc_map_describe_t *pdesc, void
 {
     int32_t err = DRV_ERR_EOK;
     struct lightc_map_param *param = (struct lightc_map_param *)args;
+    double brightness = param->brightness;
+
+    if (brightness != 0) {
+        pdesc->status.is_off = false;
+    } else {
+        pdesc->status.is_off = true;
+    }
+    
+    pdesc->priv.brightness_position = brightness;
     pdesc->priv.mode = LIGHTC_MAP_MODE_SET_BRIGHTNESS_BY_TIME;
     pdesc->priv.step_temp = 99 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * param->move_time);
     return err;
