@@ -26,24 +26,24 @@ extern "C" {
 #include <stddef.h>
 #include "device.h"
 /*---------- macro ----------*/
-#define IOCTL_LIGHTC_SET_CURRENT_MODE        (IOCTL_USER_START + 0x00)
-#define IOCTL_LIGHTC_CMD_OFF                 (IOCTL_USER_START + 0x01)
-#define IOCTL_LIGHTC_CMD_ON                  (IOCTL_USER_START + 0x02)
-#define IOCTL_LIGHTC_SET_BRIGHTNESS          (IOCTL_USER_START + 0x03)
-#define IOCTL_LIGHTC_STEP_BRIGHTNESS_INC     (IOCTL_USER_START + 0x04)
-#define IOCTL_LIGHTC_SETP_BRIGHTNESS_DEC     (IOCTL_USER_START + 0x05)
-#define IOCTL_LIGHTC_CONTINUE_BRIGHTNESS_INC (IOCTL_USER_START + 0x06)
-#define IOCTL_LIGHTC_CONTINUE_BRIGHTNESS_DEC (IOCTL_USER_START + 0x07)
-#define IOCTL_LIGHTC_LIGHT_ADJUSTMENT_FINISH (IOCTL_USER_START + 0x08)
-#define IOCTL_LIGHTC_LOOP_LIGHT_ADJ_START    (IOCTL_USER_START + 0x09)
-#define IOCTL_LIGHTC_LOOP_LIGHT_ADJ_STOP     (IOCTL_USER_START + 0x0A)
-#define IOCTL_LIGHTC_REVERSE                 (IOCTL_USER_START + 0x0B) // if light brigness is 50% now, first brightness goto 0%, then goto 50%
-#define IOCTL_LIGHTC_SET_BRIGHTNESS_BY_TIME  (IOCTL_USER_START + 0x0C)
-#define IOCTL_LIGHTC_REVERSE_EXT             (IOCTL_USER_START + 0x0D) // if light brigness is 50% now, first brightness goto 0%, then goto 100%
-#define IOCTL_LIGHTC_REVERSE_BRIGHTNESS      (IOCTL_USER_START + 0x0E) // if light brigness is 50% now, first brightness goto 100%, then goto 0%
-#define IOCTL_LIGHTC_START                   (IOCTL_USER_START + 0x0F)
-#define IOCTL_LIGHTC_PARAM_READ              (IOCTL_USER_START + 0x10)
-#define IOCTL_LIGHTC_PARAM_WRITE             (IOCTL_USER_START + 0x11)
+#define IOCTL_LIGHTC_SET_CURRENT_MODE             (IOCTL_USER_START + 0x00)
+#define IOCTL_LIGHTC_CMD_OFF                      (IOCTL_USER_START + 0x01)
+#define IOCTL_LIGHTC_CMD_ON                       (IOCTL_USER_START + 0x02)
+#define IOCTL_LIGHTC_SET_BRIGHTNESS               (IOCTL_USER_START + 0x03)
+#define IOCTL_LIGHTC_STEP_BRIGHTNESS_INC          (IOCTL_USER_START + 0x04)
+#define IOCTL_LIGHTC_SETP_BRIGHTNESS_DEC          (IOCTL_USER_START + 0x05)
+#define IOCTL_LIGHTC_CONTINUE_BRIGHTNESS_INC      (IOCTL_USER_START + 0x06)
+#define IOCTL_LIGHTC_CONTINUE_BRIGHTNESS_DEC      (IOCTL_USER_START + 0x07)
+#define IOCTL_LIGHTC_LIGHT_ADJUSTMENT_FINISH      (IOCTL_USER_START + 0x08)
+#define IOCTL_LIGHTC_LOOP_LIGHT_ADJ_START         (IOCTL_USER_START + 0x09)
+#define IOCTL_LIGHTC_LOOP_LIGHT_ADJ_STOP          (IOCTL_USER_START + 0x0A)
+#define IOCTL_LIGHTC_REVERSE                      (IOCTL_USER_START + 0x0B) // if light brigness is 50% now, first brightness goto 0%, then goto 50%
+#define IOCTL_LIGHTC_SET_BRIGHTNESS_BY_TIME       (IOCTL_USER_START + 0x0C)
+#define IOCTL_LIGHTC_REVERSE_EXT                  (IOCTL_USER_START + 0x0D) // if light brigness is 50% now, first brightness goto 0%, then goto 100%
+#define IOCTL_LIGHTC_REVERSE_BRIGHTNESS           (IOCTL_USER_START + 0x0E) // if light brigness is 50% now, first brightness goto 100%, then goto 0%
+#define IOCTL_LIGHTC_START                        (IOCTL_USER_START + 0x0F)
+#define IOCTL_LIGHTC_PARAM_READ                   (IOCTL_USER_START + 0x10)
+#define IOCTL_LIGHTC_PARAM_WRITE                  (IOCTL_USER_START + 0x11)
 #define IOCTL_LIGHTC_LOOP_LIGHT_ADJ_START_BY_TIME (IOCTL_USER_START + 0x12)
 /*---------- type define ----------*/
 typedef enum {
@@ -62,15 +62,25 @@ typedef enum {
 typedef struct {
     double brightness;
     double duty;
-} _map_node_t; // 1% to 100%
+} _bmap_node_t;
 
 typedef struct {
-    _map_node_t *node;
+    double brightness;
+    double frequence;
+} _fmap_node_t;
+
+typedef struct {
+    _bmap_node_t *node;
     uint8_t node_size;
 } brightness_map_t;
 
 typedef struct {
-    brightness_map_t *map;
+    _fmap_node_t *node;
+    uint8_t node_size;
+} frequenct_map_t;
+typedef struct {
+    brightness_map_t *bmap;
+    frequenct_map_t *fmap;
     double brightness;             //[0,100] for example 50 means 50%
     uint16_t time_slice_frequence; // default 100; unit:hz;
 
@@ -93,6 +103,7 @@ typedef struct {
         lightc_status_e last_status;
         lightc_mode_e mode;
         uint8_t remeber_brightness; // default:100  device will remeber last brightness.the cmd "light on" means change the brightness to "remeber brightness".
+        double last_brightness_postion;
         double brightness_position;
         uint32_t frequence;
         float duty;

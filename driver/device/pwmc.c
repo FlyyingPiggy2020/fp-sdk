@@ -337,13 +337,13 @@ static int32_t _ioctl_set_freq_duty(pwmc_describe_t *pdesc, void *args)
             err = DRV_ERR_EOK;
             break;
         }
-
-        if (param->freq < 100) {
+        // this is depend on timer clock.
+        if (param->freq < 600) {
             pdesc->priv.prescaler = 10000 - 1;
             pdesc->priv.arr = (pdesc->clock / 10000) / param->freq - 1;
-        } else if (param->freq < 3000) {
-            pdesc->priv.prescaler = 100 - 1;
-            pdesc->priv.arr = (pdesc->clock / 100) / param->freq - 1;
+        } else if (param->freq < 1100) {
+            pdesc->priv.prescaler = 2 - 1;
+            pdesc->priv.arr = (pdesc->clock / 2) / param->freq - 1;
         } else {
             pdesc->priv.prescaler = 0;
             pdesc->priv.arr = pdesc->clock / param->freq - 1;

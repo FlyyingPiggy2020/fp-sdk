@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright (c) 2024 by Lu Xianfan.
  * @FilePath     : paj7620.c
  * @Author       : lxf

@@ -7,6 +7,8 @@
  * @LastEditTime : 2025-03-17 09:22:47
  * @Brief        :
  * ATTENTION: THIS DRIVER IS DESIGNED FOR ONE CHANNEL ONLY.
+ * _ioctl_set_freq_duty THIS FUNCTION IS DEPEND ON TIM CLK.
+ *
  * [-] this driver is control device pwm wave.user should implement follow function:
  *   (1) init, deinit , enable, updatre_duty_raw, get_update_duty_raw.
  *
