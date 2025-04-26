@@ -27,6 +27,13 @@
 #include CONFIG_HEAP_FILE
 #endif
 
+#if (defined(__ARMCC_VERSION) && __ARMCC_VERSION >= 6000000)
+__asm(".global __use_no_heap_region\n\t"); // AC6申明不使用C库的堆
+#elif defined(__CC_ARM)
+#pragma import(__use_no_heap_region) // AC5申明不使用C库的堆
+#else
+#endif
+
 /*---------- macro ----------*/
 /* heap protect callback defition */
 #ifndef CONFIG_HEAP_LOCK
@@ -241,4 +248,24 @@ size_t heap_get_free_remaining_size(void)
 size_t heap_get_minimum_free_remaining_size(void)
 {
     return minimum_free_bytes_remaining;
+}
+
+void *malloc(size_t size)
+{
+    return heap_malloc(size);
+}
+
+void free(void *p)
+{
+    heap_free(p);
+}
+
+void *realloc(void *p, size_t want)
+{
+    return 0;
+}
+
+void *calloc(size_t nmemb, size_t size)
+{
+    return 0;
 }

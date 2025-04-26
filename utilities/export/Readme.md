@@ -1,12 +1,22 @@
-支持4个优先级：`INIT_BOARD_EXPORT INIT_DEVICE_EXPORT ``INIT_COMPONENT_EXPORT INIT_APP_EXPORT`
+# 更新日志
 
-其中BOARD优先级最高，APP优先级最低。
+20250426 ：1.重构，增加POLL EXPORT功能
 
-注意：所有硬件初始化部分都在BOARD里面完成。
-例如串口初始化。
+20241026 ：1.增加对博流芯片的支持
 
-而类似于log组件这种初始化必须放在串口初始化后面。所以log初始化用DEVICE或者让COMPONET。
+20240711 ：1.增加export模块
 
-一定要注意你的程序里面的组件，是否对初始化顺序有要求。
 
-先初始化的，用优先级高的。
+
+# 移植说明
+
+1.每毫秒调用一次`fp_tick_inc`
+
+2.`main`函数的最后调用`fp_run`
+
+
+
+# API说明
+
+参考export.h的注释
+

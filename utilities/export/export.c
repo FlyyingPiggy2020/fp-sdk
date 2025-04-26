@@ -5,124 +5,121 @@
  * @Date         : 2023-12-28 10:31:34
  * @LastEditors: flyyingpiggy2020 154562451@qq.com
  * @LastEditTime: 2024-03-17 10:17:49
- * @Brief        : export机制(不需要显示调用初始化函数)
+ * @Brief        : export机制
+ * origin file from https://gitee.com/event-os/elab/blob/master/elab/common/elab_export.c
  */
 
 /*---------- includes ----------*/
-
+#include "stdlib.h"
 #include "inc/export.h"
 /*---------- macro ----------*/
+#define ELAB_POLL_PERIOD_MAX (2592000000) /* 30 days */
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
+static uint32_t sys_time_ms = 0;
 /*---------- function prototype ----------*/
+static void module_null_init(void);
 /*---------- variable ----------*/
+INIT_BSP_EXPORT(module_null_init);
+POLL_EXPORT(module_null_init, (1000 * 60 * 60));
+
+static const uint32_t export_id_table[EXPORT_MAX + 1] = {
+    EXPORT_ID_INIT,
+    EXPORT_ID_INIT,
+    EXPORT_ID_INIT,
+    EXPORT_ID_INIT,
+    EXPORT_ID_INIT,
+    EXPORT_ID_INIT,
+    EXPORT_ID_POLL,
+};
+
+static elab_export_t *export_init_table = NULL;
+static elab_export_t *export_poll_table = NULL;
+
 /*---------- function ----------*/
-
 /**
- * @brief
- * rti_start             --> 0
- * INIT_BOARD_EXPORT     --> 1
- * rti_board_end         --> 1.end
- * INIT_DEVICE_EXPORT    --> 2
- * INIT_COMPONENT_EXPORT --> 3
- * INIT_APP_EXPORT       --> 4
- *
- * rti_end               --> 4.end
- * @return {*}
+ * @brief  SysTick ISR function.
+ * @retval None
  */
-
-#if (USE_ESP == 1)
-#else
-static int fpi_start(void)
+uint32_t elab_time_ms(void)
 {
-    return 0;
+    return sys_time_ms;
 }
-INIT_EXPORT(fpi_start, "0");
 
-static int fpi_board_start(void)
+static elab_export_t *_get_export_table(uint8_t level)
 {
-    return 0;
-}
-INIT_EXPORT(fpi_board_start, "0.end");
+    elab_export_t *func_block = level < EXPORT_MAX ? ((elab_export_t *)&init_module_null_init) : ((elab_export_t *)&poll_module_null_init);
 
-static int fpi_board_end(void)
-{
-    return 0;
-}
-INIT_EXPORT(fpi_board_end, "1.end");
-
-static int fpi_end(void)
-{
-    return 0;
-}
-INIT_EXPORT(fpi_end, "4.end");
-#endif
-/**
- * @brief 板级部分启动
- * @return {*}
- */
-void fp_components_board_init(void)
-{
-    volatile const init_fn_t *fn_ptr;
-#if defined(__ARMCC_VERSION)
-    for (fn_ptr = &__fp_init_fpi_board_start; fn_ptr < &__fp_init_fpi_board_end; fn_ptr++) {
-        (*fn_ptr)();
+    while (1) {
+        uint32_t address_last = ((uint32_t)func_block - sizeof(elab_export_t));
+        elab_export_t *table = (elab_export_t *)address_last;
+        if (table->magic_head != export_id_table[level] || table->magic_tail != export_id_table[level]) {
+            break;
+        }
+        func_block = table;
     }
-#elif defined(__GNUC__)
-    extern const unsigned int _fpi_fn1_start;
-    extern const unsigned int _fpi_fn1_end;
-    for (fn_ptr = (void *)(&_fpi_fn1_start); fn_ptr < (void *)(&_fpi_fn1_end); fn_ptr++) {
-        (*fn_ptr)();
-    }
-#endif
+
+    return func_block;
 }
 
 /**
- * @brief 设备、组件、app依次启动
- * @return {*}
+ * @brief  eLab exporting function executing.
+ * @param  level export level.
+ * @retval None
  */
-void fp_components_init(void)
+static void _export_func_execute(uint8_t level)
 {
-    volatile const init_fn_t *fn_ptr;
-#if defined(__ARMCC_VERSION)
-    for (fn_ptr = &__fp_init_fpi_board_end; fn_ptr < &__fp_init_fpi_end; fn_ptr++) {
-        (*fn_ptr)();
+    uint32_t export_id = export_id_table[level];
+
+    /* Get the start address of exported poll table. */
+    if (export_init_table == NULL) {
+        export_init_table = _get_export_table(EXPORT_BSP);
     }
-#elif defined(__GNUC__)
-    extern const unsigned int _fpi_fn2_start;
-    extern const unsigned int _fpi_fn2_end;
-    extern const unsigned int _fpi_fn3_start;
-    extern const unsigned int _fpi_fn3_end;
-    extern const unsigned int _fpi_fn4_start;
-    extern const unsigned int _fpi_fn4_end;
-    for (fn_ptr = (void *)(&_fpi_fn2_start); fn_ptr < (void *)(&_fpi_fn2_end); fn_ptr++) {
-        (*fn_ptr)();
+    if (export_poll_table == NULL) {
+        export_poll_table = _get_export_table(EXPORT_MAX);
     }
-    for (fn_ptr = (void *)(&_fpi_fn3_start); fn_ptr < (void *)(&_fpi_fn3_end); fn_ptr++) {
-        (*fn_ptr)();
+
+    /* Execute the poll function in the specific level. */
+    elab_export_t *export_table = level < EXPORT_MAX ? export_init_table : export_poll_table;
+    for (uint32_t i = 0;; i++) {
+        if (export_table[i].magic_head == export_id && export_table[i].magic_tail == export_id) {
+            if (export_table[i].level == level && level <= EXPORT_APP) {
+                ((void (*)(void))export_table[i].func)();
+            }
+
+            else if (export_table[i].level == level && level == EXPORT_MAX) {
+                elab_export_poll_data_t *data = export_table[i].data;
+                // 考虑溢出
+                uint32_t _time = elab_time_ms();
+                if (((_time >= data->timeout_ms) && (_time - data->timeout_ms < ELAB_POLL_PERIOD_MAX)) || ((_time < data->timeout_ms) && (data->timeout_ms - _time > ELAB_POLL_PERIOD_MAX))) {
+                    data->timeout_ms += export_poll_table[i].period_ms;
+                    ((void (*)(void))export_poll_table[i].func)();
+                }
+            }
+        } else {
+            break;
+        }
     }
-    for (fn_ptr = (void *)(&_fpi_fn4_start); fn_ptr < (void *)(&_fpi_fn4_end); fn_ptr++) {
-        (*fn_ptr)();
-    }
-#endif
 }
 
-#ifdef __ARMCC_VERSION
-void $Sub$$main(void)
+void fp_run(void)
 {
-    extern int $Super$$main(void);
-    fp_components_board_init();
-    fp_components_init();
-    $Super$$main();
-}
-#endif
+    for (uint8_t level = EXPORT_BSP; level <= EXPORT_APP; level++) {
+        _export_func_execute(level);
+    }
 
-#if defined(__GNUC__)
-// your need to add this funciton int to app_mian()
-void submain(void)
-{
-    fp_components_board_init();
-    fp_components_init();
+    while (1) {
+        _export_func_execute(EXPORT_MAX);
+    }
 }
-#endif
+
+void fp_tick_inc(void)
+{
+    sys_time_ms++;
+}
+
+static void module_null_init(void)
+{
+    /* NULL */
+}
 /*---------- end of file ----------*/

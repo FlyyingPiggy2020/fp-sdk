@@ -3,8 +3,8 @@
  * @FilePath     : device.c
  * @Author       : lxf
  * @Date         : 2024-12-05 13:10:51
- * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2024-12-09 11:14:01
+ * @LastEditors  : lxf_zjnb@qq.com
+ * @LastEditTime : 2025-04-26 17:05:19
  * @Brief        : 从岑老板的代码中抄袭
  */
 
