@@ -11,7 +11,7 @@
 
 /*---------- includes ----------*/
 #include "stdlib.h"
-#include "inc/export.h"
+#include "export.h"
 /*---------- macro ----------*/
 #define ELAB_POLL_PERIOD_MAX (2592000000) /* 30 days */
 /*---------- type define ----------*/
