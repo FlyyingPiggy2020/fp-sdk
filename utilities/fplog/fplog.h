@@ -120,7 +120,7 @@ SOFTWARE.
 
 #if LOG_OUTPUT_LVL >= LOG_LVL_DEBUG
 #define log_d(...)         log_output(LOG_LVL_DEBUG, LOG_TAG, __FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)
-#define log_hex(name, ...) log_hex_dump(name, 32, __VA_ARGS__)
+#define log_hex(name, buf, size) log_hex_dump(name, 32, buf, size)
 #else
 #define log_d(...)   ((void)0);
 #define log_hex(...) ((void)0);
