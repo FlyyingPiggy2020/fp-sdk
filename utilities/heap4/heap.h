@@ -29,6 +29,8 @@
 
 /*---------- macro ----------*/
 /*---------- type define ----------*/
+#define malloc heap_malloc
+#define free heap_free
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
 extern void *heap_malloc(size_t wanted_size);

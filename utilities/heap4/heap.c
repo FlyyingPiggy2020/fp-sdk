@@ -23,6 +23,7 @@
 /*---------- includes ----------*/
 #include "heap.h"
 #include <stdlib.h>
+#include "string.h"
 #ifdef CONFIG_HEAP_FILE
 #include CONFIG_HEAP_FILE
 #endif
@@ -250,22 +251,4 @@ size_t heap_get_minimum_free_remaining_size(void)
     return minimum_free_bytes_remaining;
 }
 
-void *malloc(size_t size)
-{
-    return heap_malloc(size);
-}
 
-void free(void *p)
-{
-    heap_free(p);
-}
-
-void *realloc(void *p, size_t want)
-{
-    return 0;
-}
-
-void *calloc(size_t nmemb, size_t size)
-{
-    return 0;
-}
