@@ -250,5 +250,3 @@ size_t heap_get_minimum_free_remaining_size(void)
 {
     return minimum_free_bytes_remaining;
 }
-
-
