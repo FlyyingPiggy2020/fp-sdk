@@ -4,7 +4,7 @@
  * @Author       : lxf
  * @Date         : 2024-12-10 08:43:34
  * @LastEditors  : lxf_zjnb@qq.com
- * @LastEditTime : 2025-05-10 16:28:48
+ * @LastEditTime : 2025-05-12 08:37:22
  * @Brief        :
  */
 
@@ -20,50 +20,6 @@ extern "C" {
 #include <stddef.h>
 #include "device.h"
 /*---------- macro ----------*/
-
-// TODO:让用户去配置config参数是危险的，如果参数不对驱动无法正常工作
-// 日后修改直接提供下面几种选项给用户，让用户直接选择。
-// 我们地址表现为0x50
-
-// #ifdef AT24C32
-// #define EE_MODEL_NAME "AT24C32"
-// #define EE_DEV_ADDR   0xA0       /* 设备地址 */
-// #define EE_PAGE_SIZE  32         /* 页面大小(字节) */
-// #define EE_SIZE       (4 * 1024) /* 总容量(字节) */
-// #define EE_ADDR_BYTES 2          /* 地址字节个数 */
-// #endif
-
-// #ifdef AT24C64
-// #define EE_MODEL_NAME "AT24C64"
-// #define EE_DEV_ADDR   0xA0       /* 设备地址 */
-// #define EE_PAGE_SIZE  32         /* 页面大小(字节) */
-// #define EE_SIZE       (8 * 1024) /* 总容量(字节) */
-// #define EE_ADDR_BYTES 2          /* 地址字节个数 */
-// #endif
-
-// #ifdef AT24C128
-// #define EE_MODEL_NAME "AT24C128"
-// #define EE_DEV_ADDR   0xA0        /* 设备地址 */
-// #define EE_PAGE_SIZE  64          /* 页面大小(字节) */
-// #define EE_SIZE       (16 * 1024) /* 总容量(字节) */
-// #define EE_ADDR_BYTES 2           /* 地址字节个数 */
-// #endif
-
-// #ifdef AT24C256
-// #define EE_MODEL_NAME "AT24C256"
-// #define EE_DEV_ADDR   0xA0        /* 设备地址 */
-// #define EE_PAGE_SIZE  64          /* 页面大小(字节) */
-// #define EE_SIZE       (32 * 1024) /* 总容量(字节) */
-// #define EE_ADDR_BYTES 2           /* 地址字节个数 */
-// #endif
-
-// #ifdef AT24C512
-// #define EE_MODEL_NAME "AT24C512"
-// #define EE_DEV_ADDR   0xA0        /* 设备地址 */
-// #define EE_PAGE_SIZE  128         /* 页面大小(字节) */
-// #define EE_SIZE       (64 * 1024) /* 总容量(字节) */
-// #define EE_ADDR_BYTES 2           /* 地址字节个数 */
-// #endif
 
 /*---------- type define ----------*/
 typedef struct {

@@ -10,44 +10,94 @@
 
 目前支持如下的几个配置
 
-```
-// #ifdef AT24C32
-// #define EE_MODEL_NAME "AT24C32"
-// #define EE_DEV_ADDR   0xA0       /* 设备地址 */
-// #define EE_PAGE_SIZE  32         /* 页面大小(字节) */
-// #define EE_SIZE       (4 * 1024) /* 总容量(字节) */
-// #define EE_ADDR_BYTES 2          /* 地址字节个数 */
-// #endif
+```c
+at24cxx_describe_t my_at24c32 = {
+    .bus_name = "my_i2c",
+    .config = {
+        .ee_dev_addr = 0x50,
+        .ee_addr_btyes = 2,
+        .ee_page_size = 32,
+        .ee_size = (4 * 1024),
+    },
+    .ops = {
+        .init = NULL,
+        .deinit = NULL,
+        .lock = NULL,
+        .unlock = NULL,
+        .vcc_enable = NULL,
+        .wp_enable = NULL,
+    },
+};
 
-// #ifdef AT24C64
-// #define EE_MODEL_NAME "AT24C64"
-// #define EE_DEV_ADDR   0xA0       /* 设备地址 */
-// #define EE_PAGE_SIZE  32         /* 页面大小(字节) */
-// #define EE_SIZE       (8 * 1024) /* 总容量(字节) */
-// #define EE_ADDR_BYTES 2          /* 地址字节个数 */
-// #endif
+at24cxx_describe_t my_at24c64 = {
+    .bus_name = "my_i2c",
+    .config = {
+        .ee_dev_addr = 0x50,
+        .ee_addr_btyes = 2,
+        .ee_page_size = 32,
+        .ee_size = (8 * 1024),
+    },
+    .ops = {
+        .init = NULL,
+        .deinit = NULL,
+        .lock = NULL,
+        .unlock = NULL,
+        .vcc_enable = NULL,
+        .wp_enable = NULL,
+    },
+};
 
-// #ifdef AT24C128
-// #define EE_MODEL_NAME "AT24C128"
-// #define EE_DEV_ADDR   0xA0        /* 设备地址 */
-// #define EE_PAGE_SIZE  64          /* 页面大小(字节) */
-// #define EE_SIZE       (16 * 1024) /* 总容量(字节) */
-// #define EE_ADDR_BYTES 2           /* 地址字节个数 */
-// #endif
+at24cxx_describe_t my_at24c512 = {
+    .bus_name = "my_i2c",
+    .config = {
+        .ee_dev_addr = 0x50,
+        .ee_addr_btyes = 2,
+        .ee_page_size = 64,
+        .ee_size = (16 * 1024),
+    },
+    .ops = {
+        .init = NULL,
+        .deinit = NULL,
+        .lock = NULL,
+        .unlock = NULL,
+        .vcc_enable = NULL,
+        .wp_enable = NULL,
+    },
+};
 
-// #ifdef AT24C256
-// #define EE_MODEL_NAME "AT24C256"
-// #define EE_DEV_ADDR   0xA0        /* 设备地址 */
-// #define EE_PAGE_SIZE  64          /* 页面大小(字节) */
-// #define EE_SIZE       (32 * 1024) /* 总容量(字节) */
-// #define EE_ADDR_BYTES 2           /* 地址字节个数 */
-// #endif
+at24cxx_describe_t my_at24c256 = {
+    .bus_name = "my_i2c",
+    .config = {
+        .ee_dev_addr = 0x50,
+        .ee_addr_btyes = 2,
+        .ee_page_size = 64,
+        .ee_size = (32 * 1024),
+    },
+    .ops = {
+        .init = NULL,
+        .deinit = NULL,
+        .lock = NULL,
+        .unlock = NULL,
+        .vcc_enable = NULL,
+        .wp_enable = NULL,
+    },
+};
 
-// #ifdef AT24C512
-// #define EE_MODEL_NAME "AT24C512"
-// #define EE_DEV_ADDR   0xA0        /* 设备地址 */
-// #define EE_PAGE_SIZE  128         /* 页面大小(字节) */
-// #define EE_SIZE       (64 * 1024) /* 总容量(字节) */
-// #define EE_ADDR_BYTES 2           /* 地址字节个数 */
-// #endif
+at24cxx_describe_t my_at24c512 = {
+    .bus_name = "my_i2c",
+    .config = {
+        .ee_dev_addr = 0x50,
+        .ee_addr_btyes = 2,
+        .ee_page_size = 128,
+        .ee_size = (64 * 1024),
+    },
+    .ops = {
+        .init = NULL,
+        .deinit = NULL,
+        .lock = NULL,
+        .unlock = NULL,
+        .vcc_enable = NULL,
+        .wp_enable = NULL,
+    },
+};
 ```
