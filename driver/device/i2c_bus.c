@@ -101,13 +101,6 @@ static int32_t i2c_ioctl(driver_t **pdrv, uint32_t cmd, void *args)
     return err;
 }
 
-// static int32_t i2c_ctrl_rw(i2cbus_describe_t *bus, void *args)
-//{
-//     int32_t err;
-//     i2c_priv_data_t *priv_data = args;
-//     err = i2c_transfer(bus, priv_data->msgs, priv_data->number);
-//     return (err == priv_data->number) ? DRV_ERR_OK : err;
-// }
 
 static inline void i2c_delay(i2c_bit_ops_t *ops)
 {
@@ -232,7 +225,7 @@ static uint8_t i2c_readb(i2cbus_describe_t *bus)
  */
 static int32_t i2c_send_bytes(i2cbus_describe_t *bus, i2c_msg_t *msg)
 {
-    int32_t bytes;
+    int32_t bytes = 0;
     const uint8_t *ptr = msg->buf;
     int32_t count = msg->len;
     i2c_bit_ops_t *ops = bus->ops;
@@ -431,33 +424,6 @@ static int32_t i2c_transfer(i2cbus_describe_t *bus, i2c_msg_t msgs[], uint32_t n
     return ret;
 }
 
-// static int32_t i2c_master_send(i2cbus_describe_t *bus, uint16_t addr, uint16_t flags, const uint8_t *buf, uint32_t count)
-//{
-//     int32_t ret;
-//     i2c_msg_t msg;
-//     msg.addr = addr;
-//     msg.flags = flags;
-//     msg.len = count;
-//     msg.buf = (uint8_t *)buf;
-
-//    ret = i2c_transfer(bus, &msg, 1);
-//    return (ret == 1) ? count : ret;
-//}
-
-// static int32_t i2c_master_recv(i2cbus_describe_t *bus, uint16_t addr, uint16_t flags, uint8_t *buf, uint32_t count)
-//{
-//     int32_t ret;
-//     i2c_msg_t msg;
-//     ASSERT(bus != NULL);
-
-//    msg.addr = addr;
-//    msg.flags = flags | I2C_BUS_RD;
-//    msg.len = count;
-//    msg.buf = buf;
-
-//    ret = i2c_transfer(bus, &msg, 1);
-//    return (ret == 1) ? count : ret;
-//}
 
 /**
  * @brief
@@ -473,7 +439,6 @@ static int32_t i2c_bus_device_control(i2cbus_describe_t *bus, void *arg)
     ASSERT(bus->ops);
 
     priv_data = arg;
-
     ret = i2c_transfer(bus, priv_data->msgs, priv_data->number);
     return (ret == priv_data->number) ? DRV_ERR_OK : DRV_ERR_ERROR;
 }
