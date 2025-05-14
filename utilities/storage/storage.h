@@ -4,7 +4,7 @@
  * @Author       : lxf
  * @Date         : 2025-05-10 15:35:37
  * @LastEditors  : lxf_zjnb@qq.com
- * @LastEditTime : 2025-05-12 11:36:57
+ * @LastEditTime : 2025-05-13 08:32:17
  * @Brief        : 
  */
 
@@ -22,6 +22,7 @@ extern "C" {
 #define STORAGE_MAIGC_CODE 0xAABB
 /*---------- type define ----------*/
 #pragma pack(1)
+// 报错到
 typedef struct {
     uint16_t magic_code;
     uint8_t crc;

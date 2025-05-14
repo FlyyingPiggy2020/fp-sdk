@@ -106,7 +106,7 @@ bool storage_data_save(storage_hanle_t *handle,uint8_t index, uint32_t ms)
             save->crc = ptable->crc;
             memcpy(save->data, ptable->data, ptable->size);
             while(j < 3) {
-                int32_t ret = device_write(handle->ops->dev, save, handle->ops->table[i].address, handle->ops->table[i].size + 3);
+                int32_t ret = device_write(handle->ops->dev, save, ptable->address, ptable->size + 3);
                 if (ret == DRV_ERR_OK) {
                     free(save);
                     return true;
@@ -119,6 +119,7 @@ bool storage_data_save(storage_hanle_t *handle,uint8_t index, uint32_t ms)
             free(save);
         }
     }
+    log_e("save error. index = %d", index);
     return false;
 }
 
@@ -133,17 +134,42 @@ bool storage_data_read(storage_hanle_t *handle, uint8_t index)
         return false;
     }
 
-    for (int i = 0; i < handle->ops->table_size; i++) {
-        if (handle->ops->table[i].index == index && handle->ops->table[i].data != NULL) {
-            storage_save_t *save = malloc(handle->ops->table[i].size + 3);
-            int32_t ret = device_read(handle->ops->dev, handle->ops->table[i].data, handle->ops->table[i].address, handle->ops->table[i].size);
-            if (ret == DRV_ERR_OK) {
-                if (crc8_ccitt(handle->ops->table[i].data, handle->ops->table[i].size) == handle->ops->table[i].crc) {
-                    return true;
-                }
-            }
-        }
+    if (index > handle->ops->table_size) {
+        log_e("index error.");
+        return false;
     }
+
+    storage_data_fifo_t *ptable = &handle->ops->table[index];
+    if (ptable->data == NULL) {
+        log_e("data is null.");
+        return false;
+    }
+    
+    storage_save_t *save = malloc(ptable->size + 3);
+    if (save == NULL) {
+        log_e("malloc failed");
+        return false;
+    }
+    
+    int32_t ret = device_read(handle->ops->dev, save, ptable->address, ptable->size + 3);
+    if (ret != DRV_ERR_OK) {
+        log_e("read error.");
+        goto failed;
+    }
+    
+    if (crc8_ccitt((const char *)save->data, ptable->size) != save->crc) {
+        log_e("crc error");
+        goto failed;
+    }
+    if (save->magic_code != STORAGE_MAIGC_CODE) {
+        log_e("magic code error.");
+        goto failed;
+    }
+    memcpy(ptable->data, save->data, ptable->size);
+    free(save);
+    return true;
+failed:
+    free(save);
     return false;
 }
 
@@ -164,9 +190,16 @@ void storage_poll_ms(storage_hanle_t *handle)
                 //保存数据
                 int j = 0;
                 int ret = 0;
+                storage_data_fifo_t *ptable = &handle->ops->table[i];
+                ptable->crc = crc8_ccitt(ptable->data, ptable->size);
+                storage_save_t *save = malloc(ptable->size + 3);
+                save->magic_code = STORAGE_MAIGC_CODE;
+                save->crc = ptable->crc;
+                memcpy(save->data, ptable->data, ptable->size);
                 while(j < 3) {
-                    ret = device_write(handle->ops->dev, handle->ops->table[i].data, handle->ops->table[i].address, handle->ops->table[i].size);
+                    ret = device_write(handle->ops->dev, save, ptable->address, ptable->size + 3);
                     if (ret == DRV_ERR_EOK) {
+                        free(save);
                         break;
                     }
                     if (handle->ops->save_delay_ms && handle->ops->delay_ms) {
@@ -174,6 +207,7 @@ void storage_poll_ms(storage_hanle_t *handle)
                     }
                     j++;
                 }
+                free(save);
                 if (ret != DRV_ERR_OK) {
                     log_e("storage error. handle:%s, index = %d.", handle->name, i);
                 }
