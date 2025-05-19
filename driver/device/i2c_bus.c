@@ -101,7 +101,6 @@ static int32_t i2c_ioctl(driver_t **pdrv, uint32_t cmd, void *args)
     return err;
 }
 
-
 static inline void i2c_delay(i2c_bit_ops_t *ops)
 {
     ops->udelay(ops->delay_us);
@@ -423,7 +422,6 @@ static int32_t i2c_transfer(i2cbus_describe_t *bus, i2c_msg_t msgs[], uint32_t n
     }
     return ret;
 }
-
 
 /**
  * @brief
