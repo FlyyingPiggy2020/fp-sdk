@@ -8,7 +8,7 @@
  * @Brief        : 非常简单的数据管理组件(不支持均衡擦写)依赖于export组件
  * 1.实现一个storage_data_fifo_t的表格(此表格每个项需要比待保存的数据多3个字节，用于保存crc和magic code)
  * 2.利用device框架，自行实现自己的底层读写接口。
- * 
+ *
  */
 
 /*---------- includes ----------*/
@@ -80,14 +80,14 @@ void storage_handle_destroy(storage_hanle_t *handle)
  * @param {uint32_t} ms
  * @return {*} true 成功 false 失败
  */
-bool storage_data_save(storage_hanle_t *handle,uint8_t index, uint32_t ms)
+bool storage_data_save(storage_hanle_t *handle, uint8_t index, uint32_t ms)
 {
     int32_t j = 0;
     if (handle == NULL || handle->ops->table == NULL || handle->ops == NULL) {
         log_e("handle or table is null");
         return false;
     }
-    
+
     if (index > handle->ops->table_size) {
         log_e("index error.");
         return false;
@@ -105,14 +105,14 @@ bool storage_data_save(storage_hanle_t *handle,uint8_t index, uint32_t ms)
             save->magic_code = STORAGE_MAIGC_CODE;
             save->crc = ptable->crc;
             memcpy(save->data, ptable->data, ptable->size);
-            while(j < 3) {
+            while (j < 3) {
                 int32_t ret = device_write(handle->ops->dev, save, ptable->address, ptable->size + 3);
                 if (ret == DRV_ERR_OK) {
                     free(save);
                     return true;
                 }
                 if (handle->ops->save_delay_ms && handle->ops->delay_ms) {
-                    handle->ops->delay_ms(handle->ops->save_delay_ms);//该延时函数由用户自行实现
+                    handle->ops->delay_ms(handle->ops->save_delay_ms); // 该延时函数由用户自行实现
                 }
                 j++;
             }
@@ -144,19 +144,19 @@ bool storage_data_read(storage_hanle_t *handle, uint8_t index)
         log_e("data is null.");
         return false;
     }
-    
+
     storage_save_t *save = malloc(ptable->size + 3);
     if (save == NULL) {
         log_e("malloc failed");
         return false;
     }
-    
+
     int32_t ret = device_read(handle->ops->dev, save, ptable->address, ptable->size + 3);
     if (ret != DRV_ERR_OK) {
         log_e("read error.");
         goto failed;
     }
-    
+
     if (crc8_ccitt((const char *)save->data, ptable->size) != save->crc) {
         log_e("crc error");
         goto failed;
@@ -187,7 +187,7 @@ void storage_poll_ms(storage_hanle_t *handle)
         if (handle->ops->table[i].delay) {
             handle->ops->table[i].delay--;
             if (handle->ops->table[i].delay == 0) {
-                //保存数据
+                // 保存数据
                 int j = 0;
                 int ret = 0;
                 storage_data_fifo_t *ptable = &handle->ops->table[i];
@@ -196,14 +196,14 @@ void storage_poll_ms(storage_hanle_t *handle)
                 save->magic_code = STORAGE_MAIGC_CODE;
                 save->crc = ptable->crc;
                 memcpy(save->data, ptable->data, ptable->size);
-                while(j < 3) {
+                while (j < 3) {
                     ret = device_write(handle->ops->dev, save, ptable->address, ptable->size + 3);
                     if (ret == DRV_ERR_EOK) {
                         free(save);
                         break;
                     }
                     if (handle->ops->save_delay_ms && handle->ops->delay_ms) {
-                        handle->ops->delay_ms(handle->ops->save_delay_ms);//该延时函数由用户自行实现
+                        handle->ops->delay_ms(handle->ops->save_delay_ms); // 该延时函数由用户自行实现
                     }
                     j++;
                 }
