@@ -35,7 +35,7 @@ SOFTWARE.
 
 #include "fp_soft_timer.h"
 #include "stdbool.h"
-#include "stdlib.h"
+#include "heap.h"
 /*---------- macro ----------*/
 
 #if FP_LOG_TRACE_TIMER
@@ -81,7 +81,7 @@ void _fp_timer_core_init(void)
  * @param {uint32_t} tick_period
  * @return {*}
  */
-inline void fp_tick_inc(uint32_t tick_period)
+inline void fp_sftm_tick_inc(uint32_t tick_period)
 {
     tick_irq_flag = 0;
     sys_time += tick_period;
