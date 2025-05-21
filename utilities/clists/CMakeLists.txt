@@ -6,4 +6,4 @@ aux_source_directory(. DIR_LIB_SRCS)
 add_library(clists ${DIR_LIB_SRCS})
 
 # 添加include
-target_include_directories(clists PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc)
+target_include_directories(clists PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

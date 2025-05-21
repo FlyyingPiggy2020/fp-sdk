@@ -23,8 +23,16 @@
 /*---------- includes ----------*/
 #include "heap.h"
 #include <stdlib.h>
+#include "string.h"
 #ifdef CONFIG_HEAP_FILE
 #include CONFIG_HEAP_FILE
+#endif
+
+#if (defined(__ARMCC_VERSION) && __ARMCC_VERSION >= 6000000)
+__asm(".global __use_no_heap_region\n\t"); // AC6申明不使用C库的堆
+#elif defined(__CC_ARM)
+#pragma import(__use_no_heap_region) // AC5申明不使用C库的堆
+#else
 #endif
 
 /*---------- macro ----------*/

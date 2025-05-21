@@ -16,7 +16,6 @@ extern "C" {
 #endif
 
 /*---------- includes ----------*/
-#include "bsp_config.h" //该头文件来自于board组件
 #include "clists.h"
 #include <stdint.h>
 #include <stddef.h>

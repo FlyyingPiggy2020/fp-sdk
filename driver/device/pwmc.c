@@ -4,7 +4,7 @@
  * @Author       : lxf
  * @Date         : 2024-12-05 14:37:46
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2025-03-12 10:51:23
+ * @LastEditTime : 2025-03-25 09:20:49
  * @Brief        :
  */
 
@@ -26,15 +26,12 @@ static int32_t _ioctl_enable(pwmc_describe_t *pdesc, void *args);
 static int32_t _ioctl_disable(pwmc_describe_t *pdesc, void *args);
 static int32_t _ioctl_get_freq(pwmc_describe_t *pdesc, void *args);
 static int32_t _ioctl_set_freq(pwmc_describe_t *pdesc, void *args);
-static int32_t _ioctl_get_number_of_channel(pwmc_describe_t *pdesc, void *args);
 static int32_t _ioctl_get_duty(pwmc_describe_t *pdesc, void *args);
 static int32_t _ioctl_set_duty(pwmc_describe_t *pdesc, void *args);
 static int32_t _ioctl_get_duty_raw(pwmc_describe_t *pdesc, void *args);
 static int32_t _ioctl_set_duty_raw(pwmc_describe_t *pdesc, void *args);
-static int32_t _ioctl_enable_channel(pwmc_describe_t *pdesc, void *args);
-static int32_t _ioctl_disable_channel(pwmc_describe_t *pdesc, void *args);
 static int32_t _ioctl_set_irq(pwmc_describe_t *pdesc, void *args);
-static int32_t _ioctl_get_duty_raw_max(pwmc_describe_t *pdesc, void *args);
+static int32_t _ioctl_set_freq_duty(pwmc_describe_t *pdesc, void *args);
 /*---------- variable ----------*/
 DRIVER_DEFINED(pwmc, pwmc_open, pwmc_close, NULL, NULL, pwmc_ioctl, pwmc_irq_handler);
 
@@ -43,15 +40,12 @@ static struct protocol_callback ioctl_cbs[] = {
     { IOCTL_PWMC_DISABLE, _ioctl_disable },
     { IOCTL_PWMC_GET_FREQ, _ioctl_get_freq },
     { IOCTL_PWMC_SET_FREQ, _ioctl_set_freq },
-    { IOCTL_PWMC_GET_NUMBER_OF_CHANNEL, _ioctl_get_number_of_channel },
     { IOCTL_PWMC_GET_DUTY, _ioctl_get_duty },
     { IOCTL_PWMC_SET_DUTY, _ioctl_set_duty },
     { IOCTL_PWMC_GET_DUTY_RAW, _ioctl_get_duty_raw },
     { IOCTL_PWMC_SET_DUTY_RAW, _ioctl_set_duty_raw },
-    { IOCTL_PWMC_ENABLE_CHANNEL, _ioctl_enable_channel },
-    { IOCTL_PWMC_DISABLE_CHANNEL, _ioctl_disable_channel },
     { IOCTL_PWMC_SET_IRQ_HANDLER, _ioctl_set_irq },
-    { IOCTL_PWMC_GET_DUTY_RAW_MAX, _ioctl_get_duty_raw_max }
+    { IOCTL_PWMC_SET_FREQ_DUTY, _ioctl_set_freq_duty }
 };
 /*---------- function ----------*/
 static int32_t pwmc_open(driver_t **pdrv)
@@ -65,12 +59,32 @@ static int32_t pwmc_open(driver_t **pdrv)
         if (!pdesc) {
             break;
         }
-        err = DRV_ERR_OK;
-        if (pdesc->ops.init) {
-            if (!pdesc->ops.init()) {
-                err = DRV_ERR_ERROR;
-            }
+        if (!pdesc->ops.init) {
+            err = DRV_ERR_POINT_NONE;
+            break;
         }
+        if (!pdesc->ops.update_frequence_arr) {
+            err = DRV_ERR_POINT_NONE;
+            break;
+        }
+        if (pdesc->frequence < 100) {
+            pdesc->priv.prescaler = 10000 - 1;
+            pdesc->priv.arr = (pdesc->clock / 10000) / pdesc->frequence - 1;
+        } else if (pdesc->frequence < 1100) {
+            pdesc->priv.prescaler = 1;
+            pdesc->priv.arr = (pdesc->clock / 100) / pdesc->frequence - 1;
+        } else {
+            pdesc->priv.prescaler = 0;
+            pdesc->priv.arr = pdesc->clock / pdesc->frequence - 1;
+        }
+        if (!pdesc->ops.init()) {
+            err = DRV_ERR_ERROR;
+            break;
+        }
+        struct pwmc_ioctl_param param;
+        param.freq = pdesc->frequence;
+        param.duty = pdesc->duty;
+        err = _ioctl_set_freq_duty(pdesc, &param);
     } while (0);
 
     return err;
@@ -129,6 +143,7 @@ static int32_t _ioctl_enable(pwmc_describe_t *pdesc, void *args)
 
     if (pdesc->ops.enable) {
         if (pdesc->ops.enable(true)) {
+            pdesc->is_enable = true;
             err = DRV_ERR_OK;
         }
     }
@@ -142,6 +157,7 @@ static int32_t _ioctl_disable(pwmc_describe_t *pdesc, void *args)
 
     if (pdesc->ops.enable) {
         if (pdesc->ops.enable(false)) {
+            pdesc->is_enable = false;
             err = DRV_ERR_OK;
         }
     }
@@ -152,12 +168,12 @@ static int32_t _ioctl_disable(pwmc_describe_t *pdesc, void *args)
 static int32_t _ioctl_get_freq(pwmc_describe_t *pdesc, void *args)
 {
     int32_t err = DRV_ERR_WRONG_ARGS;
-    union pwmc_ioctl_param *param = (union pwmc_ioctl_param *)args;
+    struct pwmc_ioctl_param *param = (struct pwmc_ioctl_param *)args;
     do {
         if (!param) {
             break;
         }
-        param->freq.freq = pdesc->freq;
+        param->freq = pdesc->frequence;
         err = DRV_ERR_EOK;
     } while (0);
 
@@ -167,28 +183,38 @@ static int32_t _ioctl_get_freq(pwmc_describe_t *pdesc, void *args)
 static int32_t _ioctl_set_freq(pwmc_describe_t *pdesc, void *args)
 {
     int32_t err = DRV_ERR_WRONG_ARGS;
-    union pwmc_ioctl_param *param = (union pwmc_ioctl_param *)args;
+    struct pwmc_ioctl_param *param = (struct pwmc_ioctl_param *)args;
+    uint32_t crr;
     do {
         if (!param) {
             break;
         }
-        pdesc->freq = param->freq.freq;
-        err = DRV_ERR_EOK;
-    } while (0);
-
-    return err;
-}
-
-static int32_t _ioctl_get_number_of_channel(pwmc_describe_t *pdesc, void *args)
-{
-    int32_t err = DRV_ERR_WRONG_ARGS;
-    union pwmc_ioctl_param *param = (union pwmc_ioctl_param *)args;
-    do {
-        if (!param) {
+        if (!pdesc->ops.update_frequence_arr) {
+            err = DRV_ERR_POINT_NONE;
+        }
+        if (param->freq < 100) {
+            pdesc->priv.prescaler = 10000 - 1;
+            pdesc->priv.arr = (pdesc->clock / 10000) / param->freq - 1;
+        } else if (param->freq < 3000) {
+            pdesc->priv.prescaler = 100 - 1;
+            pdesc->priv.arr = (pdesc->clock / 100) / param->freq - 1;
+        } else {
+            pdesc->priv.prescaler = 0;
+            pdesc->priv.arr = pdesc->clock / param->freq - 1;
+        }
+        err = pdesc->ops.update_frequence_arr(pdesc->priv.prescaler, pdesc->priv.arr);
+        if (err != DRV_ERR_EOK) {
             break;
         }
-        param->number_of_channel.channel = pdesc->number_of_channel;
-        err = DRV_ERR_EOK;
+        crr = (uint32_t)(pdesc->priv.arr * pdesc->duty);
+        err = pdesc->ops.update_duty_crr(crr);
+        if (err != DRV_ERR_EOK) {
+            break;
+        }
+        crr = (uint32_t)(pdesc->priv.arr * pdesc->duty);
+        err = pdesc->ops.update_duty_crr(crr);
+        pdesc->priv.crr = crr;
+        pdesc->frequence = param->freq;
     } while (0);
 
     return err;
@@ -197,21 +223,18 @@ static int32_t _ioctl_get_number_of_channel(pwmc_describe_t *pdesc, void *args)
 static int32_t _ioctl_get_duty(pwmc_describe_t *pdesc, void *args)
 {
     int32_t err = DRV_ERR_WRONG_ARGS;
-    uint32_t raw = 0;
-    union pwmc_ioctl_param *param = (union pwmc_ioctl_param *)args;
+    uint32_t crr = 0;
+    struct pwmc_ioctl_param *param = (struct pwmc_ioctl_param *)args;
 
     do {
         if (!param) {
             break;
         }
-        if (!pdesc->ops.get_duty_raw) {
+        if (!pdesc->ops.get_duty_crr) {
             break;
         }
-        if (!pdesc->raw_max) {
-            break;
-        }
-        raw = pdesc->ops.get_duty_raw(param->duty.channel);
-        param->duty.duty = (float)raw / (float)pdesc->raw_max;
+        crr = pdesc->ops.get_duty_crr();
+        param->duty = (float)crr / (float)pdesc->priv.arr;
         err = DRV_ERR_OK;
     } while (0);
 
@@ -221,19 +244,23 @@ static int32_t _ioctl_get_duty(pwmc_describe_t *pdesc, void *args)
 static int32_t _ioctl_set_duty(pwmc_describe_t *pdesc, void *args)
 {
     int32_t err = DRV_ERR_WRONG_ARGS;
-    uint32_t raw = 0;
-    union pwmc_ioctl_param *param = (union pwmc_ioctl_param *)args;
+    uint32_t crr = 0;
+    struct pwmc_ioctl_param *param = (struct pwmc_ioctl_param *)args;
 
     do {
         if (!param) {
             break;
         }
-        if (!pdesc->ops.update_duty_raw) {
+        if (!pdesc->ops.update_duty_crr) {
             break;
         }
-        raw = (uint32_t)(pdesc->raw_max * param->duty.duty);
-        pdesc->ops.update_duty_raw(param->duty.channel, raw);
-        err = DRV_ERR_OK;
+        crr = (uint32_t)(pdesc->priv.arr * param->duty);
+        err = pdesc->ops.update_duty_crr(crr);
+        if (err != DRV_ERR_EOK) {
+            break;
+        }
+        pdesc->priv.crr = crr;
+        pdesc->duty = param->duty;
     } while (0);
 
     return err;
@@ -242,16 +269,16 @@ static int32_t _ioctl_set_duty(pwmc_describe_t *pdesc, void *args)
 static int32_t _ioctl_get_duty_raw(pwmc_describe_t *pdesc, void *args)
 {
     int32_t err = DRV_ERR_WRONG_ARGS;
-    union pwmc_ioctl_param *param = (union pwmc_ioctl_param *)args;
+    struct pwmc_ioctl_param *param = (struct pwmc_ioctl_param *)args;
 
     do {
         if (!param) {
             break;
         }
-        if (!pdesc->ops.get_duty_raw) {
+        if (!pdesc->ops.get_duty_crr) {
             break;
         }
-        param->duty_raw.raw = pdesc->ops.get_duty_raw(param->duty_raw.channel);
+        param->crr = pdesc->ops.get_duty_crr();
         err = DRV_ERR_OK;
     } while (0);
 
@@ -261,60 +288,18 @@ static int32_t _ioctl_get_duty_raw(pwmc_describe_t *pdesc, void *args)
 static int32_t _ioctl_set_duty_raw(pwmc_describe_t *pdesc, void *args)
 {
     int32_t err = DRV_ERR_WRONG_ARGS;
-    union pwmc_ioctl_param *param = (union pwmc_ioctl_param *)args;
+    struct pwmc_ioctl_param *param = (struct pwmc_ioctl_param *)args;
 
     do {
         if (!param) {
             break;
         }
-        if (!pdesc->ops.update_duty_raw) {
+        if (!pdesc->ops.update_duty_crr) {
             break;
         }
-        pdesc->ops.update_duty_raw(param->duty_raw.channel, param->duty_raw.raw);
-        err = DRV_ERR_OK;
-    } while (0);
-
-    return err;
-}
-
-static int32_t _ioctl_enable_channel(pwmc_describe_t *pdesc, void *args)
-{
-    int32_t err = DRV_ERR_WRONG_ARGS;
-    uint32_t *channel = (uint32_t *)args;
-
-    do {
-        if (!channel) {
-            break;
-        }
-        if (!pdesc->ops.channel_ctrl) {
-            break;
-        }
-        if (!pdesc->ops.channel_ctrl(*channel, true)) {
-            err = DRV_ERR_ERROR;
-            break;
-        }
-        err = DRV_ERR_OK;
-    } while (0);
-
-    return err;
-}
-
-static int32_t _ioctl_disable_channel(pwmc_describe_t *pdesc, void *args)
-{
-    int32_t err = DRV_ERR_WRONG_ARGS;
-    uint32_t *channel = (uint32_t *)args;
-
-    do {
-        if (!channel) {
-            break;
-        }
-        if (!pdesc->ops.channel_ctrl) {
-            break;
-        }
-        if (!pdesc->ops.channel_ctrl(*channel, false)) {
-            err = DRV_ERR_ERROR;
-            break;
-        }
+        pdesc->ops.update_duty_crr(param->crr);
+        pdesc->duty = (float)param->crr / (float)pdesc->priv.arr;
+        pdesc->priv.crr = param->crr;
         err = DRV_ERR_OK;
     } while (0);
 
@@ -329,18 +314,50 @@ static int32_t _ioctl_set_irq(pwmc_describe_t *pdesc, void *args)
 
     return DRV_ERR_OK;
 }
-
-static int32_t _ioctl_get_duty_raw_max(pwmc_describe_t *pdesc, void *args)
+static int32_t _ioctl_set_freq_duty(pwmc_describe_t *pdesc, void *args)
 {
     int32_t err = DRV_ERR_WRONG_ARGS;
-    uint32_t *raw = (uint32_t *)args;
-
+    struct pwmc_ioctl_param *param = (struct pwmc_ioctl_param *)args;
+    uint32_t crr = 0;
     do {
-        if (!raw) {
+        if (!param) {
             break;
         }
-        *raw = pdesc->raw_max;
-        err = DRV_ERR_OK;
+        if (!pdesc->ops.update_frequence_arr) {
+            err = DRV_ERR_POINT_NONE;
+        }
+        if (!pdesc->ops.update_duty_crr) {
+            err = DRV_ERR_POINT_NONE;
+            break;
+        }
+        if (param->duty == 0 || param->duty == 1) {
+            crr = (uint32_t)(pdesc->priv.arr * param->duty);
+            pdesc->ops.update_duty_crr(crr);
+            pdesc->frequence = param->freq;
+            err = DRV_ERR_EOK;
+            break;
+        }
+        // this is depend on timer clock.
+        if (param->freq < 600) {
+            pdesc->priv.prescaler = 10000 - 1;
+            pdesc->priv.arr = (pdesc->clock / 10000) / param->freq - 1;
+        } else if (param->freq < 1100) {
+            pdesc->priv.prescaler = 2 - 1;
+            pdesc->priv.arr = (pdesc->clock / 2) / param->freq - 1;
+        } else {
+            pdesc->priv.prescaler = 0;
+            pdesc->priv.arr = pdesc->clock / param->freq - 1;
+        }
+        err = pdesc->ops.update_frequence_arr(pdesc->priv.prescaler, pdesc->priv.arr);
+        if (err != DRV_ERR_EOK) {
+            break;
+        }
+        pdesc->frequence = param->freq;
+        crr = (uint32_t)(pdesc->priv.arr * param->duty);
+        err = pdesc->ops.update_duty_crr(crr);
+        if (err != DRV_ERR_EOK) {
+            break;
+        }
     } while (0);
 
     return err;

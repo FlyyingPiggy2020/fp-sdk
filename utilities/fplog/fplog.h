@@ -83,7 +83,7 @@ SOFTWARE.
  * This file defines the logging output level and provides default values if not defined.
  */
 #ifndef LOG_OUTPUT_LVL
-#define LOG_OUTPUT_LVL LOG_LVL_VERBOSE
+#define LOG_OUTPUT_LVL LOG_LVL_INFO
 #endif
 
 #ifndef __FILENAME__
@@ -119,9 +119,11 @@ SOFTWARE.
 #endif
 
 #if LOG_OUTPUT_LVL >= LOG_LVL_DEBUG
-#define log_d(...) log_output(LOG_LVL_DEBUG, LOG_TAG, __FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)
+#define log_d(...)               log_output(LOG_LVL_DEBUG, LOG_TAG, __FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)
+#define log_hex(name, buf, size) log_hex_dump(name, 32, buf, size)
 #else
-#define log_d(...) ((void)0);
+#define log_d(...)   ((void)0);
+#define log_hex(...) ((void)0);
 #endif
 
 #if LOG_OUTPUT_LVL >= LOG_LVL_VERBOSE
