@@ -5,13 +5,12 @@
  * @Date         : 2025-05-20 10:49:54
  * @LastEditors  : lxf_zjnb@qq.com
  * @LastEditTime : 2025-05-20 11:57:44
- * @Brief        : 
+ * @Brief        :
  */
-
 
 /*---------- includes ----------*/
 
-#include "led.h"
+#include "led_flash.h"
 #include "driver.h"
 #include "drv_err.h"
 #include "heap.h"
@@ -29,13 +28,13 @@ static int32_t _led_start_flash(ledf_describe_t *pdesc, void *args);
 static int32_t _led_stop_flash(ledf_describe_t *pdesc, void *args);
 
 /* priv */
-static int32_t __led_stop_flash(ledf_describe_t * pdesc, uint8_t id, led_flash_layer_name_t layer);
+static int32_t __led_stop_flash(ledf_describe_t *pdesc, uint8_t id, led_flash_layer_name_t layer);
 /*---------- variable ----------*/
 DRIVER_DEFINED(ledf, _ledf_open, _ledf_close, NULL, NULL, _ledf_ioctl, _ledf_irq_handler);
 
 static struct protocol_callback ioctl_cbs[] = {
-    {IOCTL_LEDF_START_FLASH, _led_start_flash},
-    {IOCTL_LEDF_STOP_FLASH, _led_stop_flash},
+    { IOCTL_LEDF_START_FLASH, _led_start_flash },
+    { IOCTL_LEDF_STOP_FLASH, _led_stop_flash },
 };
 /*---------- function ----------*/
 
@@ -124,21 +123,17 @@ static int32_t _ledf_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *ar
                     led_flash_list[i].layer[LED_FLASH_HIGH_LAYER].cnt--;
                 }
                 if (led_flash_list[i].layer[LED_FLASH_HIGH_LAYER].cnt != 0) {
-                    led_flash_list[i].layer[LED_FLASH_HIGH_LAYER].dealy =
-                        led_flash_list[i].layer[LED_FLASH_HIGH_LAYER].delay_reload;
-                }
-                else {
+                    led_flash_list[i].layer[LED_FLASH_HIGH_LAYER].dealy = led_flash_list[i].layer[LED_FLASH_HIGH_LAYER].delay_reload;
+                } else {
                     /* clear led list */
                     __led_stop_flash(pdesc, i, LED_FLASH_HIGH_LAYER);
                 }
             }
-        }
-        else if (led_flash_list[i].layer[LED_FLASH_LOW_LAYER].dealy > 0) {
+        } else if (led_flash_list[i].layer[LED_FLASH_LOW_LAYER].dealy > 0) {
             // 低优先级的layer里面支持让某个灯一直亮
             if (led_flash_list[i].layer[LED_FLASH_LOW_LAYER].dealy != LED_FLASH_DELAY_FOREVER) {
                 led_flash_list[i].layer[LED_FLASH_LOW_LAYER].dealy--;
-            }
-            else {
+            } else {
                 pdesc->ops.led_on(i);
             }
             if (led_flash_list[i].layer[LED_FLASH_LOW_LAYER].dealy == 0) { /* 每delay毫秒执行一次 */
@@ -147,10 +142,8 @@ static int32_t _ledf_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *ar
                     led_flash_list[i].layer[LED_FLASH_LOW_LAYER].cnt--;
                 }
                 if (led_flash_list[i].layer[LED_FLASH_LOW_LAYER].cnt != 0) {
-                    led_flash_list[i].layer[LED_FLASH_LOW_LAYER].dealy =
-                        led_flash_list[i].layer[LED_FLASH_LOW_LAYER].delay_reload;
-                }
-                else {
+                    led_flash_list[i].layer[LED_FLASH_LOW_LAYER].dealy = led_flash_list[i].layer[LED_FLASH_LOW_LAYER].delay_reload;
+                } else {
                     /* clear led list */
                     __led_stop_flash(pdesc, i, LED_FLASH_LOW_LAYER);
                 }
@@ -168,19 +161,22 @@ static int32_t _ledf_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *ar
  * @param {led_flash_layer_name_t} layer 控制逻辑优先级
  * @return {*}
  */
-int32_t __led_start_flash(ledf_describe_t * pdesc, uint8_t id, uint16_t cnt, uint16_t delay, led_flash_layer_name_t layer)
+int32_t __led_start_flash(ledf_describe_t *pdesc, uint8_t id, uint16_t cnt, uint16_t delay, led_flash_layer_name_t layer)
 {
     if (!pdesc->priv.led_flash_list) {
         return DRV_ERR_POINT_NONE;
     }
-
+    
+    if (id >= pdesc->led_num) {
+        return DRV_ERR_WRONG_ARGS;
+    }
+    
     led_flash_logic_t *led_flash_list = pdesc->priv.led_flash_list;
 
     if (cnt == LED_FLASH_FOREVER) {
         led_flash_list[id].layer[layer].cnt = LED_FLASH_FOREVER;
         led_flash_list[id].layer[layer].cnt_reload = LED_FLASH_FOREVER;
-    }
-    else if (cnt < (UINT16_MAX / 2) - 1) {
+    } else if (cnt < (UINT16_MAX / 2) - 1) {
         led_flash_list[id].layer[layer].cnt = cnt * 2;
         led_flash_list[id].layer[layer].cnt_reload = cnt * 2;
     }
@@ -195,7 +191,7 @@ int32_t __led_start_flash(ledf_describe_t * pdesc, uint8_t id, uint16_t cnt, uin
  * @param {led_flash_layer_name_t} layer : 图层
  * @return {*}
  */
-static int32_t __led_stop_flash(ledf_describe_t * pdesc, uint8_t id, led_flash_layer_name_t layer)
+static int32_t __led_stop_flash(ledf_describe_t *pdesc, uint8_t id, led_flash_layer_name_t layer)
 {
     if (!pdesc->priv.led_flash_list) {
         return DRV_ERR_POINT_NONE;
@@ -203,7 +199,10 @@ static int32_t __led_stop_flash(ledf_describe_t * pdesc, uint8_t id, led_flash_l
     if (!pdesc->ops.led_off) {
         return DRV_ERR_POINT_NONE;
     }
-
+    if (id >= pdesc->led_num) {
+        return DRV_ERR_WRONG_ARGS;
+    }
+    
     led_flash_logic_t *led_flash_list = pdesc->priv.led_flash_list;
     pdesc->ops.led_off(id);
     led_flash_list[id].layer[layer].dealy = 0;
@@ -228,9 +227,7 @@ static int32_t _led_stop_flash(ledf_describe_t *pdesc, void *args)
         return DRV_ERR_POINT_NONE;
     }
     ledf_api_param_t *param = args;
-    
+
     return __led_stop_flash(pdesc, param->stop.id, param->stop.layer);
 }
 /*---------- end of file ----------*/
-
-
