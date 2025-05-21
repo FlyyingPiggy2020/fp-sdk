@@ -29,6 +29,7 @@ SOFTWARE.
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
  * @LastEditTime : 2024-07-16 11:26:55
  * @Brief        : Implementation of software timers using linked lists.
+ * 该驱动中已经考虑了count溢出的情况，详见fp_tick_elaps。
  */
 
 /*---------- includes ----------*/

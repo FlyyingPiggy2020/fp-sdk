@@ -56,15 +56,21 @@ typedef struct _fp_timer_t {
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
 
+// 移植接口 时基、轮询、初始化
 void fp_sftm_tick_inc(uint32_t tick_period);
-void _fp_timer_core_init(void);
-fp_timer_t *fp_timer_create(fp_tiemr_cb_t timer_xcb, uint32_t period, void *user_data);
-void fp_timer_set_repeat_count(fp_timer_t *timer, int32_t repeat_count);
-fp_timer_t *fp_timer_get_next(fp_timer_t *timer);
-bool fp_timer_del(fp_timer_t *timer);
 uint32_t fp_timer_handler(void);
-void fp_timer_enable(bool en);
+void _fp_timer_core_init(void);
+
+// 使用接口 创建、删除、暂停、重新启动 (用户移植完成后，主要用下面这四个接口)
+fp_timer_t *fp_timer_create(fp_tiemr_cb_t timer_xcb, uint32_t period, void *user_data);
+bool fp_timer_del(fp_timer_t *timer);
 void fp_timer_pasue(fp_timer_t *timer);
 void fp_timer_resume(fp_timer_t *timer);
+void fp_timer_reset(fp_timer_t *timer);
+// 私有
+void fp_timer_enable(bool en);
+void fp_timer_set_repeat_count(fp_timer_t *timer, int32_t repeat_count);
+fp_timer_t *fp_timer_get_next(fp_timer_t *timer);
+
 /*---------- end of file ----------*/
 #endif
