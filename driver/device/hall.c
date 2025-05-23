@@ -187,7 +187,7 @@ typedef struct {
  * @brief 滤波器系数
  * @return {*}
  */
-FilterCoefficients coeffs = {
+static FilterCoefficients coeffs = {
     .b = { 0.012411, 0.012411 }, // 分子系数
     .a = { 1.000000, -0.975178 } // 分母系数
 };
@@ -198,7 +198,7 @@ FilterCoefficients coeffs = {
  * @param {int16_t} input
  * @return {*}
  */
-float low_pass_filter(float input)
+static float low_pass_filter(float input)
 {
     float output;
     static double last_input = 0;
@@ -217,11 +217,7 @@ static void calcalateSpeed_ms(hall_describe_t *pdesc)
 {
     uint16_t tmp = 0;
     if (pdesc->priv.pluse_width > 0) {
-        if (pdesc->priv.dir == MDIRECTION_INC) {
-            pdesc->speed = low_pass_filter(5000.0 / ((float)pdesc->priv.pluse_width));
-        } else {
-            pdesc->speed = low_pass_filter(-5000.0 / ((float)pdesc->priv.pluse_width));
-        }
+        pdesc->speed = 5000.0 / ((float)pdesc->priv.pluse_width);
         pdesc->priv.pluse_width = 0;
         pdesc->priv.no_pluse_time = 0;
     } else {
