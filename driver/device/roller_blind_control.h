@@ -27,6 +27,9 @@ extern "C" {
 #define IOCTL_MOTORC_SET_DOWN_ROUTE (IOCTL_USER_START + 0x05) // 设置下行程
 #define IOCTL_MOTORC_CLEAR_ROUTE    (IOCTL_USER_START + 0x06) // 清除行程
 #define IOCTL_MOTORC_TURN           (IOCTL_USER_START + 0x07) // 开停关停
+#define IOCTL_MOTORC_GET_STATUS     (IOCTL_USER_START + 0x08) // 获取电机状态
+#define IOCTL_MOTORC_ROUTE_IS_FREE  (IOCTL_USER_START + 0x09) // 电机是否存在行程
+#define IOCTL_MOTORC_GET_ROUTE      (IOCTL_USER_START + 0x0A) // 获取电机行程
 
 #define MOTOR_ROUTE_FREE            0x7fffffff
 #define MOTOR_ROUTE_INC_MAX         (0 + (MOTOR_ROUTE_FREE - 1))
@@ -78,6 +81,7 @@ typedef struct {
         void (*motor_stop)(void);  // 电机停止
         void (*motor_inc)(void);   // 电机正转
         void (*motor_dec)(void);   // 电机反转
+        uint16_t (*get_motor_current_with_offset)(void); //获取电机电流的adc值
     } ops;
 
     struct {
@@ -114,6 +118,14 @@ typedef struct {
         uint16_t time_stop_delay;
     } param;
 } roller_blind_control_describe_t;
+
+union roller_blind_control_param {
+    struct {
+        uint8_t status;
+        uint8_t route;
+        bool is_route_free;
+    }get;
+};
 #pragma pack()
 /*---------- function prototype ----------*/
 /*---------- end of file ----------*/
