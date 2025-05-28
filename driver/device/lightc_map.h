@@ -64,7 +64,12 @@ typedef enum {
 typedef struct {
     double brightness;
     double duty;
-} _bmap_node_t;
+} _bmap_node_t; 
+
+typedef struct {
+    double brightness;
+    double duty;
+} _iadj_node_t;
 
 typedef struct {
     double brightness;
@@ -80,9 +85,16 @@ typedef struct {
     _fmap_node_t *node;
     uint8_t node_size;
 } frequenct_map_t;
+
+typedef struct {
+    _iadj_node_t *node;
+    uint8_t node_size;
+} iadj_map_t;
+
 typedef struct {
     brightness_map_t *bmap;
     frequenct_map_t *fmap;
+    iadj_map_t *imap;
     double brightness;             //[0,100] for example 50 means 50%
     bool is_virtual;  //虚拟化(虚拟化之后将调用xfer接口，而不是实际的灯)
     int8_t virtual_brightness; //虚拟化的灯的亮度(0-100)
@@ -110,6 +122,7 @@ typedef struct {
         double last_brightness_postion;
         double brightness_position;
         uint32_t frequence;
+        float iadj;
         float duty;
         float brightness_actual;             //[0, 100]total brightness means the brightness without limit by "dimming_start_point" and "dimming_end_point"
         float brightness_step_1_percent_inc; // if brightness below to 1%,brightness change per 10ms.
@@ -125,7 +138,7 @@ typedef struct {
     struct {
         bool (*init)(void);
         void (*deinit)(void);
-        int32_t (*update_brightness)(uint32_t frequence, float duty);
+        int32_t (*update_brightness)(uint32_t frequence, float duty, float iadj);
     } ops;
     struct {
         void (*lightc_cmd_off)(void); // light off

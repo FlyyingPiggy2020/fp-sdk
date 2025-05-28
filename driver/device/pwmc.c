@@ -318,7 +318,6 @@ static int32_t _ioctl_set_freq_duty(pwmc_describe_t *pdesc, void *args)
 {
     int32_t err = DRV_ERR_WRONG_ARGS;
     struct pwmc_ioctl_param *param = (struct pwmc_ioctl_param *)args;
-    uint32_t crr = 0;
     do {
         if (!param) {
             break;
@@ -330,9 +329,10 @@ static int32_t _ioctl_set_freq_duty(pwmc_describe_t *pdesc, void *args)
             err = DRV_ERR_POINT_NONE;
             break;
         }
+        pdesc->duty = param->duty;
         if (param->duty == 0 || param->duty == 1) {
-            crr = (uint32_t)(pdesc->priv.arr * param->duty);
-            pdesc->ops.update_duty_crr(crr);
+            pdesc->priv.crr = (uint32_t)(pdesc->priv.arr * param->duty);
+            pdesc->ops.update_duty_crr(pdesc->priv.crr);
             pdesc->frequence = param->freq;
             err = DRV_ERR_EOK;
             break;
@@ -353,8 +353,8 @@ static int32_t _ioctl_set_freq_duty(pwmc_describe_t *pdesc, void *args)
             break;
         }
         pdesc->frequence = param->freq;
-        crr = (uint32_t)(pdesc->priv.arr * param->duty);
-        err = pdesc->ops.update_duty_crr(crr);
+        pdesc->priv.crr = (uint32_t)(pdesc->priv.arr * param->duty);;
+        err = pdesc->ops.update_duty_crr(pdesc->priv.crr);
         if (err != DRV_ERR_EOK) {
             break;
         }
