@@ -724,11 +724,11 @@ static int32_t __light_param_write(lightc_map_describe_t *pdesc, void *args)
         }
         ((uint8_t *)(&pdesc->param.light_type))[start + i] = ((uint8_t *)(&param->param.param.light_type))[start + i];
         // param check
-        if (start + i == offsetof(struct lightc_map_param, param.param.dimming_start_point)) {
+        if (start + i == offsetof(union lightc_map_param, param.param.dimming_start_point)) {
             if (pdesc->param.dimming_start_point > pdesc->param.dimming_end_point) {
                 pdesc->param.dimming_start_point = 0;
             }
-        } else if (start + i == offsetof(struct lightc_map_param, param.param.dimming_end_point)) {
+        } else if (start + i == offsetof(union lightc_map_param, param.param.dimming_end_point)) {
             if (pdesc->param.dimming_end_point < pdesc->param.dimming_start_point) {
                 pdesc->param.dimming_end_point = 100;
             }
