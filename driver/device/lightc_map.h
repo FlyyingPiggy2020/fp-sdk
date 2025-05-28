@@ -4,7 +4,7 @@
  * @Author       : lxf
  * @Date         : 2025-03-18 09:13:30
  * @LastEditors  : lxf_zjnb@qq.com
- * @LastEditTime : 2025-05-23 17:15:24
+ * @LastEditTime : 2025-05-27 10:45:23
  * @Brief        :
  * this drvier is control lightc brightness by frequence and duty map.
  * you need to provide a map, x-axis is brightness (0->100), y-axis is frequence(120hz->3000hz), z-axis is duty(0.0f->1.0f).
@@ -46,6 +46,7 @@ extern "C" {
 #define IOCTL_LIGHTC_PARAM_WRITE                  (IOCTL_USER_START + 0x11)
 #define IOCTL_LIGHTC_LOOP_LIGHT_ADJ_START_BY_TIME (IOCTL_USER_START + 0x12)
 #define IOCTL_LIGHTC_GET_BRIGHTNESS               (IOCTL_USER_START + 0x13)
+#define IOCTL_LIGHTC_SET_VIRTUAL_BRIGHTNESS               (IOCTL_USER_START + 0x13) //设置虚拟行程
 /*---------- type define ----------*/
 typedef enum {
     LIGHTC_MAP_MODE_NORMAL,                 // normal mode
@@ -84,6 +85,7 @@ typedef struct {
     frequenct_map_t *fmap;
     double brightness;             //[0,100] for example 50 means 50%
     bool is_virtual;  //虚拟化(虚拟化之后将调用xfer接口，而不是实际的灯)
+    int8_t virtual_brightness; //虚拟化的灯的亮度(0-100)
     uint16_t time_slice_frequence; // default 100; unit:hz;
     
     struct {
