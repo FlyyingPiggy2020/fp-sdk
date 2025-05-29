@@ -5,10 +5,9 @@
  * @Date         : 2025-05-21 13:31:44
  * @LastEditors  : lxf_zjnb@qq.com
  * @LastEditTime : 2025-05-22 11:27:01
- * @Brief        : 霍尔传感器驱动程序 
+ * @Brief        : 霍尔传感器驱动程序
  * 需要把iqrhandler放入一个200us的中断内部执行
  */
-
 
 /*---------- includes ----------*/
 #include "hall.h"
@@ -17,8 +16,8 @@
 #include "fpevent.h"
 /*---------- macro ----------*/
 /*---------- type define ----------*/
-#define HALL1          (1 << 0) // 霍尔线1
-#define HALL2          (1 << 1) // 霍尔线2
+#define HALL1 (1 << 0) // 霍尔线1
+#define HALL2 (1 << 1) // 霍尔线2
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
 static int32_t _hall_open(driver_t **pdrv);
@@ -59,12 +58,12 @@ static int32_t _hall_open(driver_t **pdrv)
         if (!pdesc) {
             break;
         }
-        
+
         if (!pdesc->ops.init) {
             err = DRV_ERR_POINT_NONE;
             break;
         }
-        
+
         if (!pdesc->ops.init()) {
             err = DRV_ERR_ERROR;
             break;
@@ -94,7 +93,7 @@ static int32_t _hall_ioctl(driver_t **pdrv, uint32_t cmd, void *args)
     hall_describe_t *pdesc = NULL;
     int32_t err = DRV_ERR_WRONG_ARGS;
     int32_t (*cb)(hall_describe_t *, void *) = NULL;
-    
+
     ASSERT(pdrv);
     pdesc = container_of(pdrv, device_t, pdrv)->pdesc;
     do {
@@ -143,7 +142,7 @@ static bool hall_phase_detect(hall_describe_t *pdesc)
 
     uint8_t tmp = get_hall_state(pdesc);
     uint8_t dir = MDIRECTION_DEC;
-    
+
     if (tmp == pdesc->priv.hall_state) {
         hall_change = (pdesc->priv.hall_state ^ pdesc->priv.hall_state_last) & (HALL1 | HALL2);
         if (hall_change == 0) {
@@ -153,7 +152,7 @@ static bool hall_phase_detect(hall_describe_t *pdesc)
 
         // 识别方向
         if (hall_change == HALL1) {
-            if(pdesc->priv.hall_state ==  0x00 || pdesc->priv.hall_state == 0x03) {
+            if (pdesc->priv.hall_state == 0x00 || pdesc->priv.hall_state == 0x03) {
                 dir = MDIRECTION_INC;
             }
         } else if (hall_change == HALL2) {
@@ -247,7 +246,7 @@ static int32_t _hall_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *ar
 
     uint16_t tmp = 0;
     pdesc->priv.time_200us++;
-    
+
     do {
         if (!pdesc) {
             break;
@@ -257,21 +256,21 @@ static int32_t _hall_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *ar
             tmp = pdesc->priv.time_200us;
             switch (pdesc->priv.hall_state_last) {
                 case HALL1:
-                pdesc->priv.pluse_width = tmp - pdesc->priv.p1_t0;
-                pdesc->priv.p1_t0 = tmp;
-                break;
+                    pdesc->priv.pluse_width = tmp - pdesc->priv.p1_t0;
+                    pdesc->priv.p1_t0 = tmp;
+                    break;
                 case HALL1 | HALL2:
-                pdesc->priv.pluse_width = tmp - pdesc->priv.p2_t0;
-                pdesc->priv.p2_t0 = tmp;
-                break;
+                    pdesc->priv.pluse_width = tmp - pdesc->priv.p2_t0;
+                    pdesc->priv.p2_t0 = tmp;
+                    break;
                 case HALL2:
-                pdesc->priv.pluse_width = tmp - pdesc->priv.p1_t1;
-                pdesc->priv.p1_t1 = tmp;
-                break;
+                    pdesc->priv.pluse_width = tmp - pdesc->priv.p1_t1;
+                    pdesc->priv.p1_t1 = tmp;
+                    break;
                 default:
-                pdesc->priv.pluse_width = tmp - pdesc->priv.p2_t1;
-                pdesc->priv.p2_t1 = tmp;
-                break;
+                    pdesc->priv.pluse_width = tmp - pdesc->priv.p2_t1;
+                    pdesc->priv.p2_t1 = tmp;
+                    break;
             }
         }
     } while (0);
@@ -282,10 +281,7 @@ static int32_t _hall_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *ar
         ms_count = 0;
         calcalateSpeed_ms(pdesc);
     }
-    return  err;
+    return err;
 }
 
-
 /*---------- end of file ----------*/
-
-

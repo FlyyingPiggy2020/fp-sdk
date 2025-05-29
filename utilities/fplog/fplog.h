@@ -148,15 +148,15 @@ SOFTWARE.
 #endif
 
 #if LOG_OUTPUT_LVL >= LOG_LVL_DEBUG
-#define log_d(...)               log_output(LOG_LVL_DEBUG, LOG_TAG, __FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)
-#define log_hex(name, buf, size) log_hex_dump(name, 32, buf, size)
+#define log_d(...)                 log_output(LOG_LVL_DEBUG, LOG_TAG, __FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)
+#define log_hex(name, buf, size)   log_hex_dump(name, 32, buf, size)
 #define log_hex_a(name, buf, size) _log_hex_dump(LOG_LVL_ASSERT, name, 32, buf, size)
 #define log_hex_e(name, buf, size) _log_hex_dump(LOG_LVL_ERROR, name, 32, buf, size)
 #define log_hex_w(name, buf, size) _log_hex_dump(LOG_LVL_WARN, name, 32, buf, size)
 #define log_hex_i(name, buf, size) _log_hex_dump(LOG_LVL_INFO, name, 32, buf, size)
 #else
-#define log_d(...)   ((void)0);
-#define log_hex(...) ((void)0);
+#define log_d(...)     ((void)0);
+#define log_hex(...)   ((void)0);
 #define log_hex_a(...) ((void)0);
 #define log_hex_e(...) ((void)0);
 #define log_hex_w(...) ((void)0);

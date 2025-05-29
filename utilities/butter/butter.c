@@ -19,7 +19,6 @@
 /*---------- function prototype ----------*/
 /*---------- variable ----------*/
 
-
 /*---------- function ----------*/
 
 /**
@@ -30,7 +29,7 @@
 int16_t low_pass_filter(FilterCoefficients *coeffs, int16_t input)
 {
     int32_t output;
-    
+
     output = (coeffs->b[0] * input + coeffs->b[1] * coeffs->last_input - coeffs->a[1] * coeffs->last_output) >> 14;
     // 滤波器系数已经限幅，不需要额外再去做一次限幅
     coeffs->last_input = input;

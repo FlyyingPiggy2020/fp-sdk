@@ -5,9 +5,8 @@
  * @Date         : 2025-05-23 10:08:46
  * @LastEditors  : lxf_zjnb@qq.com
  * @LastEditTime : 2025-05-23 10:09:03
- * @Brief        : 
+ * @Brief        :
  */
-
 
 #ifndef __ANALOG_H__
 #define __ANALOG_H__
@@ -20,10 +19,10 @@ extern "C" {
 #include <stddef.h>
 #include "device.h"
 /*---------- macro ----------*/
-#define IOCTL_ANALOG_ENABLE                             (IOCTL_USER_START + 0x00)
-#define IOCTL_ANALOG_DISABLE                            (IOCTL_USER_START + 0x01)
-#define IOCTL_ANALOG_GET                                (IOCTL_USER_START + 0x02)
-#define IOCTL_ANALOG_SET_IRQ_HANDLER                    (IOCTL_USER_START + 0x03)
+#define IOCTL_ANALOG_ENABLE          (IOCTL_USER_START + 0x00)
+#define IOCTL_ANALOG_DISABLE         (IOCTL_USER_START + 0x01)
+#define IOCTL_ANALOG_GET             (IOCTL_USER_START + 0x02)
+#define IOCTL_ANALOG_SET_IRQ_HANDLER (IOCTL_USER_START + 0x03)
 /*---------- type define ----------*/
 typedef struct {
     uint32_t number_of_channels;
@@ -49,6 +48,3 @@ union analog_ioctl_param {
 }
 #endif
 #endif // !__ANALOG_H__
-
-
-

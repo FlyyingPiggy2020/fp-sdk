@@ -7,12 +7,12 @@
  * @LastEditTime : 2024-12-27 11:25:02
  * @Brief        : 一阶巴特沃斯滤波器
  */
- 
+
 ///**
 // * @brief (采样率2.5KHZ，截止频率10HZ)
 // * @return {*}
 // */
-//FilterCoefficients coeffs = {
+// FilterCoefficients coeffs = {
 //    .b = { 203, 203 },     // 分子系数
 //    .a = { 16384, -15977 } // 分母系数
 //};

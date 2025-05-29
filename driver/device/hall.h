@@ -5,7 +5,7 @@
  * @Date         : 2025-05-21 13:31:51
  * @LastEditors  : lxf_zjnb@qq.com
  * @LastEditTime : 2025-05-22 11:20:59
- * @Brief        : 
+ * @Brief        :
  */
 
 #ifndef __FP_HALL_H__
@@ -19,8 +19,8 @@ extern "C" {
 #include <stddef.h>
 #include "device.h"
 /*---------- macro ----------*/
-#define MDIRECTION_INC 0        // 行程增加
-#define MDIRECTION_DEC 1        // 行程减少
+#define MDIRECTION_INC 0 // 行程增加
+#define MDIRECTION_DEC 1 // 行程减少
 /*---------- type define ----------*/
 typedef struct {
     int32_t route;
@@ -33,11 +33,11 @@ typedef struct {
     } ops;
 
     struct {
-        uint8_t dir; //方向
+        uint8_t dir;              // 方向
         uint16_t hall_state_last; // 上次的霍尔状态
-        uint16_t hall_state; // 霍尔状态
-        uint16_t time_200us; // 计时
-        uint16_t pluse_width; // 脉宽
+        uint16_t hall_state;      // 霍尔状态
+        uint16_t time_200us;      // 计时
+        uint16_t pluse_width;     // 脉宽
         uint16_t no_pluse_time;
         uint16_t p1_t0; // 用于测量脉宽
         uint16_t p1_t1;
@@ -53,5 +53,3 @@ typedef struct {
 }
 #endif
 #endif // !__FP_HALL_H__
-
-

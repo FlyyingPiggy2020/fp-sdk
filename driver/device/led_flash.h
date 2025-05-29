@@ -64,7 +64,7 @@ typedef struct {
 
 typedef union {
     struct {
-        uint8_t id;// 从0开始。例如led_num为1，则led的id从0开始。
+        uint8_t id; // 从0开始。例如led_num为1，则led的id从0开始。
         uint16_t cnt;
         uint16_t delay;
         led_flash_layer_name_t layer;

@@ -76,12 +76,12 @@ typedef struct {
     struct {
         bool (*init)(void);
         void (*deinit)(void);
-        bool (*save_config)(void); // 保存电机config内的数据到非易失性存储器
-        bool (*load_config)(void); // 从非易失性数据存储器内读取电机的config数据
-        void (*motor_stop)(void);  // 电机停止
-        void (*motor_inc)(void);   // 电机正转
-        void (*motor_dec)(void);   // 电机反转
-        uint16_t (*get_motor_current_with_offset)(void); //获取电机电流的adc值
+        bool (*save_config)(void);                       // 保存电机config内的数据到非易失性存储器
+        bool (*load_config)(void);                       // 从非易失性数据存储器内读取电机的config数据
+        void (*motor_stop)(void);                        // 电机停止
+        void (*motor_inc)(void);                         // 电机正转
+        void (*motor_dec)(void);                         // 电机反转
+        uint16_t (*get_motor_current_with_offset)(void); // 获取电机电流的adc值
     } ops;
 
     struct {
@@ -124,7 +124,7 @@ union roller_blind_control_param {
         uint8_t status;
         uint8_t route;
         bool is_route_free;
-    }get;
+    } get;
 };
 #pragma pack()
 /*---------- function prototype ----------*/

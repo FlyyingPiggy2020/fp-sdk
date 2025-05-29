@@ -48,9 +48,9 @@ static struct protocol_callback ioctl_cbs[] = {
     { IOCTL_MOTORC_SET_DOWN_ROUTE, NULL },
     { IOCTL_MOTORC_CLEAR_ROUTE, NULL },
     { IOCTL_MOTORC_TURN, NULL },
-    { IOCTL_MOTORC_GET_STATUS, _motor_get_status},
-    { IOCTL_MOTORC_ROUTE_IS_FREE, _motor_is_free},
-    { IOCTL_MOTORC_GET_ROUTE, _motor_get_route},
+    { IOCTL_MOTORC_GET_STATUS, _motor_get_status },
+    { IOCTL_MOTORC_ROUTE_IS_FREE, _motor_is_free },
+    { IOCTL_MOTORC_GET_ROUTE, _motor_get_route },
 };
 /*---------- function ----------*/
 
@@ -287,17 +287,17 @@ static int32_t _motor_stop(roller_blind_control_describe_t *pdesc, void *args)
  */
 static int32_t _motor_to_open_up(roller_blind_control_describe_t *pdesc, void *args)
 {
-//    // 同方向遇阻不再运行
-//    uint8_t *mode = (uint8_t *)args;
+    //    // 同方向遇阻不再运行
+    //    uint8_t *mode = (uint8_t *)args;
 
-//    if (EVENT_IS_AND_BIT_SET(pdesc->priv.flag.state, MFLAG_RESISTANCE_INC)) {
-//        return DRV_ERR_ERROR;
-//    }
+    //    if (EVENT_IS_AND_BIT_SET(pdesc->priv.flag.state, MFLAG_RESISTANCE_INC)) {
+    //        return DRV_ERR_ERROR;
+    //    }
 
-//    if ((pdesc->config.route_up == MOTOR_ROUTE_FREE) || (*mode & MMODE_OVERROUTE)) {
-//        if ((*mode & 0x0f) & MMODE_SSTEP) {
-//        }
-//    }
+    //    if ((pdesc->config.route_up == MOTOR_ROUTE_FREE) || (*mode & MMODE_OVERROUTE)) {
+    //        if ((*mode & 0x0f) & MMODE_SSTEP) {
+    //        }
+    //    }
     pdesc->priv.state.state_curr = MSTATE_RUN_INC;
     pdesc->ops.motor_inc();
     return DRV_ERR_EOK;
@@ -314,14 +314,14 @@ static int32_t _motor_get_status(roller_blind_control_describe_t *pdesc, void *a
 {
     int32_t err = DRV_ERR_WRONG_ARGS;
     union roller_blind_control_param *param = (union roller_blind_control_param *)args;
-    
+
     do {
         if (!param) {
             break;
         }
         param->get.status = pdesc->priv.state.state_curr;
         err = DRV_ERR_EOK;
-    }while(0);
+    } while (0);
     return err;
 }
 
@@ -329,24 +329,24 @@ static int32_t _motor_is_free(roller_blind_control_describe_t *pdesc, void *args
 {
     int32_t err = DRV_ERR_WRONG_ARGS;
     union roller_blind_control_param *param = (union roller_blind_control_param *)args;
-    
+
     do {
         if (!param) {
             break;
         }
-        
+
         if (pdesc->config.route_up == MOTOR_ROUTE_FREE) {
             param->get.is_route_free = true;
             break;
         }
-        
+
         if (pdesc->config.route_down == MOTOR_ROUTE_FREE) {
             param->get.is_route_free = true;
             break;
         }
         param->get.is_route_free = false;
         err = DRV_ERR_EOK;
-    }while(0);
+    } while (0);
     return err;
 }
 
@@ -354,24 +354,24 @@ static int32_t _motor_get_route(roller_blind_control_describe_t *pdesc, void *ar
 {
     int32_t err = DRV_ERR_WRONG_ARGS;
     union roller_blind_control_param *param = (union roller_blind_control_param *)args;
-    
+
     do {
         if (!param) {
             break;
         }
-        
+
         _motor_is_free(pdesc, param);
-        
+
         if (param->get.is_route_free == true) {
             err = DRV_ERR_EOK;
             param->get.route = 0xff;
             break;
         }
-        
+
         int32_t max, min, x;
         max = pdesc->config.route_up;
         min = pdesc->config.route_down;
-        
+
         x = max - min;
         int32_t y = pdesc->priv.control.target_route;
         y -= min;
@@ -386,7 +386,7 @@ static int32_t _motor_get_route(roller_blind_control_describe_t *pdesc, void *ar
         }
         param->get.route = x;
         err = DRV_ERR_EOK;
-    }while(0);
+    } while (0);
     return err;
 }
 /*---------- end of file ----------*/

@@ -39,14 +39,14 @@ extern "C" {
 #define IOCTL_LIGHTC_LOOP_LIGHT_ADJ_STOP          (IOCTL_USER_START + 0x0A)
 #define IOCTL_LIGHTC_REVERSE                      (IOCTL_USER_START + 0x0B) // if light brigness is 50% now, first brightness goto 0%, then goto 50%
 #define IOCTL_LIGHTC_SET_BRIGHTNESS_BY_TIME       (IOCTL_USER_START + 0x0C)
-//#define IOCTL_LIGHTC_REVERSE_EXT                  (IOCTL_USER_START + 0x0D) // if light brigness is 50% now, first brightness goto 0%, then goto 100%
-//#define IOCTL_LIGHTC_REVERSE_BRIGHTNESS           (IOCTL_USER_START + 0x0E) // if light brigness is 50% now, first brightness goto 100%, then goto 0%
+// #define IOCTL_LIGHTC_REVERSE_EXT                  (IOCTL_USER_START + 0x0D) // if light brigness is 50% now, first brightness goto 0%, then goto 100%
+// #define IOCTL_LIGHTC_REVERSE_BRIGHTNESS           (IOCTL_USER_START + 0x0E) // if light brigness is 50% now, first brightness goto 100%, then goto 0%
 #define IOCTL_LIGHTC_START                        (IOCTL_USER_START + 0x0F)
 #define IOCTL_LIGHTC_PARAM_READ                   (IOCTL_USER_START + 0x10)
 #define IOCTL_LIGHTC_PARAM_WRITE                  (IOCTL_USER_START + 0x11)
 #define IOCTL_LIGHTC_LOOP_LIGHT_ADJ_START_BY_TIME (IOCTL_USER_START + 0x12)
 #define IOCTL_LIGHTC_GET_BRIGHTNESS               (IOCTL_USER_START + 0x13)
-#define IOCTL_LIGHTC_SET_VIRTUAL_BRIGHTNESS               (IOCTL_USER_START + 0x13) //设置虚拟行程
+#define IOCTL_LIGHTC_SET_VIRTUAL_BRIGHTNESS       (IOCTL_USER_START + 0x13) // 设置虚拟行程
 /*---------- type define ----------*/
 typedef enum {
     LIGHTC_MAP_MODE_NORMAL,                 // normal mode
@@ -64,7 +64,7 @@ typedef enum {
 typedef struct {
     double brightness;
     double duty;
-} _bmap_node_t; 
+} _bmap_node_t;
 
 typedef struct {
     double brightness;
@@ -96,10 +96,10 @@ typedef struct {
     frequenct_map_t *fmap;
     iadj_map_t *imap;
     double brightness;             //[0,100] for example 50 means 50%
-    bool is_virtual;  //虚拟化(虚拟化之后将调用xfer接口，而不是实际的灯)
-    int8_t virtual_brightness; //虚拟化的灯的亮度(0-100)
+    bool is_virtual;               // 虚拟化(虚拟化之后将调用xfer接口，而不是实际的灯)
+    int8_t virtual_brightness;     // 虚拟化的灯的亮度(0-100)
     uint16_t time_slice_frequence; // default 100; unit:hz;
-    
+
     struct {
         uint8_t light_type;          // default:0xff; reserve
         uint8_t dimming_start_point; // default:0;    unit:%
@@ -141,22 +141,22 @@ typedef struct {
         int32_t (*update_brightness)(uint32_t frequence, float duty, float iadj);
     } ops;
     struct {
-        void (*lightc_cmd_off)(void); // light off
-        void (*lightc_cmd_on)(void);  // light on
-        void (*lightc_cmd_set_brightness)(double brightness); // set brightness
-        void (*lightc_cmd_step_brightness_inc)(void); // step brightness inc
-        void (*lightc_cmd_step_brightness_dec)(void); // step brightness dec
-        void (*lightc_cmd_continue_brightness_inc)(void); // continue brightness inc
-        void (*lightc_cmd_continue_brightness_dec)(void); // continue brightness dec
-        void (*lightc_cmd_continue_brightness_finish)(void); // continue brightness stop
-        void (*lightc_cmd_loop_light_adj_start)(void); // loop light adjustment start
-        void (*lightc_cmd_loop_light_adj_stop)(void); // loop light adjustment stop
-        void (*lightc_cmd_reverse)(void); // reverse brightness
-//        void (*lightc_cmd_reverse_ext)(void); // reverse brightness
-//        void (*lightc_cmd_reverse_brightness)(void); // reverse brightness
-        void (*lightc_cmd_start)(void); // start
-        void (*lightc_cmd_param_write)(void); // write light param
-        void (*lightc_cmd_param_read)(void); // read light param
+        void (*lightc_cmd_off)(void);                          // light off
+        void (*lightc_cmd_on)(void);                           // light on
+        void (*lightc_cmd_set_brightness)(double brightness);  // set brightness
+        void (*lightc_cmd_step_brightness_inc)(void);          // step brightness inc
+        void (*lightc_cmd_step_brightness_dec)(void);          // step brightness dec
+        void (*lightc_cmd_continue_brightness_inc)(void);      // continue brightness inc
+        void (*lightc_cmd_continue_brightness_dec)(void);      // continue brightness dec
+        void (*lightc_cmd_continue_brightness_finish)(void);   // continue brightness stop
+        void (*lightc_cmd_loop_light_adj_start)(void);         // loop light adjustment start
+        void (*lightc_cmd_loop_light_adj_stop)(void);          // loop light adjustment stop
+        void (*lightc_cmd_reverse)(void);                      // reverse brightness
+                                                               //        void (*lightc_cmd_reverse_ext)(void); // reverse brightness
+                                                               //        void (*lightc_cmd_reverse_brightness)(void); // reverse brightness
+        void (*lightc_cmd_start)(void);                        // start
+        void (*lightc_cmd_param_write)(void);                  // write light param
+        void (*lightc_cmd_param_read)(void);                   // read light param
         void (*lightc_cmd_loop_light_adj_start_by_time)(void); // loop light adjustment start by time
     } xfer;
     struct {
@@ -164,7 +164,7 @@ typedef struct {
     } cb;
 } lightc_map_describe_t;
 
-union lightc_map_param{
+union lightc_map_param {
     struct {
         uint8_t brightness;
         uint16_t move_time; // unit: second

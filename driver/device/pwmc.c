@@ -353,7 +353,8 @@ static int32_t _ioctl_set_freq_duty(pwmc_describe_t *pdesc, void *args)
             break;
         }
         pdesc->frequence = param->freq;
-        pdesc->priv.crr = (uint32_t)(pdesc->priv.arr * param->duty);;
+        pdesc->priv.crr = (uint32_t)(pdesc->priv.arr * param->duty);
+        ;
         err = pdesc->ops.update_duty_crr(pdesc->priv.crr);
         if (err != DRV_ERR_EOK) {
             break;

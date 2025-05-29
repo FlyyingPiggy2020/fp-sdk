@@ -260,7 +260,7 @@ void _log_hex_dump(unsigned char level, const char *name, uint8_t width, const v
 
     for (i = 0; i < size; i += width) {
         /* package header */
-        fmt_result = snprintf(log_buf, LOG_LINE_BUF_SIZE, "%s %s D/HEX %s: %04X-%04X: ",CSI_START,color_hex_output_info[level], name, i, i + width - 1);
+        fmt_result = snprintf(log_buf, LOG_LINE_BUF_SIZE, "%s %s D/HEX %s: %04X-%04X: ", CSI_START, color_hex_output_info[level], name, i, i + width - 1);
         /* calculate log length */
         if ((fmt_result > -1) && (fmt_result <= LOG_LINE_BUF_SIZE)) {
             log_len = fmt_result;
