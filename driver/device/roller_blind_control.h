@@ -61,9 +61,9 @@ extern "C" {
 // #define MOTOR_PW_DMAX         0x40     // 允许的脉宽最大的变化系数（超过此值认为遇阻)
 
 // #define preMax                100
+#define JOG_HALL                    20 // 点动霍尔数
 
-// #define JOG_HALL              20  // 点动霍尔数
-// #define MOTOR_ROUTE_MIN       300 // 行程最小值
+#define MOTOR_ROUTE_MIN             300 // 行程最小值
 
 // #define MIN_SPEED             20.0f // 最小速度 单位hz
 // #define MAX_SPEED             130.0f // 最大速度 单位hz
@@ -72,6 +72,11 @@ extern "C" {
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
 #pragma pack(1)
+typedef struct {
+    int32_t route_curr; // 当前行程
+    int32_t route_up;   // 上行程
+    int32_t route_down; // 下行程
+} motor_config_t;
 typedef struct {
     struct {
         bool (*init)(void);
@@ -84,11 +89,7 @@ typedef struct {
         uint16_t (*get_motor_current_with_offset)(void); // 获取电机电流的adc值
     } ops;
 
-    struct {
-        int32_t route_curr; // 当前行程
-        int32_t route_up;   // 上行程
-        int32_t route_down; // 下行程
-    } config;
+    motor_config_t config;
 
     struct {
         struct {
@@ -125,6 +126,11 @@ union roller_blind_control_param {
         uint8_t route;
         bool is_route_free;
     } get;
+
+    struct {
+        uint8_t mode; // MMODE_NORMAL,MMODE_SSTEP
+        uint8_t route;
+    } run;
 };
 #pragma pack()
 /*---------- function prototype ----------*/

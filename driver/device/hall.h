@@ -19,8 +19,11 @@ extern "C" {
 #include <stddef.h>
 #include "device.h"
 /*---------- macro ----------*/
-#define MDIRECTION_INC 0 // 行程增加
-#define MDIRECTION_DEC 1 // 行程减少
+#define MDIRECTION_INC       0 // 行程增加
+#define MDIRECTION_DEC       1 // 行程减少
+
+#define IOCTL_HALL_GET_SPEED (IOCTL_USER_START + 0x00) //
+#define IOCTL_HALL_GET_ROUTE (IOCTL_USER_START + 0x01) //
 /*---------- type define ----------*/
 typedef struct {
     int32_t route;
@@ -30,21 +33,30 @@ typedef struct {
         void (*deinit)(void);
         bool (*hall1_read)(void); // 读取霍尔1的电平;高电平true，低电平false
         bool (*hall2_read)(void); // 读取霍尔2的电平;
+        void (*add)(void);
+        void (*dec)(void);
     } ops;
 
     struct {
-        uint8_t dir;              // 方向
-        uint16_t hall_state_last; // 上次的霍尔状态
-        uint16_t hall_state;      // 霍尔状态
-        uint16_t time_200us;      // 计时
-        uint16_t pluse_width;     // 脉宽
+        uint8_t dir;                   // 方向
+        uint16_t hall_state_last;      // 上次的霍尔状态
+        uint8_t hall_state;            // 霍尔状态
+        uint16_t time_200us;           // 计时
+        volatile uint16_t pluse_width; // 脉宽
         uint16_t no_pluse_time;
-        uint16_t p1_t0; // 用于测量脉宽
-        uint16_t p1_t1;
-        uint16_t p2_t0;
-        uint16_t p2_t1;
+        volatile uint16_t p1_t0; // 用于测量脉宽
+        volatile uint16_t p1_t1;
+        volatile uint16_t p2_t0;
+        volatile uint16_t p2_t1;
     } priv;
 } hall_describe_t;
+
+union hall_ioctl_param {
+    struct {
+        float speed;
+        int32_t route;
+    } get;
+};
 
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/

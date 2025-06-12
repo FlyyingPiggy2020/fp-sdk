@@ -27,6 +27,11 @@ static int32_t _motor_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *a
 static int32_t _motor_to_open_up(roller_blind_control_describe_t *pdesc, void *args);
 static int32_t _motor_to_close_down(roller_blind_control_describe_t *pdesc, void *args);
 static int32_t _motor_stop(roller_blind_control_describe_t *pdesc, void *args);
+static int32_t _motor_goto_xx_pre(roller_blind_control_describe_t *pdesc, void *args);
+static int32_t _motor_set_up_route(roller_blind_control_describe_t *pdesc, void *args);
+static int32_t _motor_set_down_route(roller_blind_control_describe_t *pdesc, void *args);
+static int32_t _motor_clear_route(roller_blind_control_describe_t *pdesc, void *args);
+
 static int32_t _motor_get_status(roller_blind_control_describe_t *pdesc, void *args);
 static int32_t _motor_is_free(roller_blind_control_describe_t *pdesc, void *args);
 static int32_t _motor_get_route(roller_blind_control_describe_t *pdesc, void *args);
@@ -43,9 +48,9 @@ static struct protocol_callback ioctl_cbs[] = {
     { IOCTL_MOTORC_OPEN, _motor_to_open_up },
     { IOCTL_MOTORC_CLOSE, _motor_to_close_down },
     { IOCTL_MOTORC_STOP, _motor_stop },
-    { IOCTL_MOTORC_GOTO_ROUTE, NULL },
-    { IOCTL_MOTORC_SET_UP_ROUTE, NULL },
-    { IOCTL_MOTORC_SET_DOWN_ROUTE, NULL },
+    { IOCTL_MOTORC_GOTO_ROUTE, _motor_goto_xx_pre },
+    { IOCTL_MOTORC_SET_UP_ROUTE, _motor_set_up_route },
+    { IOCTL_MOTORC_SET_DOWN_ROUTE, _motor_set_down_route },
     { IOCTL_MOTORC_CLEAR_ROUTE, NULL },
     { IOCTL_MOTORC_TURN, NULL },
     { IOCTL_MOTORC_GET_STATUS, _motor_get_status },
@@ -144,6 +149,34 @@ static int32_t _motor_ioctl(driver_t **pdrv, uint32_t cmd, void *args)
     return err;
 }
 
+static void _motor_route_control(roller_blind_control_describe_t *pdesc)
+{
+    bool isMustStop = false;
+    if (pdesc->priv.control.target_route != MOTOR_ROUTE_FREE) {
+        if (pdesc->priv.state.state_curr == MSTATE_RUN_INC) {
+            if (pdesc->priv.control.target_route != MOTOR_ROUTE_INC_MAX) {
+                if (pdesc->config.route_curr >= pdesc->priv.control.target_route) {
+                    isMustStop = true;
+                }
+            }
+        }
+        if (pdesc->priv.state.state_curr == MSTATE_RUN_DEC) {
+            if (pdesc->priv.control.target_route != MOTOR_ROUTE_DEC_MAX) {
+                if (pdesc->config.route_curr <= pdesc->priv.control.target_route) {
+                    isMustStop = true;
+                }
+            }
+        }
+    }
+    if (isMustStop) {
+        _motor_stop(pdesc, NULL);
+    }
+}
+
+static void _motor_speed_control(roller_blind_control_describe_t *pdesc)
+{
+    //    static uint8_t
+}
 static int32_t _motor_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *args, uint32_t length)
 {
     roller_blind_control_describe_t *pdesc = NULL;
@@ -155,8 +188,36 @@ static int32_t _motor_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *a
         if (!pdesc) {
             break;
         }
-        do {
 
+        do {
+            if (pdesc->priv.control.time_stop_delay) {
+                pdesc->priv.control.time_stop_delay--;
+                __motor_stop_without_logic(pdesc);
+            } else if (pdesc->priv.state.state_curr == MSTATE_RUN_INC) {
+                __motor_run_inc(pdesc, NULL);
+                pdesc->priv.flag.run_time++;
+            } else if (pdesc->priv.state.state_curr == MSTATE_RUN_DEC) {
+                __motor_run_dec(pdesc, NULL);
+                pdesc->priv.flag.run_time++;
+            } else if (pdesc->priv.flag.run_time) {
+                pdesc->priv.flag.run_time--;
+            }
+            _motor_route_control(pdesc);
+            _motor_speed_control(pdesc);
+
+            // 运行保护
+            if (pdesc->priv.flag.run_time > (6 * 60 * 1000)) {
+                pdesc->priv.flag.run_time = 0;
+                _motor_stop(pdesc, NULL);
+            }
+
+            if (pdesc->priv.state.disable_excloop > 0) {
+                pdesc->priv.state.disable_excloop--;
+            }
+
+            if (pdesc->priv.state.start_update_time > 0) {
+                pdesc->priv.state.start_update_time--;
+            }
         } while (0);
 
     } while (0);
@@ -226,7 +287,7 @@ static bool __motor_goto_route(roller_blind_control_describe_t *pdesc, int32_t r
             break;
         }
 
-        if (abs32(pdesc->config.route_curr, route) <= pdesc->param.space_min) {
+        if (abs32(pdesc->config.route_curr, route) <= MOTOR_SPACE_MIN) {
             break;
         }
 
@@ -237,12 +298,18 @@ static bool __motor_goto_route(roller_blind_control_describe_t *pdesc, int32_t r
         pdesc->priv.control.target_route = route;
         if (pdesc->priv.control.target_route > pdesc->config.route_curr) {
             if (pdesc->priv.state.state_curr == MSTATE_RUN_DEC) {
-                pdesc->priv.control.time_stop_delay = pdesc->param.time_stop_delay;
+                pdesc->priv.control.time_stop_delay = MOTOR_SWITCH_TIME;
                 __motor_stop_without_logic(pdesc);
             }
-
+            pdesc->priv.state.state_curr = MSTATE_RUN_INC;
         } else if (pdesc->priv.control.target_route < pdesc->config.route_curr) {
+            if (pdesc->priv.state.state_curr == MSTATE_RUN_INC) {
+                pdesc->priv.control.time_stop_delay = MOTOR_SWITCH_TIME;
+                __motor_stop_without_logic(pdesc);
+            }
+            pdesc->priv.state.state_curr = MSTATE_RUN_DEC;
         }
+        ret = true;
     } while (0);
 
     return ret;
@@ -287,27 +354,81 @@ static int32_t _motor_stop(roller_blind_control_describe_t *pdesc, void *args)
  */
 static int32_t _motor_to_open_up(roller_blind_control_describe_t *pdesc, void *args)
 {
-    //    // 同方向遇阻不再运行
-    //    uint8_t *mode = (uint8_t *)args;
+    union roller_blind_control_param *param = args;
+    bool ret = false;
+    uint8_t mode;
 
-    //    if (EVENT_IS_AND_BIT_SET(pdesc->priv.flag.state, MFLAG_RESISTANCE_INC)) {
-    //        return DRV_ERR_ERROR;
-    //    }
+    if (!args) {
+        return DRV_ERR_POINT_NONE;
+    }
 
-    //    if ((pdesc->config.route_up == MOTOR_ROUTE_FREE) || (*mode & MMODE_OVERROUTE)) {
-    //        if ((*mode & 0x0f) & MMODE_SSTEP) {
-    //        }
-    //    }
-    pdesc->priv.state.state_curr = MSTATE_RUN_INC;
-    pdesc->ops.motor_inc();
-    return DRV_ERR_EOK;
+    mode = param->run.mode;
+    // 同方向遇阻不再运行
+
+    if (EVENT_IS_AND_BIT_SET(pdesc->priv.flag.state, MFLAG_RESISTANCE_INC)) {
+        return DRV_ERR_ERROR;
+    }
+
+    if ((pdesc->config.route_up == MOTOR_ROUTE_FREE) || (mode & MMODE_OVERROUTE)) {
+        if ((mode & 0x0f) & MMODE_SSTEP) {
+            // 点动模式
+            ret = __motor_goto_route(pdesc, pdesc->config.route_curr + JOG_HALL);
+        } else {
+            // 正常模式
+            ret = __motor_goto_route(pdesc, MOTOR_ROUTE_INC_MAX);
+        }
+    } else {
+        if ((mode & 0x0f) & MMODE_SSTEP) {
+            // 点动模式
+            ret = __motor_goto_route(pdesc, pdesc->config.route_curr + JOG_HALL);
+        } else {
+            // 正常模式
+            ret = __motor_goto_route(pdesc, pdesc->config.route_up);
+        }
+    }
+
+    if (ret == true) {
+        return DRV_ERR_EOK;
+    }
+    return DRV_ERR_ERROR;
 }
 
 static int32_t _motor_to_close_down(roller_blind_control_describe_t *pdesc, void *args)
 {
-    pdesc->priv.state.state_curr = MSTATE_RUN_DEC;
-    pdesc->ops.motor_dec();
-    return DRV_ERR_EOK;
+    union roller_blind_control_param *param = args;
+
+    bool ret = false;
+    // 同方向遇阻不再运行
+    if (!args) {
+        return DRV_ERR_POINT_NONE;
+    }
+    uint8_t mode = param->run.mode;
+    if (EVENT_IS_AND_BIT_SET(pdesc->priv.flag.state, MSTATE_RUN_DEC)) {
+        return DRV_ERR_ERROR;
+    }
+
+    if ((pdesc->config.route_up == MOTOR_ROUTE_FREE) || (mode & MMODE_OVERROUTE)) {
+        if ((mode & 0x0f) & MMODE_SSTEP) {
+            // 点动模式
+            ret = __motor_goto_route(pdesc, pdesc->config.route_curr - JOG_HALL);
+        } else {
+            // 正常模式
+            ret = __motor_goto_route(pdesc, MOTOR_ROUTE_DEC_MAX);
+        }
+    } else {
+        if ((mode & 0x0f) & MMODE_SSTEP) {
+            // 点动模式
+            ret = __motor_goto_route(pdesc, pdesc->config.route_curr - JOG_HALL);
+        } else {
+            // 正常模式
+            ret = __motor_goto_route(pdesc, pdesc->config.route_down);
+        }
+    }
+
+    if (ret == true) {
+        return DRV_ERR_EOK;
+    }
+    return DRV_ERR_ERROR;
 }
 
 static int32_t _motor_get_status(roller_blind_control_describe_t *pdesc, void *args)
@@ -389,4 +510,110 @@ static int32_t _motor_get_route(roller_blind_control_describe_t *pdesc, void *ar
     } while (0);
     return err;
 }
+
+static int32_t _motor_goto_xx_pre(roller_blind_control_describe_t *pdesc, void *args)
+{
+    union roller_blind_control_param *param = (union roller_blind_control_param *)args;
+    int32_t ret = DRV_ERR_ERROR;
+
+    do {
+        if (!pdesc || !args) {
+            break;
+        }
+
+        if (param->run.route > 100) {
+            break;
+        }
+
+        if (pdesc->config.route_up == MOTOR_ROUTE_FREE) {
+            break;
+        }
+
+        if (pdesc->config.route_down == MOTOR_ROUTE_FREE) {
+            break;
+        }
+
+        int32_t route = 0;
+        int32_t max;
+        int32_t min;
+        int32_t x;
+        uint8_t pre = param->run.route;
+
+        max = pdesc->config.route_up;
+        min = pdesc->config.route_down;
+
+        do {
+            if (pre == 0) {
+                route = min;
+                break;
+            } else if (pre == 100) {
+                route = max;
+                break;
+            }
+            x = max - min;
+            x *= 2 * pre + 1;
+            x /= (2 * 100);
+            x += min;
+            route = x;
+        } while (0);
+        __motor_goto_route(pdesc, route);
+        ret = DRV_ERR_EOK;
+    } while (0);
+    return ret;
+}
+
+static int32_t _motor_set_up_route(roller_blind_control_describe_t *pdesc, void *args)
+{
+    int32_t ret = DRV_ERR_ERROR;
+    _motor_stop(pdesc, NULL);
+
+    do {
+        if (pdesc->config.route_up != MOTOR_ROUTE_FREE) {
+            break;
+        }
+        if (pdesc->config.route_down != MOTOR_ROUTE_FREE) {
+            if (pdesc->config.route_curr - pdesc->config.route_down < MOTOR_ROUTE_MIN) {
+                break;
+            }
+        }
+        pdesc->config.route_up = pdesc->config.route_curr;
+        ret = DRV_ERR_EOK;
+    } while (0);
+
+    return ret;
+}
+static int32_t _motor_set_down_route(roller_blind_control_describe_t *pdesc, void *args)
+{
+    int32_t ret = DRV_ERR_ERROR;
+    _motor_stop(pdesc, NULL);
+
+    do {
+        if (pdesc->config.route_down != MOTOR_ROUTE_FREE) {
+            break;
+        }
+        if (pdesc->config.route_up != MOTOR_ROUTE_FREE) {
+            if (pdesc->config.route_up - pdesc->config.route_curr < MOTOR_ROUTE_MIN) {
+                break;
+            }
+        }
+        pdesc->config.route_down = pdesc->config.route_curr;
+        ret = DRV_ERR_EOK;
+    } while (0);
+
+    return ret;
+}
+static int32_t _motor_clear_route(roller_blind_control_describe_t *pdesc, void *args)
+{
+    int32_t ret = DRV_ERR_ERROR;
+    _motor_stop(pdesc, NULL);
+
+    do {
+        pdesc->config.route_up = MOTOR_ROUTE_FREE;
+        pdesc->config.route_down = MOTOR_ROUTE_FREE;
+        ret = DRV_ERR_EOK;
+    } while (0);
+
+    return ret;
+}
+
 /*---------- end of file ----------*/

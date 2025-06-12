@@ -14,6 +14,7 @@
 #include "driver.h"
 #include "drv_err.h"
 #include "fpevent.h"
+
 /*---------- macro ----------*/
 /*---------- type define ----------*/
 #define HALL1 (1 << 0) // 霍尔线1
@@ -25,25 +26,15 @@ static void _hall_close(driver_t **pdrv);
 static int32_t _hall_ioctl(driver_t **pdrv, uint32_t cmd, void *args);
 static int32_t _hall_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *args, uint32_t length);
 
-// api
-static int32_t _motor_stop(hall_describe_t *pdesc, void *args);
+static int32_t _hall_get_speed(hall_describe_t *pdesc, void *args);
+static int32_t _hall_get_route(hall_describe_t *pdesc, void *args);
 
-// priv
-static int32_t __motor_run_inc(hall_describe_t *pdesc, void *args);
-static int32_t __motor_stop_without_logic(hall_describe_t *pdesc);
-static int32_t __motor_run_dec(hall_describe_t *pdesc, void *args);
 /*---------- variable ----------*/
 DRIVER_DEFINED(hall, _hall_open, _hall_close, NULL, NULL, _hall_ioctl, _hall_irq_handler);
 
 static struct protocol_callback ioctl_cbs[] = {
-    { 0, NULL },
-    // { IOCTL_MOTORC_CLOSE, NULL },
-    // { IOCTL_MOTORC_STOP, _motor_stop },
-    // { IOCTL_MOTORC_GOTO_ROUTE, NULL },
-    // { IOCTL_MOTORC_SET_UP_ROUTE, NULL },
-    // { IOCTL_MOTORC_SET_DOWN_ROUTE, NULL },
-    // { IOCTL_MOTORC_CLEAR_ROUTE, NULL },
-    // { IOCTL_MOTORC_TURN, NULL },
+    { IOCTL_HALL_GET_SPEED, _hall_get_speed },
+    { IOCTL_HALL_GET_ROUTE, _hall_get_route },
 };
 /*---------- function ----------*/
 
@@ -139,15 +130,15 @@ static uint8_t get_hall_state(hall_describe_t *pdesc)
 static bool hall_phase_detect(hall_describe_t *pdesc)
 {
     uint16_t hall_change = 0;
-
-    uint8_t tmp = get_hall_state(pdesc);
-    uint8_t dir = MDIRECTION_DEC;
+    volatile uint8_t tmp = get_hall_state(pdesc);
+    volatile uint8_t dir = MDIRECTION_DEC;
 
     if (tmp == pdesc->priv.hall_state) {
         hall_change = (pdesc->priv.hall_state ^ pdesc->priv.hall_state_last) & (HALL1 | HALL2);
         if (hall_change == 0) {
             return false;
         }
+        pdesc->priv.dir = hall_change;
         pdesc->priv.hall_state_last = pdesc->priv.hall_state;
 
         // 识别方向
@@ -165,47 +156,21 @@ static bool hall_phase_detect(hall_describe_t *pdesc)
 
         if (dir == MDIRECTION_DEC) {
             pdesc->route--;
+            if (pdesc->ops.dec) {
+                pdesc->ops.dec();
+            }
         } else {
             pdesc->route++;
+            if (pdesc->ops.add) {
+                pdesc->ops.add();
+            }
         }
-        pdesc->priv.dir = dir;
     } else {
         pdesc->priv.hall_state = tmp;
+        return false;
     }
 
     return true;
-}
-
-// 定义滤波器系数结构体
-typedef struct {
-    float b[2]; // 分子系数
-    float a[2]; // 分母系数
-} FilterCoefficients;
-
-/**
- * @brief 滤波器系数
- * @return {*}
- */
-static FilterCoefficients coeffs = {
-    .b = { 0.012411, 0.012411 }, // 分子系数
-    .a = { 1.000000, -0.975178 } // 分母系数
-};
-/*---------- function ----------*/
-
-/**
- * @brief 一阶巴特沃斯低通滤波器函数，float执行时间15us
- * @param {int16_t} input
- * @return {*}
- */
-static float low_pass_filter(float input)
-{
-    float output;
-    static double last_input = 0;
-    static double last_output = 0;
-    output = (coeffs.b[0] * input + coeffs.b[1] * last_input - coeffs.a[1] * last_output);
-    last_input = input;
-    last_output = output;
-    return output;
 }
 /**
  * @brief 每毫秒调用一次.计算速度
@@ -216,7 +181,7 @@ static void calcalateSpeed_ms(hall_describe_t *pdesc)
 {
     uint16_t tmp = 0;
     if (pdesc->priv.pluse_width > 0) {
-        pdesc->speed = 5000.0 / ((float)pdesc->priv.pluse_width);
+        pdesc->speed = 20000.0 / ((float)pdesc->priv.pluse_width);
         pdesc->priv.pluse_width = 0;
         pdesc->priv.no_pluse_time = 0;
     } else {
@@ -227,7 +192,7 @@ static void calcalateSpeed_ms(hall_describe_t *pdesc)
         }
     }
 }
-
+#include "main.h"
 /**
  * @brief 在200us的中断中执行，因为这里默认的时基是200us
  * @param {driver_t} *
@@ -275,13 +240,31 @@ static int32_t _hall_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *ar
         }
     } while (0);
 
-    if (ms_count < 5) {
+    if (ms_count < 4) {
         ms_count++;
     } else {
         ms_count = 0;
+        HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8);
         calcalateSpeed_ms(pdesc);
     }
     return err;
 }
 
+static int32_t _hall_get_speed(hall_describe_t *pdesc, void *args)
+{
+    union hall_ioctl_param *param = (union hall_ioctl_param *)args;
+
+    param->get.speed = pdesc->speed;
+
+    return DRV_ERR_EOK;
+}
+
+static int32_t _hall_get_route(hall_describe_t *pdesc, void *args)
+{
+    union hall_ioctl_param *param = (union hall_ioctl_param *)args;
+
+    param->get.route = pdesc->route;
+
+    return DRV_ERR_EOK;
+}
 /*---------- end of file ----------*/
