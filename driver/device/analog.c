@@ -107,6 +107,7 @@ static int32_t _ioctl_get(analog_describe_t *pdesc, void *args)
             break;
         }
         if (param->get.channel >= pdesc->number_of_channels) {
+            param->get.data = 0;
             break;
         }
         if (!pdesc->ops.get) {
