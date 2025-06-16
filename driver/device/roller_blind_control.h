@@ -40,10 +40,10 @@ extern "C" {
 #define MFLAG_RESISTANCE_SLOW       (1 << 3) // 减速遇阻
 #define MFLAG_RESISTANCE_STOP       (1 << 4) // 堵转遇阻
 
-#define MTURN_NORMAL                0x00
-#define MTURN_OPEN_STOP             0x01
-#define MTURN_CLOSE_STOP            0x02
-#define MTURN_OPEN_CLOSE            0x03
+// #define MTURN_NORMAL                0x00
+// #define MTURN_OPEN_STOP             0x01
+// #define MTURN_CLOSE_STOP            0x02
+// #define MTURN_OPEN_CLOSE            0x03
 
 #define MSTATE_STOP                 0 // 停止
 #define MSTATE_RUN_INC              1 // 正转
@@ -89,6 +89,9 @@ typedef struct {
         uint16_t (*get_motor_current_with_offset)(void); // 获取电机电流的adc值
     } ops;
 
+    struct {
+        void (*stop_cb)(void);
+    } cb;
     motor_config_t config;
 
     struct {

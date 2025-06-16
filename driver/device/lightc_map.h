@@ -46,7 +46,7 @@ extern "C" {
 #define IOCTL_LIGHTC_PARAM_WRITE                  (IOCTL_USER_START + 0x11)
 #define IOCTL_LIGHTC_LOOP_LIGHT_ADJ_START_BY_TIME (IOCTL_USER_START + 0x12)
 #define IOCTL_LIGHTC_GET_BRIGHTNESS               (IOCTL_USER_START + 0x13)
-#define IOCTL_LIGHTC_SET_VIRTUAL_BRIGHTNESS       (IOCTL_USER_START + 0x13) // 设置虚拟行程
+#define IOCTL_LIGHTC_SET_VIRTUAL_BRIGHTNESS       (IOCTL_USER_START + 0x14) // 设置虚拟行程
 /*---------- type define ----------*/
 typedef enum {
     LIGHTC_MAP_MODE_NORMAL,                 // normal mode

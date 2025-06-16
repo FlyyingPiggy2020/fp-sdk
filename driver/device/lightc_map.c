@@ -84,6 +84,9 @@ static int32_t _light_open(driver_t **pdrv)
             break;
         }
         err = DRV_ERR_OK;
+        if (pdesc->is_virtual) {
+            break;
+        }
         // default parameter
         pdesc->param.light_type = 0xff;
         pdesc->priv.remeber_brightness = 100;
@@ -775,7 +778,12 @@ static int32_t __light_get_brightness(lightc_map_describe_t *pdesc, void *args)
 static int32_t __light_set_virtual_brightness(lightc_map_describe_t *pdesc, void *args)
 {
     union lightc_map_param *param = (union lightc_map_param *)args;
-    pdesc->virtual_brightness = param->set.brightness;
+    if (pdesc->is_virtual == true) {
+        pdesc->virtual_brightness = param->set.brightness;
+    } else {
+        param->get.brightness = pdesc->priv.brightness_position;
+    }
+
     return DRV_ERR_EOK;
 }
 /*---------- end of file ----------*/
