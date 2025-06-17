@@ -47,6 +47,7 @@ extern "C" {
 #define IOCTL_LIGHTC_LOOP_LIGHT_ADJ_START_BY_TIME (IOCTL_USER_START + 0x12)
 #define IOCTL_LIGHTC_GET_BRIGHTNESS               (IOCTL_USER_START + 0x13)
 #define IOCTL_LIGHTC_SET_VIRTUAL_BRIGHTNESS       (IOCTL_USER_START + 0x14) // 设置虚拟行程
+#define IOCTL_LIGHTC_SET_COLOR                    (IOCTL_USER_START + 0x15)
 /*---------- type define ----------*/
 typedef enum {
     LIGHTC_MAP_MODE_NORMAL,                 // normal mode
@@ -96,6 +97,7 @@ typedef struct {
     frequenct_map_t *fmap;
     iadj_map_t *imap;
     double brightness;             //[0,100] for example 50 means 50%
+    double color;                  // color
     bool is_virtual;               // 虚拟化(虚拟化之后将调用xfer接口，而不是实际的灯)
     int8_t virtual_brightness;     // 虚拟化的灯的亮度(0-100)
     uint16_t time_slice_frequence; // default 100; unit:hz;
@@ -116,19 +118,25 @@ typedef struct {
 
     struct {
         lightc_status_e status;
+        lightc_status_e color_status;
         lightc_status_e last_status;
         lightc_mode_e mode;
+        lightc_mode_e color_mode;
         uint8_t remeber_brightness; // default:100  device will remeber last brightness.the cmd "light on" means change the brightness to "remeber brightness".
         double last_brightness_postion;
         double brightness_position;
+        double color_postion;
         uint32_t frequence;
         float iadj;
         float duty;
+        float color_duty;
         float brightness_actual;             //[0, 100]total brightness means the brightness without limit by "dimming_start_point" and "dimming_end_point"
         float brightness_step_1_percent_inc; // if brightness below to 1%,brightness change per 10ms.
         float brightness_step_1_percent_dec;
         float brightness_step_1_to_100_inc;
         float brightness_step_1_to_100_dec;
+        float color_step_inc;
+        float color_step_dec;
         float step_temp; // for IOCTL_LIGHTC_SET_BRIGHTNESS_BY_TIME API
     } priv;
 
@@ -139,6 +147,7 @@ typedef struct {
         bool (*init)(void);
         void (*deinit)(void);
         int32_t (*update_brightness)(uint32_t frequence, float duty, float iadj);
+        int32_t (*update_color)(float duty);
     } ops;
     struct {
         void (*lightc_cmd_off)(void);                          // light off
@@ -168,6 +177,7 @@ union lightc_map_param {
     struct {
         uint8_t brightness;
         uint16_t move_time; // unit: second
+        uint16_t color;
     } set;
     struct {
         uint8_t start;

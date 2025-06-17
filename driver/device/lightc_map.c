@@ -25,6 +25,7 @@ static int32_t _light_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *a
 
 static void _get_brightness_actual_from_brightness(lightc_map_describe_t *pdesc);
 static void _get_pwm_duty_frequence(lightc_map_describe_t *pdesc);
+static void _get_color_pwm(lightc_map_describe_t *pdesc);
 
 /* lightc map control api */
 static int32_t __light_cmd_off(lightc_map_describe_t *pdesc, void *args);
@@ -46,6 +47,8 @@ static int32_t __light_param_write(lightc_map_describe_t *pdesc, void *args);
 static int32_t __light_adjustment_start_by_time(lightc_map_describe_t *pdesc, void *args);
 static int32_t __light_get_brightness(lightc_map_describe_t *pdesc, void *args);
 static int32_t __light_set_virtual_brightness(lightc_map_describe_t *pdesc, void *args);
+static int32_t __light_set_color(lightc_map_describe_t *pdesc, void *args);
+
 /*---------- variable ----------*/
 DRIVER_DEFINED(lightc_map, _light_open, _light_close, NULL, NULL, _light_ioctl, _light_irq_handler);
 
@@ -70,6 +73,7 @@ static struct protocol_callback ioctl_cbs[] = {
     { IOCTL_LIGHTC_LOOP_LIGHT_ADJ_START_BY_TIME, __light_adjustment_start_by_time },
     { IOCTL_LIGHTC_GET_BRIGHTNESS, __light_get_brightness },
     { IOCTL_LIGHTC_SET_VIRTUAL_BRIGHTNESS, __light_set_virtual_brightness },
+    { IOCTL_LIGHTC_SET_COLOR, __light_set_color },
 };
 /*---------- function ----------*/
 static int32_t _light_open(driver_t **pdrv)
@@ -101,6 +105,8 @@ static int32_t _light_open(driver_t **pdrv)
         pdesc->param.fade_out_time = 8;
         pdesc->param.start_state = 0;
         pdesc->priv.frequence = 1200;
+        pdesc->color = 2700;
+        pdesc->priv.color_postion = 2700;
         if (pdesc->ops.init) {
             if (!pdesc->ops.init()) {
                 err = -1;
@@ -124,6 +130,8 @@ static int32_t _light_open(driver_t **pdrv)
         }
         pdesc->priv.brightness_step_1_to_100_inc = 99 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * pdesc->param.fade_in_time);
         pdesc->priv.brightness_step_1_to_100_dec = 99 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * pdesc->param.fade_out_time);
+        pdesc->priv.color_step_inc = (5600 - 2700) / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * pdesc->param.fade_in_time);
+        pdesc->priv.color_step_dec = (5600 - 2700) / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * pdesc->param.fade_out_time);
     } while (0);
 
     return err;
@@ -168,7 +176,7 @@ static int32_t _light_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *a
     ASSERT(pdrv);
     pdesc = container_of(pdrv, device_t, pdrv)->pdesc;
     LIGHT_MAP_FLOAT_POINT_TYPE step = 0;
-
+    LIGHT_MAP_FLOAT_POINT_TYPE color_step = 0;
     if (pdesc) {
 
         do {
@@ -198,6 +206,14 @@ static int32_t _light_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *a
                 if (pdesc->cb.lightc_stop_callback) {
                     pdesc->cb.lightc_stop_callback();
                 }
+            }
+            // 2. color
+            if (pdesc->priv.color_postion > pdesc->color) {
+                pdesc->priv.color_status = LIGHTC_MAP_STATUS_INC;
+            } else if (pdesc->priv.color_postion < pdesc->color) {
+                pdesc->priv.color_status = LIGHTC_MAP_STATUS_DEC;
+            } else if (pdesc->priv.color_status != LIGHTC_MAP_STATUS_STOP) {
+                pdesc->priv.color_status = LIGHTC_MAP_STATUS_STOP;
             }
         } while (0);
         /* 2.calculate inc/dec step in differnet control mode*/
@@ -231,6 +247,14 @@ static int32_t _light_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *a
                     }
                 }
             }
+
+            if (pdesc->priv.color_mode == LIGHTC_MAP_MODE_NORMAL) {
+                if (pdesc->priv.color_status == LIGHTC_MAP_STATUS_INC) {
+                    color_step = pdesc->priv.color_step_inc;
+                } else if (pdesc->priv.color_status == LIGHTC_MAP_STATUS_DEC) {
+                    color_step = -pdesc->priv.color_step_dec;
+                }
+            }
         } while (0);
         /* 3.update brightness */
         do {
@@ -261,7 +285,24 @@ static int32_t _light_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *a
             }
         } while (0);
         do {
-
+            pdesc->color += color_step;
+            if (pdesc->priv.color_status == LIGHTC_MAP_STATUS_INC) {
+                if (pdesc->color > pdesc->priv.color_postion) {
+                    if (pdesc->priv.color_mode == LIGHTC_MAP_MODE_NORMAL) {
+                        pdesc->color = pdesc->priv.color_postion;
+                    }
+                }
+            } else if (pdesc->priv.color_status == LIGHTC_MAP_STATUS_DEC) {
+                if (pdesc->color < pdesc->priv.color_postion) {
+                    if (pdesc->priv.color_mode == LIGHTC_MAP_MODE_NORMAL) {
+                        pdesc->color = pdesc->priv.color_postion;
+                    }
+                }
+            }
+            _get_color_pwm(pdesc);
+            if (pdesc->ops.update_color) {
+                pdesc->ops.update_color(pdesc->priv.color_duty);
+            }
         } while (0);
     }
     return err;
@@ -296,6 +337,7 @@ static void _get_brightness_actual_from_brightness(lightc_map_describe_t *pdesc)
         }
     }
 }
+
 /**
  * @brief linear interpolation
  * @param {lightc_map_describe_t} *pdesc
@@ -348,6 +390,19 @@ static void _get_pwm_duty_frequence(lightc_map_describe_t *pdesc)
             }
         }
     }
+}
+
+static void _get_color_pwm(lightc_map_describe_t *pdesc)
+{
+
+    LIGHT_MAP_FLOAT_POINT_TYPE x1, y1, x2, y2;
+    LIGHT_MAP_FLOAT_POINT_TYPE color = pdesc->color;
+
+    x1 = 2700;
+    y1 = 0;
+    x2 = 5600;
+    y2 = 1;
+    pdesc->priv.color_duty = y1 + ((y2 - y1) * (color - x1)) / (x2 - x1);
 }
 
 /* light brightness change api */
@@ -785,5 +840,36 @@ static int32_t __light_set_virtual_brightness(lightc_map_describe_t *pdesc, void
     }
 
     return DRV_ERR_EOK;
+}
+
+static int32_t __light_set_color(lightc_map_describe_t *pdesc, void *args)
+{
+    int32_t err = DRV_ERR_WRONG_ARGS;
+    union lightc_map_param *param = (union lightc_map_param *)args;
+    double color = param->set.color;
+
+    do {
+        if (!args) {
+            err = DRV_ERR_POINT_NONE;
+            break;
+        }
+
+        if (pdesc->is_virtual == true) {
+            err = DRV_ERR_EOK;
+            break;
+        }
+
+        if (param->set.color > 5600 || param->set.color < 2700) {
+            break;
+        }
+
+        if (pdesc->is_virtual == false) {
+            pdesc->priv.color_mode = LIGHTC_MAP_MODE_NORMAL;
+            pdesc->priv.color_postion = color;
+            err = DRV_ERR_EOK;
+        }
+    } while (0);
+
+    return err;
 }
 /*---------- end of file ----------*/
