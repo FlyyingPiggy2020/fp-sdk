@@ -107,7 +107,7 @@ typedef struct {
         uint8_t dimming_start_point; // default:0;    unit:%
         uint8_t dimming_end_point;   // default:100;  unit:%
         uint8_t cut_start_point;     // default:0;    unit:%
-        uint8_t cut_end_pint;        // default:100;  unit:%
+        uint8_t cut_end_point;       // default:100;  unit:%
         uint8_t start_delay;         // default:8;    unit:100ms (the time it taskes for brightness to go form 0% to 1%)
         uint8_t stop_delay;          // default:8;    unit:100ms (the time it taskes for brightness to go form 1% to 0%)
         uint8_t charge_duty;         // default:20;   unit:% (charge crr is [1% brightness crr value * charge duty])
@@ -161,8 +161,6 @@ typedef struct {
         void (*lightc_cmd_loop_light_adj_start)(void);         // loop light adjustment start
         void (*lightc_cmd_loop_light_adj_stop)(void);          // loop light adjustment stop
         void (*lightc_cmd_reverse)(void);                      // reverse brightness
-                                                               //        void (*lightc_cmd_reverse_ext)(void); // reverse brightness
-                                                               //        void (*lightc_cmd_reverse_brightness)(void); // reverse brightness
         void (*lightc_cmd_start)(void);                        // start
         void (*lightc_cmd_param_write)(void);                  // write light param
         void (*lightc_cmd_param_read)(void);                   // read light param
@@ -180,21 +178,18 @@ union lightc_map_param {
         uint16_t color;
     } set;
     struct {
-        uint8_t start;
-        uint8_t size;
-        struct {
-            uint8_t light_type;          // default:0xff; reserve
-            uint8_t dimming_start_point; // default:0;    unit:%
-            uint8_t dimming_end_point;   // default:100;  unit:%
-            uint8_t cut_start_point;     // default:0;    unit:%
-            uint8_t cut_end_pint;        // default:100;  unit:%
-            uint8_t start_delay;         // default:8;    unit:100ms (the time it taskes for brightness to go form 0% to 1%)
-            uint8_t stop_delay;          // default:8;    unit:100ms (the time it taskes for brightness to go form 1% to 0%)
-            uint8_t charge_duty;         // default:20;   unit:% (charge crr is [1% brightness crr value * charge duty])
-            uint8_t fade_in_time;        // default:8;    unit:second (the time it taskes for brightness to go form 1% to 100%)
-            uint8_t fade_out_time;       // default:8;    unit:second (the time it taskes for brightness to go form 100% to 1%)
-            uint8_t start_state;         // default:0;    unit:0->off 1->on
-        } param;
+        uint8_t light_type;          // default:0xff; reserve
+        uint8_t dimming_start_point; // default:0;    unit:%
+        uint8_t dimming_end_point;   // default:100;  unit:%
+        uint8_t cut_start_point;     // default:0;    unit:%
+        uint8_t cut_end_point;       // default:100;  unit:%
+        uint8_t start_delay;         // default:8;    unit:100ms (the time it taskes for brightness to go form 0% to 1%)
+        uint8_t stop_delay;          // default:8;    unit:100ms (the time it taskes for brightness to go form 1% to 0%)
+        uint8_t charge_duty;         // default:20;   unit:% (charge crr is [1% brightness crr value * charge duty])
+        uint8_t fade_in_time;        // default:8;    unit:second (the time it taskes for brightness to go form 1% to 100%)
+        uint8_t fade_out_time;       // default:8;    unit:second (the time it taskes for brightness to go form 100% to 1%)
+        uint8_t start_state;         // default:0;    unit:0->off 1->on 2->keep last brightness
+        double last_brightness_postion;
     } param;
     struct {
         uint8_t brightness;
