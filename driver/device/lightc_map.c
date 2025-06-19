@@ -297,6 +297,12 @@ static int32_t _light_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *a
 static void __init_priv_param(lightc_map_describe_t *pdesc)
 {
     // init priv param
+    if (pdesc->param.dimming_start_point >= 100) {
+        pdesc->param.dimming_start_point = 0;
+    }
+    if (pdesc->param.dimming_end_point <= 0) {
+        pdesc->param.dimming_end_point = 100;
+    }
     if (pdesc->param.dimming_end_point <= pdesc->param.dimming_start_point) {
         pdesc->param.dimming_start_point = 0;
         pdesc->param.dimming_end_point = 100;
