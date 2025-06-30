@@ -183,6 +183,9 @@ void storage_poll_ms(storage_hanle_t *handle)
     if (handle == NULL) {
         return;
     }
+    if (handle->ops->table == NULL || handle->ops->table_size == 0) {
+        return;
+    }
     for (uint32_t i = 0; i < handle->ops->table_size; i++) {
         if (handle->ops->table[i].delay) {
             handle->ops->table[i].delay--;
@@ -191,6 +194,9 @@ void storage_poll_ms(storage_hanle_t *handle)
                 int j = 0;
                 int ret = 0;
                 storage_data_fifo_t *ptable = &handle->ops->table[i];
+                if (ptable->data == NULL) {
+                    continue;
+                }
                 ptable->crc = crc8_ccitt(ptable->data, ptable->size);
                 storage_save_t *save = malloc(ptable->size + 3);
                 save->magic_code = STORAGE_MAIGC_CODE;
