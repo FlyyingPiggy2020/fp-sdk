@@ -684,21 +684,21 @@ static int32_t __light_reverse(lightc_map_describe_t *pdesc, void *args)
     int32_t err = DRV_ERR_EOK;
 
     do {
-        if (pdesc->priv.status == LIGHTC_MAP_STATUS_STOP && pdesc->brightness != 0) {
-            __light_cmd_off(pdesc, args);
-        } else if (pdesc->priv.status == LIGHTC_MAP_STATUS_STOP && pdesc->brightness == 0) {
-            __light_cmd_on(pdesc, args);
-        } else {
-            if (pdesc->priv.status == LIGHTC_MAP_STATUS_INC) {
-                __light_cmd_off(pdesc, args);
-            } else if (pdesc->priv.status == LIGHTC_MAP_STATUS_DEC) {
-                __light_cmd_on(pdesc, args);
-            }
-        }
-
         if (pdesc->is_virtual == true) {
             if (pdesc->xfer.lightc_cmd_reverse) {
                 pdesc->xfer.lightc_cmd_reverse();
+            }
+        } else {
+            if (pdesc->priv.status == LIGHTC_MAP_STATUS_STOP && pdesc->brightness != 0) {
+                __light_cmd_off(pdesc, args);
+            } else if (pdesc->priv.status == LIGHTC_MAP_STATUS_STOP && pdesc->brightness == 0) {
+                __light_cmd_on(pdesc, args);
+            } else {
+                if (pdesc->priv.status == LIGHTC_MAP_STATUS_INC) {
+                    __light_cmd_off(pdesc, args);
+                } else if (pdesc->priv.status == LIGHTC_MAP_STATUS_DEC) {
+                    __light_cmd_on(pdesc, args);
+                }
             }
         }
     } while (0);
