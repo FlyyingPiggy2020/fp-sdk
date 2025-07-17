@@ -117,12 +117,12 @@ typedef struct {
         } flag;
 
         struct {
-            uint16_t idle;    // 停止时的电流
-            uint16_t current; // 实时电流
-            uint16_t load;    // 负载电流=实时电流-停止时电流
-            uint8_t state;    // 1:遇阻 0:非遇阻
-            uint32_t time;    //
-        } current;            // 电流
+            int16_t idle;    // 停止时的电流
+            int16_t current; // 实时电流
+            int16_t load;    // 负载电流=实时电流-停止时电流
+            uint8_t state;   // 1:遇阻 0:非遇阻
+            uint32_t time;   //
+        } current;           // 电流
     } priv;
 
     struct {

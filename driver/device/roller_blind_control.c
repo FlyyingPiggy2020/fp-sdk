@@ -197,6 +197,7 @@ FilterCoefficients coeff = {
     .last_input = 0,
     .last_output = 0,
 };
+
 static void _motor_resistance_control(roller_blind_control_describe_t *pdesc)
 {
     if (++pdesc->priv.current.time >= 50 && pdesc->ops.get_motor_current) {
