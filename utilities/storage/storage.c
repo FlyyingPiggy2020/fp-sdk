@@ -7,7 +7,7 @@
  * @LastEditTime : 2025-05-12 13:30:34
  * @Brief        : 非常简单的数据管理组件(不支持均衡擦写)依赖于export组件
  * 1.实现一个storage_data_fifo_t的表格(此表格每个项需要比待保存的数据多3个字节，用于保存crc和magic code)
- * 2.利用device框架，自行实现自己的底层读写接口。
+ * 2.利用device框架，自行实现自己的底层读写接口。依赖于dev_write和dev_read接口。
  *
  */
 
