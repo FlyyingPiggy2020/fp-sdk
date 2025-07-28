@@ -4,7 +4,7 @@
  * @Author       : lxf
  * @Date         : 2025-05-10 15:35:31
  * @LastEditors  : lxf_zjnb@qq.com
- * @LastEditTime : 2025-05-12 13:30:34
+ * @LastEditTime : 2025-07-24 16:53:37
  * @Brief        : 非常简单的数据管理组件(不支持均衡擦写)依赖于export组件
  * 1.实现一个storage_data_fifo_t的表格(此表格每个项需要比待保存的数据多3个字节，用于保存crc和magic code)
  * 2.利用device框架，自行实现自己的底层读写接口。依赖于dev_write和dev_read接口。
@@ -102,6 +102,10 @@ bool storage_data_save(storage_hanle_t *handle, uint8_t index, uint32_t ms)
             ptable->crc = crc8_ccitt(ptable->data, ptable->size);
             ptable->delay = ms;
             storage_save_t *save = malloc(ptable->size + 3);
+            if (save == NULL) {
+                log_e("malloc failed");
+                return false;
+            }
             save->magic_code = STORAGE_MAIGC_CODE;
             save->crc = ptable->crc;
             memcpy(save->data, ptable->data, ptable->size);
