@@ -34,21 +34,21 @@ typedef struct {
     void *data;
     uint16_t address;
     uint16_t size;
-    uint32_t delay;
     uint8_t crc;
+    bool flag; // 是否准备存储
 } storage_data_fifo_t;
 
 typedef struct {
     storage_data_fifo_t *table;
     uint8_t table_size;
-    device_t *dev;         // 读写操作接口
-    uint8_t save_delay_ms; // 某些设备不能快速保存，需要保存之间加延时。
+    device_t *dev; // 读写操作接口
     void (*delay_ms)(uint32_t ms);
 } storage_ops_t;
 
 typedef struct {
     char *name;
     storage_ops_t *ops;
+    uint32_t safe_time; //
 } storage_hanle_t;
 
 /*---------- variable prototype ----------*/

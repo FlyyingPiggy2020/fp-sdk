@@ -14,10 +14,13 @@
 /*---------- includes ----------*/
 #include "heap.h"
 #include "storage.h"
+#include "options.h"
 
 #define LOG_TAG "storage"
 #include "fplog.h"
 /*---------- macro ----------*/
+
+#define SAVETIME __ticks2ms(100) // 默认存储的安全时间为100ms
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
@@ -57,6 +60,13 @@ storage_hanle_t *storage_handle_create(char *name, storage_ops_t *ops, device_t 
     handle->name = name;
     handle->ops = ops;
     handle->ops->dev = dev;
+    for (uint8_t i = 0; i < handle->ops->table_size; i++) {
+        storage_data_fifo_t *ptable = &handle->ops->table[i];
+        if (ptable->data == NULL) {
+            continue;
+        }
+        ptable->flag = false;
+    }
     return handle;
 }
 
@@ -96,11 +106,11 @@ bool storage_data_save(storage_hanle_t *handle, uint8_t index, uint32_t ms)
     if (ptable->data != NULL) {
         if (ms > 0) {
             ptable->crc = crc8_ccitt(ptable->data, ptable->size);
-            ptable->delay = ms;
+            ptable->flag = true;
+            handle->safe_time = SAVETIME;
             return true;
         } else {
             ptable->crc = crc8_ccitt(ptable->data, ptable->size);
-            ptable->delay = ms;
             storage_save_t *save = malloc(ptable->size + 3);
             if (save == NULL) {
                 log_e("malloc failed");
@@ -115,8 +125,8 @@ bool storage_data_save(storage_hanle_t *handle, uint8_t index, uint32_t ms)
                     free(save);
                     return true;
                 }
-                if (handle->ops->save_delay_ms && handle->ops->delay_ms) {
-                    handle->ops->delay_ms(handle->ops->save_delay_ms); // 该延时函数由用户自行实现
+                if (handle->ops->delay_ms) {
+                    handle->ops->delay_ms(5);
                 }
                 j++;
             }
@@ -190,38 +200,41 @@ void storage_poll_ms(storage_hanle_t *handle)
     if (handle->ops->table == NULL || handle->ops->table_size == 0) {
         return;
     }
+
+    if (handle->safe_time) {
+        handle->safe_time--;
+        return;
+    }
+
     for (uint32_t i = 0; i < handle->ops->table_size; i++) {
-        if (handle->ops->table[i].delay) {
-            handle->ops->table[i].delay--;
-            if (handle->ops->table[i].delay == 0) {
-                // 保存数据
-                int j = 0;
-                int ret = 0;
-                storage_data_fifo_t *ptable = &handle->ops->table[i];
-                if (ptable->data == NULL) {
-                    continue;
-                }
-                ptable->crc = crc8_ccitt(ptable->data, ptable->size);
-                storage_save_t *save = malloc(ptable->size + 3);
-                save->magic_code = STORAGE_MAIGC_CODE;
-                save->crc = ptable->crc;
-                memcpy(save->data, ptable->data, ptable->size);
-                while (j < 3) {
-                    ret = device_write(handle->ops->dev, save, ptable->address, ptable->size + 3);
-                    if (ret == DRV_ERR_EOK) {
-                        free(save);
-                        break;
-                    }
-                    if (handle->ops->save_delay_ms && handle->ops->delay_ms) {
-                        handle->ops->delay_ms(handle->ops->save_delay_ms); // 该延时函数由用户自行实现
-                    }
-                    j++;
-                }
+        // 保存数据
+        int j = 0;
+        int ret = 0;
+        storage_data_fifo_t *ptable = &handle->ops->table[i];
+        if (ptable->data == NULL || ptable->flag == false) {
+            continue;
+        }
+        handle->safe_time = SAVETIME;
+        ptable->flag = false;
+        ptable->crc = crc8_ccitt(ptable->data, ptable->size);
+        storage_save_t *save = malloc(ptable->size + 3);
+        save->magic_code = STORAGE_MAIGC_CODE;
+        save->crc = ptable->crc;
+        memcpy(save->data, ptable->data, ptable->size);
+        while (j < 3) {
+            ret = device_write(handle->ops->dev, save, ptable->address, ptable->size + 3);
+            if (ret == DRV_ERR_EOK) {
                 free(save);
-                if (ret != DRV_ERR_OK) {
-                    log_e("storage error. handle:%s, index = %d.", handle->name, i);
-                }
+                break;
             }
+            if (handle->ops->delay_ms) {
+                handle->ops->delay_ms(5); // 该延时函数由用户自行实现
+            }
+            j++;
+        }
+        free(save);
+        if (ret != DRV_ERR_OK) {
+            log_e("storage error. handle:%s, index = %d.", handle->name, i);
         }
     }
 }
