@@ -23,6 +23,10 @@ extern "C" {
 
 /*---------- macro ----------*/
 
+#ifndef __ticks2ms
+#define __ticks2ms(ms) (ms)
+#endif // !__ticks2ms
+
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/

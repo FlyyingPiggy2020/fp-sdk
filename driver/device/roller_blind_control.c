@@ -3,8 +3,8 @@
  * @FilePath     : roller_blind_control.c
  * @Author       : lxf
  * @Date         : 2025-05-14 15:36:33
- * @LastEditors  : lxf_zjnb@qq.com
- * @LastEditTime : 2025-05-23 11:20:41
+ * @LastEditors: Lu Xianfan 154562451@qq.com
+ * @LastEditTime: 2025-08-12 16:17:06
  * @Brief        : 卷帘,百叶帘的控制业务逻辑驱动程序
  * 该驱动需要保证 up 的行程值大于 down的行程值。open增加行程，close减少行程。两者才会不变。
  * 另外运行irq_handler的时基默认为1ms，暂时不支持修改
@@ -17,7 +17,7 @@
 #include "driver.h"
 #include "drv_err.h"
 #include "fpevent.h"
-#include "butter.h"
+#include "options.h"
 /*---------- macro ----------*/
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
@@ -157,6 +157,7 @@ static int32_t _motor_ioctl(driver_t **pdrv, uint32_t cmd, void *args)
 static void _motor_route_control(roller_blind_control_describe_t *pdesc)
 {
     bool isMustStop = false;
+    uint8_t event = 0;
     if (pdesc->priv.control.target_route != MOTOR_ROUTE_FREE) {
         if (pdesc->priv.state.state_curr == MSTATE_RUN_INC) {
             if (pdesc->priv.control.target_route != MOTOR_ROUTE_INC_MAX) {
@@ -173,6 +174,17 @@ static void _motor_route_control(roller_blind_control_describe_t *pdesc)
             }
         }
     }
+
+    if (pdesc->priv.state.state_curr == MSTATE_RUN_DEC) {
+        if (pdesc->config.route_curr <= pdesc->config.route_down_max) {
+            event |= MFLAG_RESISTANCE_ROUTE_MAX;
+            isMustStop = true;
+            if (pdesc->cb.resistance_cb) {
+                pdesc->cb.resistance_cb(event);
+            }
+        }
+    }
+
     if (isMustStop) {
         _motor_stop(pdesc, NULL);
         if (pdesc->cb.stop_cb) {
@@ -181,28 +193,16 @@ static void _motor_route_control(roller_blind_control_describe_t *pdesc)
     }
 }
 
-//
 static void _motor_speed_control(roller_blind_control_describe_t *pdesc)
 {
     //    static uint8_t
 }
 
-// 遇阻保护
-#define COEFFA (750)
-#define COEFFB (-(16384 - COEFFA - COEFFA))
-
-FilterCoefficients coeff = {
-    .b = { COEFFA, COEFFA }, // 分子系数
-    .a = { 16384, COEFFB },  // 分母系数
-    .last_input = 0,
-    .last_output = 0,
-};
-
 static void _motor_resistance_control(roller_blind_control_describe_t *pdesc)
 {
-    if (++pdesc->priv.current.time >= 50 && pdesc->ops.get_motor_current) {
+    if (++pdesc->priv.current.time >= __ticks2ms(50) && pdesc->ops.get_motor_current) {
         pdesc->priv.current.time = 0;
-        pdesc->priv.current.current = low_pass_filter(&coeff, pdesc->ops.get_motor_current());
+        pdesc->priv.current.current = pdesc->ops.get_motor_current();
         if (pdesc->priv.state.is_running == MSTATE_STOP) {
             pdesc->priv.current.idle = pdesc->priv.current.current;
         }
@@ -216,19 +216,19 @@ static void _motor_resistance_control(roller_blind_control_describe_t *pdesc)
 
     // 1.电流遇阻 TODO：这部分代码依赖于特定硬件需要解耦合
     if (pdesc->ops.get_motor_current) {
-        if (pdesc->priv.current.state == 0) {
+        if (pdesc->priv.current.mutex == 0) {
             if (pdesc->priv.current.load > 500) {
-                pdesc->priv.current.state = 1;
+                pdesc->priv.current.mutex = 1;
                 pdesc->priv.flag.is_resistance = true;
             }
         } else {
             if (pdesc->priv.current.load < 370) {
-                pdesc->priv.current.state = 0;
+                pdesc->priv.current.mutex = 0;
             }
         }
     }
 
-    // 2.行程长时间变化缓慢
+    // 2.遇阻停止
     if (pdesc->priv.flag.is_resistance == true) {
         //        pdesc->priv.flag.state |= pdesc->priv.state.state_curr;
         _motor_stop(pdesc, NULL);
@@ -264,7 +264,7 @@ static int32_t _motor_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *a
             _motor_resistance_control(pdesc);
 
             // 运行保护
-            if (pdesc->priv.flag.run_time > (6 * 60 * 1000)) {
+            if (pdesc->priv.flag.run_time > __ticks2ms(6 * 60 * 1000)) {
                 pdesc->priv.flag.run_time = 0;
                 _motor_stop(pdesc, NULL);
             }

@@ -4,7 +4,7 @@
  * @Author       : lxf
  * @Date         : 2025-05-14 15:36:45
  * @LastEditors  : lxf_zjnb@qq.com
- * @LastEditTime : 2025-05-20 08:32:31
+ * @LastEditTime : 2025-08-12 15:55:26
  * @Brief        : 卷帘，百叶帘的驱动
  */
 
@@ -37,13 +37,9 @@ extern "C" {
 
 #define MFLAG_RESISTANCE_INC        (1 << 1) // inc过程中遇阻
 #define MFLAG_RESISTANCE_DEC        (1 << 2) // dec过程中遇阻
-#define MFLAG_RESISTANCE_SLOW       (1 << 3) // 减速遇阻
-#define MFLAG_RESISTANCE_STOP       (1 << 4) // 堵转遇阻
-
-// #define MTURN_NORMAL                0x00
-// #define MTURN_OPEN_STOP             0x01
-// #define MTURN_CLOSE_STOP            0x02
-// #define MTURN_OPEN_CLOSE            0x03
+#define MFLAG_RESISTANCE_ADC        (1 << 3) // 电流遇阻
+#define MFLAG_RESISTANCE_HALL       (1 << 4) // 霍尔遇阻
+#define MFLAG_RESISTANCE_ROUTE_MAX  (1 << 5) // 行程到达最大值
 
 #define MSTATE_STOP                 0 // 停止
 #define MSTATE_RUN_INC              1 // 正转
@@ -57,25 +53,16 @@ extern "C" {
 // default
 #define MOTOR_SPACE_MIN             (10)  // 默认允许运行的最小行程
 #define MOTOR_SWITCH_TIME           (500) // 正反切换延时。单位毫秒
-// // #define MOTOR_PW_MAX          (300 ms) // 允许的最大脉冲宽度（超过此宽度认为遇阻）
-// #define MOTOR_PW_DMAX         0x40     // 允许的脉宽最大的变化系数（超过此值认为遇阻)
-
-// #define preMax                100
-#define JOG_HALL                    20 // 点动霍尔数
-
-#define MOTOR_ROUTE_MIN             300 // 行程最小值
-
-// #define MIN_SPEED             20.0f // 最小速度 单位hz
-// #define MAX_SPEED             130.0f // 最大速度 单位hz
-// #define SLOW_SPEED_ROUTE      150    // 慢启慢停所需要的行程 单位：霍尔数
-// #define SLOW_SPEED_D          5     // 变化的速度 单位：hz
+#define JOG_HALL                    20    // 点动霍尔数
+#define MOTOR_ROUTE_MIN             300   // 行程最小值
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
 #pragma pack(1)
 typedef struct {
-    int32_t route_curr; // 当前行程
-    int32_t route_up;   // 上行程
-    int32_t route_down; // 下行程
+    int32_t route_curr;     // 当前行程
+    int32_t route_up;       // 上行程
+    int32_t route_down;     // 下行程
+    int32_t route_down_max; // 最大下行程
 } motor_config_t;
 typedef struct {
     struct {
@@ -90,8 +77,9 @@ typedef struct {
     } ops;
 
     struct {
-        void (*stop_cb)(void);
-    } cb;
+        void (*stop_cb)(void);                 // 电机停止回调(电机停止时会进入1次)
+        void (*resistance_cb)(uint32_t event); // 遇阻保护(MFLAG_RESISTANCE_xxxx)
+    } cb;                                      // 回调函数只会在条件触发时进入1次
     motor_config_t config;
 
     struct {
@@ -120,9 +108,9 @@ typedef struct {
             int16_t idle;    // 停止时的电流
             int16_t current; // 实时电流
             int16_t load;    // 负载电流=实时电流-停止时电流
-            uint8_t state;   // 1:遇阻 0:非遇阻
-            uint32_t time;   //
-        } current;           // 电流
+            uint8_t mutex;   //
+            uint32_t time;   // 时基
+        } current;           // 电流相关的结构体
     } priv;
 
     struct {
