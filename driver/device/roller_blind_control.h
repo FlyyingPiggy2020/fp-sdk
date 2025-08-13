@@ -81,12 +81,12 @@ typedef struct {
     struct {
         bool (*init)(void);
         void (*deinit)(void);
-        bool (*save_config)(void);                       // 保存电机config内的数据到非易失性存储器
-        bool (*load_config)(void);                       // 从非易失性数据存储器内读取电机的config数据
-        void (*motor_stop)(void);                        // 电机停止
-        void (*motor_inc)(void);                         // 电机正转
-        void (*motor_dec)(void);                         // 电机反转
-        uint16_t (*get_motor_current_with_offset)(void); // 获取电机电流的adc值
+        bool (*save_config)(void);           // 保存电机config内的数据到非易失性存储器
+        bool (*load_config)(void);           // 从非易失性数据存储器内读取电机的config数据
+        void (*motor_stop)(void);            // 电机停止
+        void (*motor_inc)(void);             // 电机正转
+        void (*motor_dec)(void);             // 电机反转
+        uint16_t (*get_motor_current)(void); // 获取电机电流的adc值
     } ops;
 
     struct {
@@ -115,6 +115,14 @@ typedef struct {
             uint32_t run_time;  // 运行时间(电机运行5分钟需要保护)
             bool is_resistance; // 已遇阻 (过流或刹车或一切需要电机立即停止的标志位)
         } flag;
+
+        struct {
+            int16_t idle;    // 停止时的电流
+            int16_t current; // 实时电流
+            int16_t load;    // 负载电流=实时电流-停止时电流
+            uint8_t state;   // 1:遇阻 0:非遇阻
+            uint32_t time;   //
+        } current;           // 电流
     } priv;
 
     struct {

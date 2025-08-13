@@ -7,7 +7,7 @@
  * @LastEditTime : 2025-05-12 13:30:34
  * @Brief        : 非常简单的数据管理组件(不支持均衡擦写)依赖于export组件
  * 1.实现一个storage_data_fifo_t的表格(此表格每个项需要比待保存的数据多3个字节，用于保存crc和magic code)
- * 2.利用device框架，自行实现自己的底层读写接口。
+ * 2.利用device框架，自行实现自己的底层读写接口。依赖于dev_write和dev_read接口。
  *
  */
 
@@ -183,6 +183,9 @@ void storage_poll_ms(storage_hanle_t *handle)
     if (handle == NULL) {
         return;
     }
+    if (handle->ops->table == NULL || handle->ops->table_size == 0) {
+        return;
+    }
     for (uint32_t i = 0; i < handle->ops->table_size; i++) {
         if (handle->ops->table[i].delay) {
             handle->ops->table[i].delay--;
@@ -191,6 +194,9 @@ void storage_poll_ms(storage_hanle_t *handle)
                 int j = 0;
                 int ret = 0;
                 storage_data_fifo_t *ptable = &handle->ops->table[i];
+                if (ptable->data == NULL) {
+                    continue;
+                }
                 ptable->crc = crc8_ccitt(ptable->data, ptable->size);
                 storage_save_t *save = malloc(ptable->size + 3);
                 save->magic_code = STORAGE_MAIGC_CODE;

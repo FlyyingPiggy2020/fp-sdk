@@ -244,7 +244,6 @@ static int32_t _hall_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *ar
         ms_count++;
     } else {
         ms_count = 0;
-        HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_8);
         calcalateSpeed_ms(pdesc);
     }
     return err;
