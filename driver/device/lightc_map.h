@@ -46,7 +46,7 @@ extern "C" {
 #define IOCTL_LIGHTC_PARAM_WRITE                  (IOCTL_USER_START + 0x11)
 #define IOCTL_LIGHTC_LOOP_LIGHT_ADJ_START_BY_TIME (IOCTL_USER_START + 0x12)
 #define IOCTL_LIGHTC_GET_BRIGHTNESS               (IOCTL_USER_START + 0x13)
-#define IOCTL_LIGHTC_SET_VIRTUAL_BRIGHTNESS       (IOCTL_USER_START + 0x14) // 设置虚拟行程
+#define IOCTL_LIGHTC_SET_VIRTUAL_BRIGHTNESS       (IOCTL_USER_START + 0x14)
 #define IOCTL_LIGHTC_SET_COLOR                    (IOCTL_USER_START + 0x15)
 /*---------- type define ----------*/
 typedef enum {
@@ -168,6 +168,15 @@ typedef struct {
     } xfer;
     struct {
         void (*lightc_stop_callback)(void); // when dimming stops,"lightc_stop_callback" will be called.
+        /**
+         * @brief
+         * when brightness change stop, this function will be called once.It be used to remeber last
+         * brightness due to some hardware not have a power down detection circuit.
+         *
+         * A more standard approach is storage brightness when device power down.
+         */
+        void (*brightness_stop_callback)(uint8_t remeber_brightness);
+        void (*color_stop_callback)(void);
     } cb;
 } lightc_map_describe_t;
 
@@ -193,6 +202,7 @@ union lightc_map_param {
     } param;
     struct {
         uint8_t brightness;
+        uint8_t remeber_brightness;
     } get;
 };
 /*---------- variable prototype ----------*/

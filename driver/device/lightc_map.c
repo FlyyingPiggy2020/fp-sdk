@@ -3,8 +3,8 @@
  * @FilePath     : lightc_map.c
  * @Author       : lxf
  * @Date         : 2025-03-18 09:12:48
- * @LastEditors  : lxf_zjnb@qq.com
- * @LastEditTime : 2025-06-17 11:13:43
+ * @LastEditors: Lu Xianfan 154562451@qq.com
+ * @LastEditTime: 2025-08-14 13:43:54
  * @Brief        :
  */
 
@@ -118,6 +118,18 @@ static int32_t _light_open(driver_t **pdrv)
             }
         }
         __init_priv_param(pdesc);
+
+        union lightc_map_param param;
+
+        if (pdesc->param.start_state == 0) {
+            param.set.brightness = 0;
+            __light_set_brightness(pdesc, &param);
+        } else if (pdesc->param.start_state == 1) {
+            param.set.brightness = 100;
+            __light_set_brightness(pdesc, &param);
+        } else if (pdesc->param.start_state == 3) {
+            __light_cmd_on(pdesc, NULL);
+        }
     } while (0);
 
     return err;
@@ -186,6 +198,9 @@ static int32_t _light_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *a
                 if (pdesc->brightness >= 1) {
                     pdesc->priv.remeber_brightness = pdesc->brightness;
                     pdesc->status.is_off = false;
+                    if (pdesc->cb.brightness_stop_callback) {
+                        pdesc->cb.brightness_stop_callback(pdesc->priv.remeber_brightness);
+                    }
                 } else if (pdesc->brightness == 0) {
                     pdesc->status.is_off = true;
                 }
@@ -316,6 +331,9 @@ static void __init_priv_param(lightc_map_describe_t *pdesc)
         pdesc->priv.brightness_step_1_percent_dec = 1 * 10 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->param.stop_delay * pdesc->time_slice_frequence);
     } else {
         pdesc->priv.brightness_step_1_percent_dec = 1;
+    }
+    if (pdesc->param.start_state > 3 || pdesc->param.start_state == 2) {
+        pdesc->param.start_state = 0;
     }
     pdesc->priv.brightness_step_1_to_100_inc = 99 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * pdesc->param.fade_in_time);
     pdesc->priv.brightness_step_1_to_100_dec = 99 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * pdesc->param.fade_out_time);
@@ -824,8 +842,10 @@ static int32_t __light_get_brightness(lightc_map_describe_t *pdesc, void *args)
     union lightc_map_param *param = (union lightc_map_param *)args;
     if (pdesc->is_virtual == true) {
         param->get.brightness = pdesc->virtual_brightness;
+        param->get.remeber_brightness = pdesc->virtual_brightness;
     } else {
         param->get.brightness = pdesc->priv.brightness_position;
+        param->get.remeber_brightness = pdesc->priv.remeber_brightness;
     }
     return DRV_ERR_EOK;
 }
