@@ -3,8 +3,8 @@
  * @FilePath     : lightc_map.c
  * @Author       : lxf
  * @Date         : 2025-03-18 09:12:48
- * @LastEditors: Lu Xianfan 154562451@qq.com
- * @LastEditTime: 2025-08-14 13:43:54
+ * @LastEditors  : lxf_zjnb@qq.com
+ * @LastEditTime : 2025-06-17 11:13:43
  * @Brief        :
  */
 
@@ -198,14 +198,11 @@ static int32_t _light_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *a
                 if (pdesc->brightness >= 1) {
                     pdesc->priv.remeber_brightness = pdesc->brightness;
                     pdesc->status.is_off = false;
-                    if (pdesc->cb.brightness_stop_callback) {
-                        pdesc->cb.brightness_stop_callback(pdesc->priv.remeber_brightness);
-                    }
                 } else if (pdesc->brightness == 0) {
                     pdesc->status.is_off = true;
                 }
-                if (pdesc->cb.lightc_stop_callback) {
-                    pdesc->cb.lightc_stop_callback();
+                if (pdesc->cb.brightness_stop_callback) {
+                    pdesc->cb.brightness_stop_callback(pdesc->brightness);
                 }
             }
             // 2. color

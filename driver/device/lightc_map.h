@@ -167,7 +167,7 @@ typedef struct {
         void (*lightc_cmd_loop_light_adj_start_by_time)(void); // loop light adjustment start by time
     } xfer;
     struct {
-        void (*lightc_stop_callback)(void); // when dimming stops,"lightc_stop_callback" will be called.
+        // void (*lightc_stop_callback)(void); // when dimming stops,"lightc_stop_callback" will be called.
         /**
          * @brief
          * when brightness change stop, this function will be called once.It be used to remeber last
