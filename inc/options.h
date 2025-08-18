@@ -14,15 +14,14 @@
 extern "C" {
 #endif
 /*---------- includes ----------*/
-
+#ifdef USE_BSP_BOARD_OPTION
 #include "board_options.h"
-
 #ifndef __BOARD_OPTIONS_H__
 #error "Please implement your 'board_options.h' and include before options.h"
 #endif // !__BOARD_OPTIONS_H__
 
+#else
 /*---------- macro ----------*/
-
 #ifndef __ticks2ms
 #define __ticks2ms(ms) (ms)
 #endif // !__ticks2ms
@@ -31,6 +30,7 @@ extern "C" {
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
 /*---------- end of file ----------*/
+#endif
 #ifdef __cplusplus
 }
 #endif

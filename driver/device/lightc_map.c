@@ -98,7 +98,6 @@ static int32_t _light_open(driver_t **pdrv)
         }
         // default parameter
         pdesc->param.light_type = 0xff;
-        pdesc->priv.remeber_brightness = 100;
         pdesc->param.dimming_start_point = 0;
         pdesc->param.dimming_end_point = 100;
         pdesc->param.cut_start_point = 0;
@@ -109,15 +108,33 @@ static int32_t _light_open(driver_t **pdrv)
         pdesc->param.fade_in_time = 8;
         pdesc->param.fade_out_time = 8;
         pdesc->param.start_state = 0;
+        // default priv
+        pdesc->priv.remeber_brightness = 100;
         pdesc->priv.frequence = 1200;
-        pdesc->color = 2700;
+        pdesc->priv.brightness_position = 0;
         pdesc->priv.color_postion = 2700;
+
+        pdesc->color = 2700;
+
         if (pdesc->ops.init) {
             if (!pdesc->ops.init()) {
                 err = -1;
             }
         }
         __init_priv_param(pdesc);
+
+        union lightc_map_param param;
+
+        if (pdesc->param.start_state == 0) {
+            param.set.brightness = 0;
+            __light_set_brightness(pdesc, &param);
+        } else if (pdesc->param.start_state == 1) {
+            param.set.brightness = 100;
+            __light_set_brightness(pdesc, &param);
+        } else if (pdesc->param.start_state == 3) {
+            param.set.brightness = pdesc->priv.poweron_brightness;
+            __light_set_brightness(pdesc, &param);
+        }
     } while (0);
 
     return err;
@@ -189,8 +206,8 @@ static int32_t _light_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *a
                 } else if (pdesc->brightness == 0) {
                     pdesc->status.is_off = true;
                 }
-                if (pdesc->cb.lightc_stop_callback) {
-                    pdesc->cb.lightc_stop_callback();
+                if (pdesc->cb.brightness_stop_callback) {
+                    pdesc->cb.brightness_stop_callback(pdesc->brightness);
                 }
             }
             // 2. color
@@ -317,10 +334,17 @@ static void __init_priv_param(lightc_map_describe_t *pdesc)
     } else {
         pdesc->priv.brightness_step_1_percent_dec = 1;
     }
+    if (pdesc->param.start_state > 3 || pdesc->param.start_state == 2) {
+        pdesc->param.start_state = 0;
+    }
     pdesc->priv.brightness_step_1_to_100_inc = 99 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * pdesc->param.fade_in_time);
     pdesc->priv.brightness_step_1_to_100_dec = 99 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * pdesc->param.fade_out_time);
     pdesc->priv.color_step_inc = (5600 - 2700) / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * pdesc->param.fade_in_time);
     pdesc->priv.color_step_dec = (5600 - 2700) / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * pdesc->param.fade_out_time);
+
+    if (pdesc->priv.poweron_brightness > 100) {
+        pdesc->priv.poweron_brightness = 0;
+    }
 }
 
 /**
@@ -824,8 +848,10 @@ static int32_t __light_get_brightness(lightc_map_describe_t *pdesc, void *args)
     union lightc_map_param *param = (union lightc_map_param *)args;
     if (pdesc->is_virtual == true) {
         param->get.brightness = pdesc->virtual_brightness;
+        param->get.remeber_brightness = pdesc->virtual_brightness;
     } else {
         param->get.brightness = pdesc->priv.brightness_position;
+        param->get.remeber_brightness = pdesc->priv.remeber_brightness;
     }
     return DRV_ERR_EOK;
 }
