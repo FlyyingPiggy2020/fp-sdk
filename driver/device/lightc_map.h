@@ -123,6 +123,7 @@ typedef struct {
         lightc_mode_e mode;
         lightc_mode_e color_mode;
         uint8_t remeber_brightness; // default:100  device will remeber last brightness.the cmd "light on" means change the brightness to "remeber brightness".
+        uint8_t poweron_brightness;
         double last_brightness_postion;
         double brightness_position;
         double color_postion;

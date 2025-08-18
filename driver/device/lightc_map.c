@@ -98,7 +98,6 @@ static int32_t _light_open(driver_t **pdrv)
         }
         // default parameter
         pdesc->param.light_type = 0xff;
-        pdesc->priv.remeber_brightness = 100;
         pdesc->param.dimming_start_point = 0;
         pdesc->param.dimming_end_point = 100;
         pdesc->param.cut_start_point = 0;
@@ -109,9 +108,14 @@ static int32_t _light_open(driver_t **pdrv)
         pdesc->param.fade_in_time = 8;
         pdesc->param.fade_out_time = 8;
         pdesc->param.start_state = 0;
+        // default priv
+        pdesc->priv.remeber_brightness = 100;
         pdesc->priv.frequence = 1200;
-        pdesc->color = 2700;
+        pdesc->priv.brightness_position = 0;
         pdesc->priv.color_postion = 2700;
+
+        pdesc->color = 2700;
+
         if (pdesc->ops.init) {
             if (!pdesc->ops.init()) {
                 err = -1;
@@ -128,7 +132,8 @@ static int32_t _light_open(driver_t **pdrv)
             param.set.brightness = 100;
             __light_set_brightness(pdesc, &param);
         } else if (pdesc->param.start_state == 3) {
-            __light_cmd_on(pdesc, NULL);
+            param.set.brightness = pdesc->priv.poweron_brightness;
+            __light_set_brightness(pdesc, &param);
         }
     } while (0);
 
@@ -336,6 +341,10 @@ static void __init_priv_param(lightc_map_describe_t *pdesc)
     pdesc->priv.brightness_step_1_to_100_dec = 99 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * pdesc->param.fade_out_time);
     pdesc->priv.color_step_inc = (5600 - 2700) / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * pdesc->param.fade_in_time);
     pdesc->priv.color_step_dec = (5600 - 2700) / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * pdesc->param.fade_out_time);
+
+    if (pdesc->priv.poweron_brightness > 100) {
+        pdesc->priv.poweron_brightness = 0;
+    }
 }
 
 /**
