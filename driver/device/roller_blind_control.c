@@ -175,15 +175,15 @@ static void _motor_route_control(roller_blind_control_describe_t *pdesc)
         }
     }
 
-    if (pdesc->priv.state.state_curr == MSTATE_RUN_DEC) {
-        if (pdesc->config.route_curr <= pdesc->config.route_down_max) {
-            event |= MFLAG_RESISTANCE_ROUTE_MAX;
-            isMustStop = true;
-            if (pdesc->cb.resistance_cb) {
-                pdesc->cb.resistance_cb(event);
-            }
-        }
-    }
+    //    if (pdesc->priv.state.state_curr == MSTATE_RUN_DEC) {
+    //        if (pdesc->config.route_curr <= pdesc->config.route_down_max) {
+    //            event |= MFLAG_RESISTANCE_ROUTE_MAX;
+    //            isMustStop = true;
+    //            if (pdesc->cb.resistance_cb) {
+    //                pdesc->cb.resistance_cb(event);
+    //            }
+    //        }
+    //    }
 
     if (isMustStop) {
         _motor_stop(pdesc, NULL);
@@ -230,7 +230,6 @@ static void _motor_resistance_control(roller_blind_control_describe_t *pdesc)
 
     // 2.遇阻停止
     if (pdesc->priv.flag.is_resistance == true) {
-        //        pdesc->priv.flag.state |= pdesc->priv.state.state_curr;
         _motor_stop(pdesc, NULL);
     }
 }
