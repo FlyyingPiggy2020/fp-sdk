@@ -122,6 +122,10 @@ void serial_bus_send_to_cache(struct serial_bus_handle *self, const uint8_t *pda
             break;
         }
 
+        if (trans_cnt == 0) {
+            break;
+        }
+
         struct serial_bus_transport_node *node = (struct serial_bus_transport_node *)malloc(sizeof(struct serial_bus_transport_node) + length);
         if (node == NULL) {
             break;

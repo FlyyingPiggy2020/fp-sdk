@@ -5,7 +5,9 @@
  * @Date         : 2025-07-22 11:54:17
  * @LastEditors  : lxf_zjnb@qq.com
  * @LastEditTime : 2025-07-22 11:55:19
- * @Brief        :
+ * @Brief        : 用户需要实现ops，并且设置tx_delay，这个参数是2帧数据之间间隔时间。
+ * 用get_delay_ms这个函数实现随机间隔，递增间隔等个性化的需求
+ *
  */
 
 #ifndef __DUPLEX_BUS_H__
@@ -36,7 +38,9 @@ struct serial_bus_transport_node {
 
 struct serial_duplex_bus_ops {
     int32_t (*write_buf)(uint8_t *buf, uint16_t len);
-    int32_t (*get_delay_ms)(struct serial_bus_transport_node n); // 获取延时时间
+    // 获取延时时间(有的时候有修改两帧之间的延时的需求)例如随着发送的次数，延时越来越大。例如间隔在40~100ms之间随机。
+    // 如果这个函数为NULL，那么默认的发送延时为tx_delay.
+    int32_t (*get_delay_ms)(struct serial_bus_transport_node n); //
 };
 
 struct serial_duplex_bus_cb {
@@ -47,7 +51,7 @@ struct serial_bus_handle {
     struct serial_duplex_bus_ops *ops;                 // 操作函数
     struct serial_duplex_bus_cb *cb;                   // 回调函数
     struct list_head tx_list[SERIAL_BUS_PRIORITY_MAX]; // 发送队列
-    uint16_t tx_delay;                                 // 发送延时
+    uint16_t tx_delay;                                 // 默认发送延时
     uint16_t tx_delay_count;                           // 发送计数值
     struct serial_bus_transport_node *cur_tx_node;     // 当前发送的node节点
 };
