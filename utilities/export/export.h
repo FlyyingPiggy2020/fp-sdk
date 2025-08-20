@@ -3,8 +3,8 @@
  * @FilePath     : export.h
  * @Author       : lxf
  * @Date         : 2023-12-28 10:31:44
- * @LastEditors: flyyingpiggy2020 154562451@qq.com
- * @LastEditTime: 2024-03-17 10:06:26
+ * @LastEditors: Lu Xianfan 154562451@qq.com
+ * @LastEditTime: 2025-08-14 13:34:10
  * @Brief        : export机制
  * you need to implent this function:elab_time_ms();
  */
@@ -90,7 +90,7 @@ enum fp_export_level {
 void fp_run(void);
 void fp_tick_inc(void);
 /**
- * @brief  Initialization function in BSP layer.
+ * @brief  highest priority (no other dependencies)
  * @param  _func       The initialization function.
  * @retval None.
  */

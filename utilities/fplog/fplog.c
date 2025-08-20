@@ -37,35 +37,6 @@ SOFTWARE.
 
 /*---------- macro ----------*/
 
-#define CSI_START "\033["
-#define CSI_END   "\033[0m"
-#define CSI_START "\033["
-#define CSI_END   "\033[0m"
-
-#define F_BLACK   "30;"
-#define F_RED     "31;"
-#define F_GREEN   "32;"
-#define F_YELLOW  "33;"
-#define F_BLUE    "34;"
-#define F_MAGENTA "35;"
-#define F_CYAN    "36;"
-#define F_WHITE   "37;"
-
-#define B_NULL
-#define B_BLACK     "40;"
-#define B_RED       "41;"
-#define B_GREEN     "42;"
-#define B_YELLOW    "43;"
-#define B_BLUE      "44;"
-#define B_MAGENTA   "45;"
-#define B_CYAN      "46;"
-#define B_WHITE     "47;"
-
-#define Sz_BOLD     "1m"
-#define S_UNDERLINE "4m"
-#define S_BLINK     "5m"
-#define S_NORMAL    "22m"
-
 #ifndef LOG_COLOR_ASSERT
 #define LOG_COLOR_ASSERT (F_MAGENTA B_NULL S_NORMAL)
 #endif
@@ -84,6 +55,26 @@ SOFTWARE.
 #ifndef LOG_COLOR_VERBOSE
 #define LOG_COLOR_VERBOSE (F_BLUE B_NULL S_NORMAL)
 #endif
+
+#ifndef HEX_COLOR_ASSERT
+#define HEX_COLOR_ASSERT (F_BLACK B_GREEN S_NORMAL)
+#endif
+#ifndef HEX_COLOR_ERROR
+#define HEX_COLOR_ERROR (F_WHITE B_GREEN S_NORMAL)
+#endif
+#ifndef HEX_COLOR_WARN
+#define HEX_COLOR_WARN (F_BLACK B_RED S_NORMAL)
+#endif
+#ifndef HEX_COLOR_INFO
+#define HEX_COLOR_INFO (F_WHITE B_RED S_NORMAL)
+#endif
+#ifndef HEX_COLOR_DEBUG
+#define HEX_COLOR_DEBUG (F_MAGENTA B_GREEN S_NORMAL)
+#endif
+#ifndef HEX_COLOR_VERBOSE
+#define HEX_COLOR_VERBOSE (S_NORMAL)
+#endif
+
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
 static void _log_output_handler(const char *log, int len);
@@ -103,6 +94,15 @@ static const char *color_output_info[] = {
         [LOG_LVL_INFO]    = LOG_COLOR_INFO,
         [LOG_LVL_DEBUG]   = LOG_COLOR_DEBUG,
         [LOG_LVL_VERBOSE] = LOG_COLOR_VERBOSE,
+};
+
+static const char *color_hex_output_info[] = {
+        [LOG_LVL_ASSERT]  = HEX_COLOR_ASSERT,
+        [LOG_LVL_ERROR]   = HEX_COLOR_ERROR,
+        [LOG_LVL_WARN]    = HEX_COLOR_WARN,
+        [LOG_LVL_INFO]    = HEX_COLOR_INFO,
+        [LOG_LVL_DEBUG]   = HEX_COLOR_DEBUG,
+        [LOG_LVL_VERBOSE] = HEX_COLOR_VERBOSE,
 };
 
 static const char *output_name[] = {
@@ -245,7 +245,7 @@ void log_output(unsigned char level, const char *tag, const char *file, const ch
  * @param {uint16_t} size
  * @return {*}
  */
-void log_hex_dump(const char *name, uint8_t width, const void *buf, uint16_t size)
+void _log_hex_dump(unsigned char level, const char *name, uint8_t width, const void *buf, uint16_t size)
 {
 #define __is_print(ch) ((unsigned int)((ch) - ' ') < 127u - ' ')
 
@@ -260,7 +260,7 @@ void log_hex_dump(const char *name, uint8_t width, const void *buf, uint16_t siz
 
     for (i = 0; i < size; i += width) {
         /* package header */
-        fmt_result = snprintf(log_buf, LOG_LINE_BUF_SIZE, "D/HEX %s: %04X-%04X: ", name, i, i + width - 1);
+        fmt_result = snprintf(log_buf, LOG_LINE_BUF_SIZE, "%s %s D/HEX %s: %04X-%04X: ", CSI_START, color_hex_output_info[level], name, i, i + width - 1);
         /* calculate log length */
         if ((fmt_result > -1) && (fmt_result <= LOG_LINE_BUF_SIZE)) {
             log_len = fmt_result;
@@ -288,15 +288,26 @@ void log_hex_dump(const char *name, uint8_t width, const void *buf, uint16_t siz
             }
         }
         /* overflow check and reserve some space for newline sign */
-        if (log_len + strlen(LOG_NEWLINE_SIGN) > LOG_LINE_BUF_SIZE) {
-            log_len = LOG_LINE_BUF_SIZE - strlen(LOG_NEWLINE_SIGN);
+        if (log_len + strlen(LOG_NEWLINE_SIGN) + (sizeof(CSI_END) - 1) > LOG_LINE_BUF_SIZE) {
+            /* using max length */
+            log_len = LOG_LINE_BUF_SIZE;
+            /* reserve some space for CSI end sign */
+            log_len -= (sizeof(CSI_END) - 1);
+            /* reserve some space for newline sign */
+            log_len -= strlen(LOG_NEWLINE_SIGN);
         }
         /* package newline sign */
+        log_len += log_strcpy(log_len, log_buf + log_len, CSI_END);
         log_len += log_strcpy(log_len, log_buf + log_len, LOG_NEWLINE_SIGN);
         /* do log output */
         s_log_info.log_output_handler(log_buf, log_len);
     }
     /* unlock output */
     s_log_info.log_unlock_handler();
+}
+
+void log_hex_dump(const char *name, uint8_t width, const void *buf, uint16_t size)
+{
+    _log_hex_dump(LOG_LVL_VERBOSE, name, width, buf, size);
 }
 /*---------- end of file ----------*/

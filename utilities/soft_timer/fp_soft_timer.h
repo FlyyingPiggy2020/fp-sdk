@@ -67,9 +67,14 @@ bool fp_timer_del(fp_timer_t *timer);
 void fp_timer_pasue(fp_timer_t *timer);
 void fp_timer_resume(fp_timer_t *timer);
 void fp_timer_reset(fp_timer_t *timer);
+// 定时器立即就绪
+void fp_timer_ready(fp_timer_t *timer);
+// 修改定时器周期
+void fp_timer_set_period(fp_timer_t *timer, uint32_t period);
 // 私有
 void fp_timer_enable(bool en);
 void fp_timer_set_repeat_count(fp_timer_t *timer, int32_t repeat_count);
+void fp_timer_set_period(fp_timer_t *timer, uint32_t period);
 fp_timer_t *fp_timer_get_next(fp_timer_t *timer);
 
 /*---------- end of file ----------*/

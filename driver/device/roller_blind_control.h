@@ -4,7 +4,7 @@
  * @Author       : lxf
  * @Date         : 2025-05-14 15:36:45
  * @LastEditors  : lxf_zjnb@qq.com
- * @LastEditTime : 2025-05-20 08:32:31
+ * @LastEditTime : 2025-08-12 15:55:26
  * @Brief        : 卷帘，百叶帘的驱动
  */
 
@@ -27,6 +27,9 @@ extern "C" {
 #define IOCTL_MOTORC_SET_DOWN_ROUTE (IOCTL_USER_START + 0x05) // 设置下行程
 #define IOCTL_MOTORC_CLEAR_ROUTE    (IOCTL_USER_START + 0x06) // 清除行程
 #define IOCTL_MOTORC_TURN           (IOCTL_USER_START + 0x07) // 开停关停
+#define IOCTL_MOTORC_GET_STATUS     (IOCTL_USER_START + 0x08) // 获取电机状态
+#define IOCTL_MOTORC_ROUTE_IS_FREE  (IOCTL_USER_START + 0x09) // 电机是否存在行程
+#define IOCTL_MOTORC_GET_ROUTE      (IOCTL_USER_START + 0x0A) // 获取电机行程
 
 #define MOTOR_ROUTE_FREE            0x7fffffff
 #define MOTOR_ROUTE_INC_MAX         (0 + (MOTOR_ROUTE_FREE - 1))
@@ -34,13 +37,9 @@ extern "C" {
 
 #define MFLAG_RESISTANCE_INC        (1 << 1) // inc过程中遇阻
 #define MFLAG_RESISTANCE_DEC        (1 << 2) // dec过程中遇阻
-#define MFLAG_RESISTANCE_SLOW       (1 << 3) // 减速遇阻
-#define MFLAG_RESISTANCE_STOP       (1 << 4) // 堵转遇阻
-
-#define MTURN_NORMAL                0x00
-#define MTURN_OPEN_STOP             0x01
-#define MTURN_CLOSE_STOP            0x02
-#define MTURN_OPEN_CLOSE            0x03
+#define MFLAG_RESISTANCE_ADC        (1 << 3) // 电流遇阻
+#define MFLAG_RESISTANCE_HALL       (1 << 4) // 霍尔遇阻
+#define MFLAG_RESISTANCE_ROUTE_MAX  (1 << 5) // 行程到达最大值
 
 #define MSTATE_STOP                 0 // 停止
 #define MSTATE_RUN_INC              1 // 正转
@@ -54,37 +53,34 @@ extern "C" {
 // default
 #define MOTOR_SPACE_MIN             (10)  // 默认允许运行的最小行程
 #define MOTOR_SWITCH_TIME           (500) // 正反切换延时。单位毫秒
-// // #define MOTOR_PW_MAX          (300 ms) // 允许的最大脉冲宽度（超过此宽度认为遇阻）
-// #define MOTOR_PW_DMAX         0x40     // 允许的脉宽最大的变化系数（超过此值认为遇阻)
-
-// #define preMax                100
-
-// #define JOG_HALL              20  // 点动霍尔数
-// #define MOTOR_ROUTE_MIN       300 // 行程最小值
-
-// #define MIN_SPEED             20.0f // 最小速度 单位hz
-// #define MAX_SPEED             130.0f // 最大速度 单位hz
-// #define SLOW_SPEED_ROUTE      150    // 慢启慢停所需要的行程 单位：霍尔数
-// #define SLOW_SPEED_D          5     // 变化的速度 单位：hz
+#define JOG_HALL                    20    // 点动霍尔数
+#define MOTOR_ROUTE_MIN             300   // 行程最小值
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
 #pragma pack(1)
 typedef struct {
+    int32_t route_curr;     // 当前行程
+    int32_t route_up;       // 上行程
+    int32_t route_down;     // 下行程
+    int32_t route_down_max; // 最大下行程
+} motor_config_t;
+typedef struct {
     struct {
         bool (*init)(void);
         void (*deinit)(void);
-        bool (*save_config)(void); // 保存电机config内的数据到非易失性存储器
-        bool (*load_config)(void); // 从非易失性数据存储器内读取电机的config数据
-        void (*motor_stop)(void);  // 电机停止
-        void (*motor_inc)(void);   // 电机正转
-        void (*motor_dec)(void);   // 电机反转
+        bool (*save_config)(void);           // 保存电机config内的数据到非易失性存储器
+        bool (*load_config)(void);           // 从非易失性数据存储器内读取电机的config数据
+        void (*motor_stop)(void);            // 电机停止
+        void (*motor_inc)(void);             // 电机正转
+        void (*motor_dec)(void);             // 电机反转
+        uint16_t (*get_motor_current)(void); // 获取电机电流的adc值
     } ops;
 
     struct {
-        int32_t route_curr; // 当前行程
-        int32_t route_up;   // 上行程
-        int32_t route_down; // 下行程
-    } config;
+        void (*stop_cb)(void);                 // 电机停止回调(电机停止时会进入1次)
+        void (*resistance_cb)(uint32_t event); // 遇阻保护(MFLAG_RESISTANCE_xxxx)
+    } cb;                                      // 回调函数只会在条件触发时进入1次
+    motor_config_t config;
 
     struct {
         struct {
@@ -107,6 +103,14 @@ typedef struct {
             uint32_t run_time;  // 运行时间(电机运行5分钟需要保护)
             bool is_resistance; // 已遇阻 (过流或刹车或一切需要电机立即停止的标志位)
         } flag;
+
+        struct {
+            int16_t idle;    // 停止时的电流
+            int16_t current; // 实时电流
+            int16_t load;    // 负载电流=实时电流-停止时电流
+            uint8_t mutex;   //
+            uint32_t time;   // 时基
+        } current;           // 电流相关的结构体
     } priv;
 
     struct {
@@ -114,6 +118,19 @@ typedef struct {
         uint16_t time_stop_delay;
     } param;
 } roller_blind_control_describe_t;
+
+union roller_blind_control_param {
+    struct {
+        uint8_t status;
+        uint8_t route;
+        bool is_route_free;
+    } get;
+
+    struct {
+        uint8_t mode; // MMODE_NORMAL,MMODE_SSTEP
+        uint8_t route;
+    } run;
+};
 #pragma pack()
 /*---------- function prototype ----------*/
 /*---------- end of file ----------*/

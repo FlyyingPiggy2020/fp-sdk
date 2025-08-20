@@ -51,6 +51,35 @@ SOFTWARE.
 #define LOG_TAG_BUFF_SIZE 66
 #endif
 
+#define CSI_START "\033["
+#define CSI_END   "\033[0m"
+#define CSI_START "\033["
+#define CSI_END   "\033[0m"
+
+#define F_BLACK   "30;"
+#define F_RED     "31;"
+#define F_GREEN   "32;"
+#define F_YELLOW  "33;"
+#define F_BLUE    "34;"
+#define F_MAGENTA "35;"
+#define F_CYAN    "36;"
+#define F_WHITE   "37;"
+
+#define B_NULL
+#define B_BLACK     "40;"
+#define B_RED       "41;"
+#define B_GREEN     "42;"
+#define B_YELLOW    "43;"
+#define B_BLUE      "44;"
+#define B_MAGENTA   "45;"
+#define B_CYAN      "46;"
+#define B_WHITE     "47;"
+
+#define Sz_BOLD     "1m"
+#define S_UNDERLINE "4m"
+#define S_BLINK     "5m"
+#define S_NORMAL    "22m"
+
 /**
  * @brief The size of the line buffer used for logging.
  *
@@ -119,11 +148,19 @@ SOFTWARE.
 #endif
 
 #if LOG_OUTPUT_LVL >= LOG_LVL_DEBUG
-#define log_d(...)               log_output(LOG_LVL_DEBUG, LOG_TAG, __FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)
-#define log_hex(name, buf, size) log_hex_dump(name, 32, buf, size)
+#define log_d(...)                 log_output(LOG_LVL_DEBUG, LOG_TAG, __FILENAME__, __FUNCTION__, __LINE__, __VA_ARGS__)
+#define log_hex(name, buf, size)   log_hex_dump(name, 32, buf, size)
+#define log_hex_a(name, buf, size) _log_hex_dump(LOG_LVL_ASSERT, name, 32, buf, size)
+#define log_hex_e(name, buf, size) _log_hex_dump(LOG_LVL_ERROR, name, 32, buf, size)
+#define log_hex_w(name, buf, size) _log_hex_dump(LOG_LVL_WARN, name, 32, buf, size)
+#define log_hex_i(name, buf, size) _log_hex_dump(LOG_LVL_INFO, name, 32, buf, size)
 #else
-#define log_d(...)   ((void)0);
-#define log_hex(...) ((void)0);
+#define log_d(...)     ((void)0);
+#define log_hex(...)   ((void)0);
+#define log_hex_a(...) ((void)0);
+#define log_hex_e(...) ((void)0);
+#define log_hex_w(...) ((void)0);
+#define log_hex_i(...) ((void)0);
 #endif
 
 #if LOG_OUTPUT_LVL >= LOG_LVL_VERBOSE
@@ -154,5 +191,7 @@ typedef struct log_info_t {
 unsigned char log_init(log_info_t *log_info);
 void log_output(unsigned char level, const char *tag, const char *file, const char *func, const long line, const char *format, ...);
 void log_hex_dump(const char *name, uint8_t width, const void *buf, uint16_t size);
+void _log_hex_dump(unsigned char level, const char *name, uint8_t width, const void *buf, uint16_t size);
+
 /*---------- end of file ----------*/
 #endif

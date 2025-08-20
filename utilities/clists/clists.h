@@ -22,7 +22,6 @@ SOFTWARE.
 
 */
 /*
- * Copyright (c) 2023 by Moorgen Tech. Co, Ltd.
  * @FilePath     : list.h
  * @Author       : lxf
  * @Date         : 2023-12-20 10:55:34

@@ -3,8 +3,8 @@
  * @FilePath     : lightc_map.c
  * @Author       : lxf
  * @Date         : 2025-03-18 09:12:48
- * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2025-03-20 10:27:37
+ * @LastEditors  : lxf_zjnb@qq.com
+ * @LastEditTime : 2025-06-17 11:13:43
  * @Brief        :
  */
 
@@ -20,11 +20,14 @@
 /*---------- function prototype ----------*/
 static int32_t _light_open(driver_t **pdrv);
 static void _light_close(driver_t **pdrv);
-int32_t _light_ioctl(driver_t **pdrv, uint32_t cmd, void *args);
+static int32_t _light_ioctl(driver_t **pdrv, uint32_t cmd, void *args);
 static int32_t _light_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *args, uint32_t length);
 
 static void _get_brightness_actual_from_brightness(lightc_map_describe_t *pdesc);
 static void _get_pwm_duty_frequence(lightc_map_describe_t *pdesc);
+static void _get_color_pwm(lightc_map_describe_t *pdesc);
+
+static void __init_priv_param(lightc_map_describe_t *pdesc);
 
 /* lightc map control api */
 static int32_t __light_cmd_off(lightc_map_describe_t *pdesc, void *args);
@@ -42,8 +45,12 @@ static int32_t __light_set_brightness_by_time(lightc_map_describe_t *pdesc, void
 static int32_t __light_reverse_ext(lightc_map_describe_t *pdesc, void *args);
 static int32_t __light_reverse_brightness(lightc_map_describe_t *pdesc, void *args);
 static int32_t __light_start(lightc_map_describe_t *pdesc, void *args);
+static int32_t __light_param_read(lightc_map_describe_t *pdesc, void *args);
 static int32_t __light_param_write(lightc_map_describe_t *pdesc, void *args);
 static int32_t __light_adjustment_start_by_time(lightc_map_describe_t *pdesc, void *args);
+static int32_t __light_get_brightness(lightc_map_describe_t *pdesc, void *args);
+static int32_t __light_set_virtual_brightness(lightc_map_describe_t *pdesc, void *args);
+static int32_t __light_set_color(lightc_map_describe_t *pdesc, void *args);
 
 /*---------- variable ----------*/
 DRIVER_DEFINED(lightc_map, _light_open, _light_close, NULL, NULL, _light_ioctl, _light_irq_handler);
@@ -54,7 +61,7 @@ static struct protocol_callback ioctl_cbs[] = {
     { IOCTL_LIGHTC_CMD_ON, __light_cmd_on },
     { IOCTL_LIGHTC_SET_BRIGHTNESS, __light_set_brightness },
     { IOCTL_LIGHTC_STEP_BRIGHTNESS_INC, __light_step_brightness_inc },
-    { IOCTL_LIGHTC_SETP_BRIGHTNESS_DEC, __light_step_brightness_dec },
+    { IOCTL_LIGHTC_STEP_BRIGHTNESS_DEC, __light_step_brightness_dec },
     { IOCTL_LIGHTC_CONTINUE_BRIGHTNESS_INC, __light_continue_brightness_inc },
     { IOCTL_LIGHTC_CONTINUE_BRIGHTNESS_DEC, __light_continue_brightness_dec },
     { IOCTL_LIGHTC_LIGHT_ADJUSTMENT_FINISH, __light_adjustment_finish },
@@ -62,13 +69,18 @@ static struct protocol_callback ioctl_cbs[] = {
     { IOCTL_LIGHTC_LOOP_LIGHT_ADJ_STOP, __loop_adjustment_stop },
     { IOCTL_LIGHTC_REVERSE, __light_reverse },
     { IOCTL_LIGHTC_SET_BRIGHTNESS_BY_TIME, __light_set_brightness_by_time },
-    { IOCTL_LIGHTC_REVERSE_EXT, __light_reverse_ext },
-    { IOCTL_LIGHTC_REVERSE_BRIGHTNESS, __light_reverse_brightness },
+    //    { IOCTL_LIGHTC_REVERSE_EXT, __light_reverse_ext },
+    //    { IOCTL_LIGHTC_REVERSE_BRIGHTNESS, __light_reverse_brightness },
     { IOCTL_LIGHTC_START, __light_start },
+    { IOCTL_LIGHTC_PARAM_READ, __light_param_read },
     { IOCTL_LIGHTC_PARAM_WRITE, __light_param_write },
     { IOCTL_LIGHTC_LOOP_LIGHT_ADJ_START_BY_TIME, __light_adjustment_start_by_time },
+    { IOCTL_LIGHTC_GET_BRIGHTNESS, __light_get_brightness },
+    { IOCTL_LIGHTC_SET_VIRTUAL_BRIGHTNESS, __light_set_virtual_brightness },
+    { IOCTL_LIGHTC_SET_COLOR, __light_set_color },
 };
 /*---------- function ----------*/
+
 static int32_t _light_open(driver_t **pdrv)
 {
     lightc_map_describe_t *pdesc = NULL;
@@ -81,43 +93,48 @@ static int32_t _light_open(driver_t **pdrv)
             break;
         }
         err = DRV_ERR_OK;
+        if (pdesc->is_virtual) {
+            break;
+        }
         // default parameter
         pdesc->param.light_type = 0xff;
-        pdesc->priv.remeber_brightness = 100;
         pdesc->param.dimming_start_point = 0;
         pdesc->param.dimming_end_point = 100;
         pdesc->param.cut_start_point = 0;
-        pdesc->param.cut_end_pint = 0;
+        pdesc->param.cut_end_point = 0;
         pdesc->param.start_delay = 8;
         pdesc->param.stop_delay = 8;
         pdesc->param.charge_duty = 20;
         pdesc->param.fade_in_time = 8;
         pdesc->param.fade_out_time = 8;
         pdesc->param.start_state = 0;
-        pdesc->priv.frequence = 4000;
+        // default priv
+        pdesc->priv.remeber_brightness = 100;
+        pdesc->priv.frequence = 1200;
+        pdesc->priv.brightness_position = 0;
+        pdesc->priv.color_postion = 2700;
+
+        pdesc->color = 2700;
+
         if (pdesc->ops.init) {
             if (!pdesc->ops.init()) {
                 err = -1;
             }
         }
-        // init priv param
-        if (pdesc->param.dimming_end_point <= pdesc->param.dimming_start_point) {
-            TRACE("(%s) dimming end point[%d] is bigger than dimming start point[%d].", pdrv[0]->drv_name, pdesc->param.dimming_end_point, pdesc->param.dimming_start_point);
-            err = DRV_ERR_WRONG_ARGS;
-            break;
+        __init_priv_param(pdesc);
+
+        union lightc_map_param param;
+
+        if (pdesc->param.start_state == 0) {
+            param.set.brightness = 0;
+            __light_set_brightness(pdesc, &param);
+        } else if (pdesc->param.start_state == 1) {
+            param.set.brightness = 100;
+            __light_set_brightness(pdesc, &param);
+        } else if (pdesc->param.start_state == 3) {
+            param.set.brightness = pdesc->priv.poweron_brightness;
+            __light_set_brightness(pdesc, &param);
         }
-        if (pdesc->param.start_delay) {
-            pdesc->priv.brightness_step_1_percent_inc = 1 * 10 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->param.start_delay * pdesc->time_slice_frequence);
-        } else {
-            pdesc->priv.brightness_step_1_percent_inc = 1;
-        }
-        if (pdesc->param.start_delay) {
-            pdesc->priv.brightness_step_1_percent_dec = 1 * 10 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->param.stop_delay * pdesc->time_slice_frequence);
-        } else {
-            pdesc->priv.brightness_step_1_percent_dec = 1;
-        }
-        pdesc->priv.brightness_step_1_to_100_inc = 99 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * pdesc->param.fade_in_time);
-        pdesc->priv.brightness_step_1_to_100_dec = 99 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * pdesc->param.fade_out_time);
     } while (0);
 
     return err;
@@ -162,9 +179,16 @@ static int32_t _light_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *a
     ASSERT(pdrv);
     pdesc = container_of(pdrv, device_t, pdrv)->pdesc;
     LIGHT_MAP_FLOAT_POINT_TYPE step = 0;
+    LIGHT_MAP_FLOAT_POINT_TYPE color_step = 0;
     if (pdesc) {
-        /* 1.update brightness control status */
+
         do {
+            // 虚拟化情况下直接退出
+            if (pdesc->is_virtual == true) {
+                // 询问灯光模组相关信息
+                break;
+            }
+            /* 1.update brightness control status */
             if (pdesc->priv.brightness_position > pdesc->brightness) {
                 pdesc->priv.status = LIGHTC_MAP_STATUS_INC;
             } else if (pdesc->priv.brightness_position < pdesc->brightness) {
@@ -182,16 +206,18 @@ static int32_t _light_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *a
                 } else if (pdesc->brightness == 0) {
                     pdesc->status.is_off = true;
                 }
-                if (pdesc->cb.lightc_stop_callback) {
-                    pdesc->cb.lightc_stop_callback();
+                if (pdesc->cb.brightness_stop_callback) {
+                    pdesc->cb.brightness_stop_callback(pdesc->brightness);
                 }
             }
-            //             else if (pdesc->priv.status != LIGHTC_MAP_STATUS_DEC){
-            //                if (fabs(pdesc->priv.last_brightness_postion - pdesc->brightness) < 1) {
-            //                } else if (fabs(pdesc->priv.last_brightness_postion - pdesc->brightness) < 1)
-            //            } else if (pdesc->priv.status == LIGHTC_MAP_STATUS_STOP) {
-            //                pdesc->priv.frequence = 600;
-            //            }
+            // 2. color
+            if (pdesc->priv.color_postion > pdesc->color) {
+                pdesc->priv.color_status = LIGHTC_MAP_STATUS_INC;
+            } else if (pdesc->priv.color_postion < pdesc->color) {
+                pdesc->priv.color_status = LIGHTC_MAP_STATUS_DEC;
+            } else if (pdesc->priv.color_status != LIGHTC_MAP_STATUS_STOP) {
+                pdesc->priv.color_status = LIGHTC_MAP_STATUS_STOP;
+            }
         } while (0);
         /* 2.calculate inc/dec step in differnet control mode*/
         do {
@@ -224,6 +250,14 @@ static int32_t _light_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *a
                     }
                 }
             }
+
+            if (pdesc->priv.color_mode == LIGHTC_MAP_MODE_NORMAL) {
+                if (pdesc->priv.color_status == LIGHTC_MAP_STATUS_INC) {
+                    color_step = pdesc->priv.color_step_inc;
+                } else if (pdesc->priv.color_status == LIGHTC_MAP_STATUS_DEC) {
+                    color_step = -pdesc->priv.color_step_dec;
+                }
+            }
         } while (0);
         /* 3.update brightness */
         do {
@@ -250,14 +284,67 @@ static int32_t _light_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *a
             _get_brightness_actual_from_brightness(pdesc);
             _get_pwm_duty_frequence(pdesc);
             if (pdesc->ops.update_brightness) {
-                pdesc->ops.update_brightness(pdesc->priv.frequence, pdesc->priv.duty);
+                pdesc->ops.update_brightness(pdesc->priv.frequence, pdesc->priv.duty, pdesc->priv.iadj);
             }
         } while (0);
         do {
-
+            pdesc->color += color_step;
+            if (pdesc->priv.color_status == LIGHTC_MAP_STATUS_INC) {
+                if (pdesc->color > pdesc->priv.color_postion) {
+                    if (pdesc->priv.color_mode == LIGHTC_MAP_MODE_NORMAL) {
+                        pdesc->color = pdesc->priv.color_postion;
+                    }
+                }
+            } else if (pdesc->priv.color_status == LIGHTC_MAP_STATUS_DEC) {
+                if (pdesc->color < pdesc->priv.color_postion) {
+                    if (pdesc->priv.color_mode == LIGHTC_MAP_MODE_NORMAL) {
+                        pdesc->color = pdesc->priv.color_postion;
+                    }
+                }
+            }
+            _get_color_pwm(pdesc);
+            if (pdesc->ops.update_color) {
+                pdesc->ops.update_color(pdesc->priv.color_duty);
+            }
         } while (0);
     }
     return err;
+}
+
+static void __init_priv_param(lightc_map_describe_t *pdesc)
+{
+    // init priv param
+    if (pdesc->param.dimming_start_point >= 100) {
+        pdesc->param.dimming_start_point = 0;
+    }
+    if (pdesc->param.dimming_end_point <= 0) {
+        pdesc->param.dimming_end_point = 100;
+    }
+    if (pdesc->param.dimming_end_point <= pdesc->param.dimming_start_point) {
+        pdesc->param.dimming_start_point = 0;
+        pdesc->param.dimming_end_point = 100;
+    }
+    if (pdesc->param.start_delay) {
+        pdesc->priv.brightness_step_1_percent_inc = 1 * 10 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->param.start_delay * pdesc->time_slice_frequence);
+    } else {
+        pdesc->priv.brightness_step_1_percent_inc = 1;
+    }
+    if (pdesc->param.start_delay) {
+        pdesc->priv.brightness_step_1_percent_dec = 1 * 10 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->param.stop_delay * pdesc->time_slice_frequence);
+    } else {
+        pdesc->priv.brightness_step_1_percent_dec = 1;
+    }
+    if (pdesc->param.start_state > 3 || pdesc->param.start_state == 2) {
+        pdesc->param.start_state = 0;
+    }
+    pdesc->priv.brightness_step_1_to_100_inc = 99 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * pdesc->param.fade_in_time);
+    pdesc->priv.brightness_step_1_to_100_dec = 99 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * pdesc->param.fade_out_time);
+    pdesc->priv.color_step_inc = (5600 - 2700) / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * pdesc->param.fade_in_time);
+    pdesc->priv.color_step_dec = (5600 - 2700) / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * pdesc->param.fade_out_time);
+
+    if (pdesc->priv.poweron_brightness > 100) {
+        pdesc->priv.poweron_brightness = 0;
+    }
 }
 
 /**
@@ -289,6 +376,7 @@ static void _get_brightness_actual_from_brightness(lightc_map_describe_t *pdesc)
         }
     }
 }
+
 /**
  * @brief linear interpolation
  * @param {lightc_map_describe_t} *pdesc
@@ -300,6 +388,8 @@ static void _get_pwm_duty_frequence(lightc_map_describe_t *pdesc)
 {
     brightness_map_t *bmap = pdesc->bmap;
     frequenct_map_t *fmap = pdesc->fmap;
+    iadj_map_t *imap = pdesc->imap;
+
     LIGHT_MAP_FLOAT_POINT_TYPE x1, y1, x2, y2;
     LIGHT_MAP_FLOAT_POINT_TYPE brightness_actual = pdesc->priv.brightness_actual;
 
@@ -314,84 +404,208 @@ static void _get_pwm_duty_frequence(lightc_map_describe_t *pdesc)
             }
         }
     }
-    //    if (fmap != NULL && fmap->node_size >= 2) {
-    //        for (int i = 0; i < pdesc->fmap->node_size - 1; i++) {
-    //            if (brightness_actual >= fmap->node[i].brightness && brightness_actual <= fmap->node[i + 1].brightness) {
-    //                x1 = fmap->node[i].brightness;
-    //                y1 = fmap->node[i].frequence;
-    //                x2 = fmap->node[i + 1].brightness;
-    //                y2 = fmap->node[i + 1].frequence;
-    //                pdesc->priv.frequence = (uint32_t)(y1 + ((y2 - y1) * (brightness_actual - x1)) / (x2 - x1));
-    //            }
-    //        }
-    //    } else {
-    //        //pdesc->priv.frequence = 1200; //default freq is 1200hz
-    //    }
+    if (fmap != NULL && fmap->node_size >= 2) {
+        for (int i = 0; i < pdesc->fmap->node_size - 1; i++) {
+            if (brightness_actual >= fmap->node[i].brightness && brightness_actual <= fmap->node[i + 1].brightness) {
+                x1 = fmap->node[i].brightness;
+                y1 = fmap->node[i].frequence;
+                x2 = fmap->node[i + 1].brightness;
+                y2 = fmap->node[i + 1].frequence;
+                pdesc->priv.frequence = (uint32_t)(y1 + ((y2 - y1) * (brightness_actual - x1)) / (x2 - x1));
+            }
+        }
+    } else {
+        pdesc->priv.frequence = 1200; // default freq is 1200hz
+    }
+
+    if (imap != NULL && imap->node_size >= 2) {
+        for (int i = 0; i < pdesc->imap->node_size - 1; i++) {
+            if (brightness_actual >= imap->node[i].brightness && brightness_actual <= imap->node[i + 1].brightness) {
+                x1 = imap->node[i].brightness;
+                y1 = imap->node[i].duty;
+                x2 = imap->node[i + 1].brightness;
+                y2 = imap->node[i + 1].duty;
+                pdesc->priv.iadj = y1 + ((y2 - y1) * (brightness_actual - x1)) / (x2 - x1);
+            }
+        }
+    }
+}
+
+static void _get_color_pwm(lightc_map_describe_t *pdesc)
+{
+
+    LIGHT_MAP_FLOAT_POINT_TYPE x1, y1, x2, y2;
+    LIGHT_MAP_FLOAT_POINT_TYPE color = pdesc->color;
+
+    x1 = 2700;
+    y1 = 0;
+    x2 = 5600;
+    y2 = 1;
+    pdesc->priv.color_duty = y1 + ((y2 - y1) * (color - x1)) / (x2 - x1);
 }
 
 /* light brightness change api */
 static int32_t __light_cmd_off(lightc_map_describe_t *pdesc, void *args)
 {
-    int32_t err = DRV_ERR_EOK;
-    double brightness = 0;
-    pdesc->status.is_off = true;
-    pdesc->priv.mode = LIGHTC_MAP_MODE_NORMAL;
-    pdesc->priv.brightness_position = brightness;
+    int32_t err = DRV_ERR_WRONG_ARGS;
+
+    do {
+        if (pdesc->is_virtual == true) {
+            pdesc->virtual_brightness = 0;
+            if (pdesc->xfer.lightc_cmd_off) {
+                pdesc->xfer.lightc_cmd_off();
+            }
+            err = DRV_ERR_EOK;
+            break;
+        }
+
+        if (pdesc->is_virtual == false) {
+            pdesc->status.is_off = true;
+            pdesc->priv.mode = LIGHTC_MAP_MODE_NORMAL;
+            pdesc->priv.brightness_position = 0;
+            err = DRV_ERR_EOK;
+            break;
+        }
+
+    } while (0);
+
     return err;
 }
 static int32_t __light_cmd_on(lightc_map_describe_t *pdesc, void *args)
 {
-    int32_t err = DRV_ERR_EOK;
+    int32_t err = DRV_ERR_WRONG_ARGS;
     double brightness = pdesc->priv.remeber_brightness;
 
-    pdesc->status.is_off = false;
-    pdesc->priv.mode = LIGHTC_MAP_MODE_NORMAL;
-    pdesc->priv.brightness_position = brightness;
+    do {
+        if (pdesc->is_virtual == true) {
+            pdesc->virtual_brightness = brightness;
+            if (pdesc->xfer.lightc_cmd_on) {
+                pdesc->xfer.lightc_cmd_on();
+            }
+            err = DRV_ERR_EOK;
+            break;
+        }
+
+        if (pdesc->is_virtual == false) {
+            pdesc->status.is_off = false;
+            pdesc->priv.mode = LIGHTC_MAP_MODE_NORMAL;
+            pdesc->priv.brightness_position = brightness;
+            err = DRV_ERR_EOK;
+            break;
+        }
+    } while (0);
+
     return err;
 }
 static int32_t __light_set_brightness(lightc_map_describe_t *pdesc, void *args)
 {
-    int32_t err = DRV_ERR_EOK;
-    struct lightc_map_param *param = (struct lightc_map_param *)args;
-    double brightness = param->brightness;
+    int32_t err = DRV_ERR_WRONG_ARGS;
+    union lightc_map_param *param = (union lightc_map_param *)args;
+    double brightness = param->set.brightness;
 
-    if (brightness != 0) {
-        pdesc->status.is_off = false;
-    } else {
-        pdesc->status.is_off = true;
-    }
-    pdesc->priv.mode = LIGHTC_MAP_MODE_NORMAL;
-    pdesc->priv.brightness_position = brightness;
+    do {
+        if (!args) {
+            err = DRV_ERR_POINT_NONE;
+            break;
+        }
+        if (brightness != 0) {
+            pdesc->status.is_off = false;
+        } else {
+            pdesc->status.is_off = true;
+        }
+
+        if (pdesc->is_virtual == true) {
+            pdesc->virtual_brightness = brightness;
+            if (brightness != 0) {
+                pdesc->priv.remeber_brightness = brightness;
+            }
+            if (pdesc->xfer.lightc_cmd_set_brightness) {
+                pdesc->xfer.lightc_cmd_set_brightness(brightness);
+            }
+            err = DRV_ERR_EOK;
+            break;
+        }
+
+        if (pdesc->is_virtual == false) {
+            pdesc->priv.mode = LIGHTC_MAP_MODE_NORMAL;
+            pdesc->priv.brightness_position = brightness;
+            err = DRV_ERR_EOK;
+        }
+    } while (0);
+
     return err;
 }
 static int32_t __light_step_brightness_inc(lightc_map_describe_t *pdesc, void *args)
 {
-    int32_t err = DRV_ERR_EOK;
+    int32_t err = DRV_ERR_WRONG_ARGS;
     double brightness = 0;
-    brightness = pdesc->priv.brightness_position + 5;
-    if (brightness > 100) {
-        brightness = 100;
-    }
-    pdesc->status.is_off = false;
-    pdesc->priv.mode = LIGHTC_MAP_MODE_NORMAL;
-    pdesc->priv.brightness_position = brightness;
+
+    do {
+        if (pdesc->is_virtual == true) {
+            brightness = pdesc->virtual_brightness + 5;
+            if (brightness > 100) {
+                brightness = 100;
+            }
+            pdesc->virtual_brightness = brightness;
+            if (brightness != 0) {
+                pdesc->priv.remeber_brightness = brightness;
+            }
+            if (pdesc->xfer.lightc_cmd_step_brightness_inc) {
+                pdesc->xfer.lightc_cmd_step_brightness_inc();
+            }
+            err = DRV_ERR_EOK;
+            break;
+        }
+        if (pdesc->is_virtual == false) {
+            brightness = pdesc->priv.brightness_position + 5;
+            if (brightness > 100) {
+                brightness = 100;
+            }
+            pdesc->status.is_off = false;
+            pdesc->priv.mode = LIGHTC_MAP_MODE_NORMAL;
+            pdesc->priv.brightness_position = brightness;
+        }
+    } while (0);
+
     return err;
 }
 static int32_t __light_step_brightness_dec(lightc_map_describe_t *pdesc, void *args)
 {
-    int32_t err = DRV_ERR_EOK;
+    int32_t err = DRV_ERR_WRONG_ARGS;
     double brightness = 0;
-    brightness = pdesc->priv.brightness_position - 5;
-    if (brightness < 0) {
-        brightness = 0;
-    }
-    if (brightness != 0) {
-        pdesc->status.is_off = false;
-    } else {
-        pdesc->status.is_off = true;
-    }
-    pdesc->priv.mode = LIGHTC_MAP_MODE_NORMAL;
-    pdesc->priv.brightness_position = brightness;
+    do {
+        if (pdesc->is_virtual == true) {
+            brightness = pdesc->virtual_brightness - 5;
+            if (brightness < 0) {
+                brightness = 0;
+            }
+            pdesc->virtual_brightness = brightness;
+            if (brightness != 0) {
+                pdesc->priv.remeber_brightness = brightness;
+            }
+            if (pdesc->xfer.lightc_cmd_step_brightness_dec) {
+                pdesc->xfer.lightc_cmd_step_brightness_dec();
+            }
+            err = DRV_ERR_EOK;
+            break;
+        }
+
+        if (pdesc->is_virtual == false) {
+            brightness = pdesc->priv.brightness_position - 5;
+            if (brightness < 0) {
+                brightness = 0;
+            }
+            if (brightness != 0) {
+                pdesc->status.is_off = false;
+            } else {
+                pdesc->status.is_off = true;
+            }
+            pdesc->priv.mode = LIGHTC_MAP_MODE_NORMAL;
+            pdesc->priv.brightness_position = brightness;
+            err = DRV_ERR_OK;
+        }
+    } while (0);
+
     return err;
 }
 static int32_t __light_continue_brightness_inc(lightc_map_describe_t *pdesc, void *args)
@@ -399,8 +613,18 @@ static int32_t __light_continue_brightness_inc(lightc_map_describe_t *pdesc, voi
     int32_t err = DRV_ERR_EOK;
     double brightness = 100;
 
-    pdesc->priv.mode = LIGHTC_MAP_MODE_NORMAL;
-    pdesc->priv.brightness_position = brightness;
+    do {
+        if (pdesc->is_virtual == true) {
+            pdesc->brightness = brightness;
+            if (pdesc->xfer.lightc_cmd_continue_brightness_inc) {
+                pdesc->xfer.lightc_cmd_continue_brightness_inc();
+            }
+            break;
+        }
+        pdesc->priv.mode = LIGHTC_MAP_MODE_NORMAL;
+        pdesc->priv.brightness_position = brightness;
+    } while (0);
+
     return err;
 }
 static int32_t __light_continue_brightness_dec(lightc_map_describe_t *pdesc, void *args)
@@ -408,8 +632,18 @@ static int32_t __light_continue_brightness_dec(lightc_map_describe_t *pdesc, voi
     int32_t err = DRV_ERR_EOK;
     double brightness = 0;
 
-    pdesc->priv.mode = LIGHTC_MAP_MODE_NORMAL;
-    pdesc->priv.brightness_position = brightness;
+    do {
+        if (pdesc->is_virtual == true) {
+            pdesc->brightness = brightness;
+            if (pdesc->xfer.lightc_cmd_continue_brightness_dec) {
+                pdesc->xfer.lightc_cmd_continue_brightness_dec();
+            }
+            break;
+        }
+        pdesc->priv.mode = LIGHTC_MAP_MODE_NORMAL;
+        pdesc->priv.brightness_position = brightness;
+    } while (0);
+
     return err;
 }
 static int32_t __light_adjustment_finish(lightc_map_describe_t *pdesc, void *args)
@@ -417,52 +651,89 @@ static int32_t __light_adjustment_finish(lightc_map_describe_t *pdesc, void *arg
     int32_t err = DRV_ERR_EOK;
     double brightness = pdesc->brightness;
 
-    pdesc->priv.mode = LIGHTC_MAP_MODE_NORMAL;
-    pdesc->priv.brightness_position = brightness;
+    do {
+        if (pdesc->is_virtual == true) {
+            pdesc->brightness = brightness;
+            if (pdesc->xfer.lightc_cmd_continue_brightness_finish) {
+                pdesc->xfer.lightc_cmd_continue_brightness_finish();
+            }
+            break;
+        }
+        pdesc->priv.mode = LIGHTC_MAP_MODE_NORMAL;
+        pdesc->priv.brightness_position = brightness;
+    } while (0);
+
     return err;
 }
 static int32_t __loop_adjustment_start(lightc_map_describe_t *pdesc, void *args)
 {
     int32_t err = DRV_ERR_EOK;
-    pdesc->priv.mode = LIGHTC_MAP_MODE_LOOP;
-    if (pdesc->brightness == 100) {
-        pdesc->priv.brightness_position = 0;
-    } else {
-        pdesc->priv.brightness_position = 100;
-    }
+    do {
+        if (pdesc->is_virtual == true) {
+            if (pdesc->xfer.lightc_cmd_loop_light_adj_start) {
+                pdesc->xfer.lightc_cmd_loop_light_adj_start();
+            }
+            break;
+        }
+        pdesc->priv.mode = LIGHTC_MAP_MODE_LOOP;
+        if (pdesc->brightness == 100) {
+            pdesc->priv.brightness_position = 0;
+        } else {
+            pdesc->priv.brightness_position = 100;
+        }
+    } while (0);
 
     return err;
 }
 static int32_t __loop_adjustment_stop(lightc_map_describe_t *pdesc, void *args)
 {
     int32_t err = DRV_ERR_EOK;
-    double brightness = pdesc->brightness;
 
-    pdesc->priv.mode = LIGHTC_MAP_MODE_NORMAL;
-    pdesc->priv.brightness_position = brightness;
+    do {
+        if (pdesc->is_virtual == true) {
+            if (pdesc->xfer.lightc_cmd_loop_light_adj_stop) {
+                pdesc->xfer.lightc_cmd_loop_light_adj_stop();
+            }
+            break;
+        }
+        double brightness = pdesc->brightness;
+        pdesc->priv.mode = LIGHTC_MAP_MODE_NORMAL;
+        pdesc->priv.brightness_position = brightness;
+    } while (0);
+
     return err;
 }
 static int32_t __light_reverse(lightc_map_describe_t *pdesc, void *args)
 {
     int32_t err = DRV_ERR_EOK;
-    if (pdesc->priv.status == LIGHTC_MAP_STATUS_STOP && pdesc->brightness != 0) {
-        __light_cmd_off(pdesc, args);
-    } else if (pdesc->priv.status == LIGHTC_MAP_STATUS_STOP && pdesc->brightness == 0) {
-        __light_cmd_on(pdesc, args);
-    } else {
-        if (pdesc->priv.status == LIGHTC_MAP_STATUS_INC) {
-            __light_cmd_off(pdesc, args);
-        } else if (pdesc->priv.status == LIGHTC_MAP_STATUS_DEC) {
-            __light_cmd_on(pdesc, args);
+
+    do {
+        if (pdesc->is_virtual == true) {
+            if (pdesc->xfer.lightc_cmd_reverse) {
+                pdesc->xfer.lightc_cmd_reverse();
+            }
+        } else {
+            if (pdesc->priv.status == LIGHTC_MAP_STATUS_STOP && pdesc->brightness != 0) {
+                __light_cmd_off(pdesc, args);
+            } else if (pdesc->priv.status == LIGHTC_MAP_STATUS_STOP && pdesc->brightness == 0) {
+                __light_cmd_on(pdesc, args);
+            } else {
+                if (pdesc->priv.status == LIGHTC_MAP_STATUS_INC) {
+                    __light_cmd_off(pdesc, args);
+                } else if (pdesc->priv.status == LIGHTC_MAP_STATUS_DEC) {
+                    __light_cmd_on(pdesc, args);
+                }
+            }
         }
-    }
+    } while (0);
+
     return err;
 }
 static int32_t __light_set_brightness_by_time(lightc_map_describe_t *pdesc, void *args)
 {
     int32_t err = DRV_ERR_EOK;
-    struct lightc_map_param *param = (struct lightc_map_param *)args;
-    double brightness = param->brightness;
+    union lightc_map_param *param = (union lightc_map_param *)args;
+    double brightness = param->set.brightness;
 
     if (brightness != 0) {
         pdesc->status.is_off = false;
@@ -472,7 +743,7 @@ static int32_t __light_set_brightness_by_time(lightc_map_describe_t *pdesc, void
 
     pdesc->priv.brightness_position = brightness;
     pdesc->priv.mode = LIGHTC_MAP_MODE_SET_BRIGHTNESS_BY_TIME;
-    pdesc->priv.step_temp = 99 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * param->move_time);
+    pdesc->priv.step_temp = 99 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * param->set.move_time);
     return err;
 }
 static int32_t __light_reverse_ext(lightc_map_describe_t *pdesc, void *args)
@@ -512,51 +783,49 @@ static int32_t __light_start(lightc_map_describe_t *pdesc, void *args)
 {
     int32_t err = DRV_ERR_EOK;
     // init priv param
-    if (pdesc->param.dimming_end_point <= pdesc->param.dimming_start_point) {
-        err = DRV_ERR_WRONG_ARGS;
-        return err;
-    }
-    if (pdesc->param.start_delay) {
-        pdesc->priv.brightness_step_1_percent_inc = 1 * 10 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->param.start_delay * pdesc->time_slice_frequence);
-    } else {
-        pdesc->priv.brightness_step_1_percent_inc = 1;
-    }
-    if (pdesc->param.start_delay) {
-        pdesc->priv.brightness_step_1_percent_dec = 1 * 10 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->param.stop_delay * pdesc->time_slice_frequence);
-    } else {
-        pdesc->priv.brightness_step_1_percent_dec = 1;
-    }
-    pdesc->priv.brightness_step_1_to_100_inc = 99 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * pdesc->param.fade_in_time);
-    pdesc->priv.brightness_step_1_to_100_dec = 99 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * pdesc->param.fade_out_time);
+    __init_priv_param(pdesc);
     if (pdesc->param.start_state == 1) {
         __light_cmd_on(pdesc, NULL);
     }
     return err;
 }
+static int32_t __light_param_read(lightc_map_describe_t *pdesc, void *args)
+{
+    int32_t err = DRV_ERR_EOK;
+    union lightc_map_param *param = (union lightc_map_param *)args;
 
+    param->param.light_type = pdesc->param.light_type;
+    param->param.dimming_start_point = pdesc->param.dimming_start_point;
+    param->param.dimming_end_point = pdesc->param.dimming_end_point;
+    param->param.cut_start_point = pdesc->param.cut_start_point;
+    param->param.cut_end_point = pdesc->param.cut_end_point;
+    param->param.start_delay = pdesc->param.start_delay;
+    param->param.stop_delay = pdesc->param.stop_delay;
+    param->param.charge_duty = pdesc->param.charge_duty;
+    param->param.fade_in_time = pdesc->param.fade_in_time;
+    param->param.fade_out_time = pdesc->param.fade_out_time;
+    param->param.start_state = pdesc->param.start_state;
+
+    return err;
+}
 static int32_t __light_param_write(lightc_map_describe_t *pdesc, void *args)
 {
     int32_t err = DRV_ERR_EOK;
-    struct lightc_map_param *param = (struct lightc_map_param *)args;
+    union lightc_map_param *param = (union lightc_map_param *)args;
 
-    uint8_t start = param->param.start;
-    uint8_t size = param->param.size;
-
-    for (uint8_t i = 0; i < size; i++) {
-        ((uint8_t *)(&pdesc->param.light_type))[start + i] = ((uint8_t *)(&param->param.param.light_type))[start + i];
-    }
-    if (pdesc->param.start_delay) {
-        pdesc->priv.brightness_step_1_percent_inc = 1 * 10 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->param.start_delay * pdesc->time_slice_frequence);
-    } else {
-        pdesc->priv.brightness_step_1_percent_inc = 1;
-    }
-    if (pdesc->param.start_delay) {
-        pdesc->priv.brightness_step_1_percent_dec = 1 * 10 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->param.stop_delay * pdesc->time_slice_frequence);
-    } else {
-        pdesc->priv.brightness_step_1_percent_dec = 1;
-    }
-    pdesc->priv.brightness_step_1_to_100_inc = 99 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * pdesc->param.fade_in_time);
-    pdesc->priv.brightness_step_1_to_100_dec = 99 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * pdesc->param.fade_out_time);
+    pdesc->param.light_type = param->param.light_type;
+    pdesc->param.dimming_start_point = param->param.dimming_start_point;
+    pdesc->param.dimming_end_point = param->param.dimming_end_point;
+    pdesc->param.cut_start_point = param->param.cut_start_point;
+    pdesc->param.cut_end_point = param->param.cut_end_point;
+    pdesc->param.start_delay = param->param.start_delay;
+    pdesc->param.stop_delay = param->param.stop_delay;
+    pdesc->param.charge_duty = param->param.charge_duty;
+    pdesc->param.fade_in_time = param->param.fade_in_time;
+    pdesc->param.fade_out_time = param->param.fade_out_time;
+    pdesc->param.start_state = param->param.start_state;
+    // 重新初始化计算参数
+    __init_priv_param(pdesc);
     return err;
 }
 
@@ -569,8 +838,64 @@ static int32_t __light_adjustment_start_by_time(lightc_map_describe_t *pdesc, vo
     } else {
         pdesc->priv.brightness_position = 100;
     }
-    struct lightc_map_param *param = (struct lightc_map_param *)args;
-    pdesc->priv.step_temp = 99 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * param->move_time);
+    union lightc_map_param *param = (union lightc_map_param *)args;
+    pdesc->priv.step_temp = 99 / (LIGHT_MAP_FLOAT_POINT_TYPE)(pdesc->time_slice_frequence * param->set.move_time);
+    return err;
+}
+
+static int32_t __light_get_brightness(lightc_map_describe_t *pdesc, void *args)
+{
+    union lightc_map_param *param = (union lightc_map_param *)args;
+    if (pdesc->is_virtual == true) {
+        param->get.brightness = pdesc->virtual_brightness;
+        param->get.remeber_brightness = pdesc->virtual_brightness;
+    } else {
+        param->get.brightness = pdesc->priv.brightness_position;
+        param->get.remeber_brightness = pdesc->priv.remeber_brightness;
+    }
+    return DRV_ERR_EOK;
+}
+
+static int32_t __light_set_virtual_brightness(lightc_map_describe_t *pdesc, void *args)
+{
+    union lightc_map_param *param = (union lightc_map_param *)args;
+    if (pdesc->is_virtual == true) {
+        pdesc->virtual_brightness = param->set.brightness;
+    } else {
+        param->get.brightness = pdesc->priv.brightness_position;
+    }
+
+    return DRV_ERR_EOK;
+}
+
+static int32_t __light_set_color(lightc_map_describe_t *pdesc, void *args)
+{
+    int32_t err = DRV_ERR_WRONG_ARGS;
+    union lightc_map_param *param = (union lightc_map_param *)args;
+    double color = param->set.color;
+
+    do {
+        if (!args) {
+            err = DRV_ERR_POINT_NONE;
+            break;
+        }
+
+        if (pdesc->is_virtual == true) {
+            err = DRV_ERR_EOK;
+            break;
+        }
+
+        if (param->set.color > 5600 || param->set.color < 2700) {
+            break;
+        }
+
+        if (pdesc->is_virtual == false) {
+            pdesc->priv.color_mode = LIGHTC_MAP_MODE_NORMAL;
+            pdesc->priv.color_postion = color;
+            err = DRV_ERR_EOK;
+        }
+    } while (0);
+
     return err;
 }
 /*---------- end of file ----------*/

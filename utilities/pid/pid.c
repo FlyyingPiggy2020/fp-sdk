@@ -7,8 +7,47 @@
  * @LastEditTime : 2024-12-26 16:45:05
  * @Brief        :
  * 移植自 Arduino PID Library
- * 调用pid_compute_raw这个API的时候SampleTime无效
+ *
+ * 如果在while(1)中调用，需要用户自行实现一个bsp_CheckRunTime的函数提供时基。
+ * 下面给出一个bsp_CheckRunTime的例子，注意你需要处理溢出的问题：
+ *
+ * 或者在时间片中调用pid_compute_raw这个函数。PS:调用pid_compute_raw这个API的时候 SampleTime 无效。
+ * 也就是说你无法动态修改修改PID环路时间
  */
+
+// volatile int32_t g_iRunTime = 0;
+
+// void SysTick_ISR(void)
+// {
+// 	/* anything else */
+//     /* 全局运行时间每1ms增1 */
+//     g_iRunTime++;
+//     if (g_iRunTime == 0x7FFFFFFF) /* 这个变量是 int32_t 类型，最大数为 0x7FFFFFFF */
+//     {
+//         g_iRunTime = 0;
+//     }
+
+// }
+
+// int32_t bsp_CheckRunTime(int32_t _LastTime)
+// {
+//     int32_t now_time;
+//     int32_t time_diff;
+
+//     DISABLE_INT(); /* 关中断 */
+
+//     now_time = g_iRunTime; /* 这个变量在Systick中断中被改写，因此需要关中断进行保护 */
+
+//     ENABLE_INT(); /* 开中断 */
+
+//     if (now_time >= _LastTime) {
+//         time_diff = now_time - _LastTime;
+//     } else {
+//         time_diff = 0x7FFFFFFF - _LastTime + now_time;
+//     }
+
+//     return time_diff;
+// }
 
 /*---------- includes ----------*/
 #include "pid.h"

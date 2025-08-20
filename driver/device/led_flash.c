@@ -166,11 +166,11 @@ int32_t __led_start_flash(ledf_describe_t *pdesc, uint8_t id, uint16_t cnt, uint
     if (!pdesc->priv.led_flash_list) {
         return DRV_ERR_POINT_NONE;
     }
-    
+
     if (id >= pdesc->led_num) {
         return DRV_ERR_WRONG_ARGS;
     }
-    
+
     led_flash_logic_t *led_flash_list = pdesc->priv.led_flash_list;
 
     if (cnt == LED_FLASH_FOREVER) {
@@ -202,7 +202,7 @@ static int32_t __led_stop_flash(ledf_describe_t *pdesc, uint8_t id, led_flash_la
     if (id >= pdesc->led_num) {
         return DRV_ERR_WRONG_ARGS;
     }
-    
+
     led_flash_logic_t *led_flash_list = pdesc->priv.led_flash_list;
     pdesc->ops.led_off(id);
     led_flash_list[id].layer[layer].dealy = 0;
