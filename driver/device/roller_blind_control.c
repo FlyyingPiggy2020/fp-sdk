@@ -4,7 +4,7 @@
  * @Author       : lxf
  * @Date         : 2025-05-14 15:36:33
  * @LastEditors: Lu Xianfan 154562451@qq.com
- * @LastEditTime: 2025-08-12 16:17:06
+ * @LastEditTime: 2025-08-21 16:03:28
  * @Brief        : 卷帘,百叶帘的控制业务逻辑驱动程序
  * 该驱动需要保证 up 的行程值大于 down的行程值。open增加行程，close减少行程。两者才会不变。
  * 另外运行irq_handler的时基默认为1ms，暂时不支持修改
@@ -114,6 +114,7 @@ static int32_t _motor_open(driver_t **pdrv)
 
     return err;
 }
+
 static void _motor_close(driver_t **pdrv)
 {
     roller_blind_control_describe_t *pdesc = NULL;
@@ -175,16 +176,6 @@ static void _motor_route_control(roller_blind_control_describe_t *pdesc)
         }
     }
 
-    //    if (pdesc->priv.state.state_curr == MSTATE_RUN_DEC) {
-    //        if (pdesc->config.route_curr <= pdesc->config.route_down_max) {
-    //            event |= MFLAG_RESISTANCE_ROUTE_MAX;
-    //            isMustStop = true;
-    //            if (pdesc->cb.resistance_cb) {
-    //                pdesc->cb.resistance_cb(event);
-    //            }
-    //        }
-    //    }
-
     if (isMustStop) {
         _motor_stop(pdesc, NULL);
         if (pdesc->cb.stop_cb) {
@@ -195,7 +186,30 @@ static void _motor_route_control(roller_blind_control_describe_t *pdesc)
 
 static void _motor_speed_control(roller_blind_control_describe_t *pdesc)
 {
-    //    static uint8_t
+    float speed = 0;
+
+    do {
+        if (!pdesc->ops.set_speed) {
+            break;
+        }
+        if (pdesc->priv.state.state_curr == MSTATE_STOP) {
+            break;
+        }
+
+        // this is a route loop, us kp only.
+        if (pdesc->priv.control.target_route != MOTOR_ROUTE_FREE) {
+            int32_t route_e = abs32(pdesc->priv.control.target_route, pdesc->config.route_curr);
+            speed = pdesc->priv.speed.kp * route_e;
+            if (speed < pdesc->priv.speed.min) {
+                speed = pdesc->priv.speed.min;
+            } else if (speed > pdesc->priv.speed.max) {
+                speed = pdesc->priv.speed.max;
+            }
+            pdesc->ops.set_speed(speed);
+        } else {
+            pdesc->ops.set_speed(pdesc->priv.speed.max);
+        }
+    } while (0);
 }
 
 static void _motor_resistance_control(roller_blind_control_describe_t *pdesc)
@@ -353,6 +367,7 @@ static bool __motor_goto_route(roller_blind_control_describe_t *pdesc, int32_t r
         }
 
         pdesc->priv.control.target_route = route;
+        pdesc->priv.control.route_start = route;
         if (pdesc->priv.control.target_route > pdesc->config.route_curr) {
             if (pdesc->priv.state.state_curr == MSTATE_RUN_DEC) {
                 pdesc->priv.control.time_stop_delay = MOTOR_SWITCH_TIME;

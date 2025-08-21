@@ -73,6 +73,7 @@ typedef struct {
         void (*motor_stop)(void);            // 电机停止
         void (*motor_inc)(void);             // 电机正转
         void (*motor_dec)(void);             // 电机反转
+        void (*set_speed)(float speed);      // set motor speed
         uint16_t (*get_motor_current)(void); // 获取电机电流的adc值
     } ops;
 
@@ -111,6 +112,12 @@ typedef struct {
             uint8_t mutex;   //
             uint32_t time;   // 时基
         } current;           // 电流相关的结构体
+
+        struct {
+            float kp;
+            float max;
+            float min;
+        } speed;
     } priv;
 
     struct {
