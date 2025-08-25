@@ -177,9 +177,10 @@ static void _motor_route_control(roller_blind_control_describe_t *pdesc)
     }
 
     if (isMustStop) {
+        pdesc->priv.flag.state |= MFLAG_RESISTANCE_ROUTE_MAX;
         _motor_stop(pdesc, NULL);
         if (pdesc->cb.stop_cb) {
-            pdesc->cb.stop_cb();
+            pdesc->cb.stop_cb(pdesc->priv.flag.state);
         }
     }
 }
@@ -234,6 +235,7 @@ static void _motor_resistance_control(roller_blind_control_describe_t *pdesc)
             if (pdesc->priv.current.load > 500) {
                 pdesc->priv.current.mutex = 1;
                 pdesc->priv.flag.is_resistance = true;
+                pdesc->priv.flag.state |= MFLAG_RESISTANCE_ADC;
             }
         } else {
             if (pdesc->priv.current.load < 370) {
@@ -244,7 +246,13 @@ static void _motor_resistance_control(roller_blind_control_describe_t *pdesc)
 
     // 2.遇阻停止
     if (pdesc->priv.flag.is_resistance == true) {
+        pdesc->priv.flag.state |= pdesc->priv.state.state_curr;
+        if (pdesc->cb.stop_cb) {
+            pdesc->cb.stop_cb(pdesc->priv.flag.state);
+        }
         _motor_stop(pdesc, NULL);
+    } else {
+        pdesc->priv.flag.state = 0;
     }
 }
 static int32_t _motor_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *args, uint32_t length)
@@ -407,7 +415,6 @@ static int32_t _motor_stop(roller_blind_control_describe_t *pdesc, void *args)
         }
 
         pdesc->ops.motor_stop();
-
         if (pdesc->priv.state.is_running != MSTATE_STOP) {
             pdesc->priv.state.is_running = MSTATE_STOP;
         }
@@ -435,12 +442,12 @@ static int32_t _motor_to_open_up(roller_blind_control_describe_t *pdesc, void *a
     }
 
     mode = param->run.mode;
-    // 同方向遇阻不再运行
 
+    // 同方向遇阻不再运行
     if (EVENT_IS_AND_BIT_SET(pdesc->priv.flag.state, MFLAG_RESISTANCE_INC)) {
         return DRV_ERR_ERROR;
     }
-
+    pdesc->priv.flag.state = 0;
     pdesc->priv.state.last_event = MSTATE_RUN_INC;
 
     if ((pdesc->config.route_up == MOTOR_ROUTE_FREE) || (mode & MMODE_OVERROUTE)) {
@@ -482,6 +489,7 @@ static int32_t _motor_to_close_down(roller_blind_control_describe_t *pdesc, void
         return DRV_ERR_ERROR;
     }
 
+    pdesc->priv.flag.state = 0;
     pdesc->priv.state.last_event = MSTATE_RUN_DEC;
 
     if ((pdesc->config.route_down == MOTOR_ROUTE_FREE) || (mode & MMODE_OVERROUTE)) {

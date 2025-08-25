@@ -35,11 +35,11 @@ extern "C" {
 #define MOTOR_ROUTE_INC_MAX         (0 + (MOTOR_ROUTE_FREE - 1))
 #define MOTOR_ROUTE_DEC_MAX         (0 - (MOTOR_ROUTE_FREE - 1))
 
-#define MFLAG_RESISTANCE_INC        (1 << 1) // inc过程中遇阻
-#define MFLAG_RESISTANCE_DEC        (1 << 2) // dec过程中遇阻
-#define MFLAG_RESISTANCE_ADC        (1 << 3) // 电流遇阻
-#define MFLAG_RESISTANCE_HALL       (1 << 4) // 霍尔遇阻
-#define MFLAG_RESISTANCE_ROUTE_MAX  (1 << 5) // 行程到达最大值
+#define MFLAG_RESISTANCE_INC        (1 << 0) // inc过程中遇阻
+#define MFLAG_RESISTANCE_DEC        (1 << 1) // dec过程中遇阻
+#define MFLAG_RESISTANCE_ADC        (1 << 2) // 电流遇阻
+#define MFLAG_RESISTANCE_HALL       (1 << 3) // 霍尔遇阻
+#define MFLAG_RESISTANCE_ROUTE_MAX  (1 << 4) // 行程到达最大值
 
 #define MSTATE_STOP                 0 // 停止
 #define MSTATE_RUN_INC              1 // 正转
@@ -78,7 +78,7 @@ typedef struct {
     } ops;
 
     struct {
-        void (*stop_cb)(void);                 // 电机停止回调(电机停止时会进入1次)
+        void (*stop_cb)(uint32_t event);       // 电机停止回调(电机停止时会进入1次)
         void (*resistance_cb)(uint32_t event); // 遇阻保护(MFLAG_RESISTANCE_xxxx)
     } cb;                                      // 回调函数只会在条件触发时进入1次
     motor_config_t config;
