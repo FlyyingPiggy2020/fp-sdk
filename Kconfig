@@ -1,0 +1,35 @@
+menu "FP-SDK"
+    menu "Heap Configuration"
+    config FP_TLSF_HEAP_EN
+        bool "Enable TLSF Heap"
+        default n
+        help 
+            Enable TLSF Heap
+        if FP_TLSF_HEAP_EN
+            config TLSF_HEAP_SIZE
+            int "TLSF Heap Size"
+            default 10240
+        endif
+    endmenu
+    menu "Bus Configuration"
+        config FP_BUS_DRIVER_EN
+        bool "Enable Bus Driver"
+        default n
+        help 
+            Enable Bus Driver
+        if FP_BUS_DRIVER_EN
+            config FP_HALF_BUS_DRIVER
+            bool "Enable Half Bus Driver"
+            default n
+            help
+                Enable Half Bus Driver
+            if FP_HALF_BUS_DRIVER
+                config FP_HALF_BUS_BAUDRATE
+                int "Half Bus Driver Baudrate"
+                default 115200
+                help 
+                    Half Bus Driver Baudrat
+            endif
+        endif
+    endmenu
+endmenu
