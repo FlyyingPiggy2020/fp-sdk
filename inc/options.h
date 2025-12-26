@@ -120,11 +120,11 @@ extern "C" {
         if (!length) {                                \
             break;                                    \
         }                                             \
-        xlog_count("%s%s: ", color, tag);              \
+        xlog_count("%s%s: ", color, tag);             \
         for (uint32_t i = 0; i < length; ++i) {       \
-            xlog_count("%02X ", buf[i]);               \
+            xlog_count("%02X ", buf[i]);              \
         }                                             \
-        xlog_count("\b\n");                            \
+        xlog_count("\b\n");                           \
     } while (0);
 #endif
 /*---------- type define ----------*/

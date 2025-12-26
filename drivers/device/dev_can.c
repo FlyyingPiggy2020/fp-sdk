@@ -52,15 +52,15 @@ static fp_err_t _dev_can_open(driver_t **pdrv)
         if (!pdesc->ops->init) {
             break;
         }
-		memset(&pdesc->rx_msg, 0, sizeof(struct can_msg_list));
+        memset(&pdesc->rx_msg, 0, sizeof(struct can_msg_list));
         pdesc->rx_msg.msg = malloc(sizeof(struct can_msg) * pdesc->config.msgboxsz);
         if (!pdesc->rx_msg.msg) {
             err = E_NO_MEMORY;
             break;
         } else {
-			memset(pdesc->rx_msg.msg, 0, sizeof(struct can_msg) * pdesc->config.msgboxsz);
-			pdesc->rx_msg.max = pdesc->config.msgboxsz;
-		} 
+            memset(pdesc->rx_msg.msg, 0, sizeof(struct can_msg) * pdesc->config.msgboxsz);
+            pdesc->rx_msg.max = pdesc->config.msgboxsz;
+        }
         err = pdesc->ops->init(pdesc, &pdesc->config);
     } while (0);
 
@@ -120,7 +120,7 @@ static fp_err_t _dev_can_read(driver_t **pdrv, void *buf, uint32_t addition, uin
         if (pdesc->rx_msg.read == pdesc->rx_msg.max) {
             pdesc->rx_msg.read = 0;
         }
-		err = E_OK;
+        err = E_OK;
     } while (0);
     return err;
 }
@@ -169,7 +169,7 @@ static fp_err_t dev_can_rx_done(struct dev_can_describe *self, void *arg)
             err = E_FULL;
             break;
         }
-		
+
         memcpy(&self->rx_msg.msg[self->rx_msg.write], arg, sizeof(struct can_msg));
         self->rx_msg.count++;
         self->rx_msg.write++;
