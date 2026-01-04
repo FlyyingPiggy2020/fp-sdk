@@ -22,7 +22,6 @@ extern "C" {
 #include "errorno.h"
 #include "event.h"
 #include "clists.h"
-
 /**
  * @brief 你可以参考board_options_sample.h构建出自己工程的配置文件
  * @return {*}
@@ -30,6 +29,8 @@ extern "C" {
 #ifdef FP_INCLDUE_BOARD_OPTIONS_FILE
 #include "board_options.h"
 #endif
+
+#include "fmath.h"
 
 // 动态内存管理算法选择
 // 0: 用户自定义动态内存管理算法
