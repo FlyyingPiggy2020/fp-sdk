@@ -4,7 +4,7 @@
  * @Author       : lxf
  * @Date         : 2025-05-10 15:35:31
  * @LastEditors  : lxf_zjnb@qq.com
- * @LastEditTime : 2025-10-16 10:32:49
+ * @LastEditTime : 2026-01-13 10:40:59
  * @Brief        : 简易非易失存储管理组件(不支持均衡擦写)
  * @features     :
  *               - 基于section的分区管理(链表存储)
@@ -121,9 +121,9 @@ storage_handle_create(char *name, storage_ops_t *ops, uint8_t grain, uint32_t ba
         }
 
         xlog_count("storage(%s) create success. base address(%d). total size(%d)",
-              handle->name,
-              handle->config.base_address,
-              handle->config.total_size);
+                   handle->name,
+                   handle->config.base_address,
+                   handle->config.total_size);
     } while (0);
 
     return handle;
@@ -182,7 +182,7 @@ bool storage_data_save(storage_hanle_t *handle, int fd, uint32_t ms)
             break;
         }
 
-        if (fd < 0) {
+        if (fd <= 0) {
             xlog_error("fd error.");
             break;
         }
@@ -251,7 +251,7 @@ bool storage_data_read(storage_hanle_t *handle, int fd)
             break;
         }
 
-        if (fd < 0) {
+        if (fd <= 0) {
             xlog_error("fd error.");
             break;
         }
@@ -263,7 +263,7 @@ bool storage_data_read(storage_hanle_t *handle, int fd)
             break;
         }
 
-        storage_save_t *save = malloc(node->size + 3);
+        storage_save_t *save = malloc(node->size + sizeof(storage_save_t));
         if (save == NULL) {
             xlog_error("malloc failed");
             break;
@@ -399,13 +399,13 @@ int storage_add_seciton_to_table(storage_hanle_t *handle, uint8_t *buf, uint32_t
         /* 检查是否超出总大小 */
         if (aligned_size > handle->config.total_size) {
             xlog_error("storage(%s) total size(%d) is not enough. current size is %d",
-                  handle->name,
-                  handle->config.total_size,
-                  aligned_size);
+                       handle->name,
+                       handle->config.total_size,
+                       aligned_size);
             break;
         }
         /* 初始化section节点 */
-        node->fd = handle->section_number++;
+        node->fd = ++handle->section_number;
         INIT_LIST_HEAD(&node->node);
         node->data = buf;
         node->address = handle->config.base_address + handle->section_offset;
@@ -416,7 +416,7 @@ int storage_add_seciton_to_table(storage_hanle_t *handle, uint8_t *buf, uint32_t
         /* 更新偏移量并添加到链表 */
         handle->section_offset = aligned_size;
         fd = node->fd;
-        list_add_tail(&handle->section, &node->node);
+        list_add_tail(&node->node,&handle->section);
         xlog_count("add section(%d) success. address(%d) size(%d)", fd, node->address, node->size);
     } while (0);
     return fd;
