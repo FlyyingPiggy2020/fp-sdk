@@ -3,8 +3,8 @@
  * @FilePath     : at24cxx.c
  * @Author       : lxf
  * @Date         : 2024-12-10 08:43:28
- * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2024-12-10 10:56:56
+ * @LastEditors  : lxf_zjnb@qq.com
+ * @LastEditTime : 2026-01-13 13:54:50
  * @Brief        : AT24C系列EEPROM驱动(I2C接口)
  * @features     :
  *               - 支持AT24C01/02/04/08/16/32/64/128/256等型号
@@ -32,6 +32,7 @@
  *                       .wp_enable = my_wp_enable,
  *                   },
  *                   .bus_name = "i2c1",          // 绑定的I2C总线
+ *                   .retries = 1000,// 页写入后需要等待内部写周期
  *               };
  *               DEVICE_DEFINED(eeprom, at24cxx, &at24c02);
  *
@@ -51,6 +52,7 @@
  *               @endcode
  *
  * @note         AT24C系列EEPROM使用I2C接口,页写入后需要等待内部写周期(约5-10ms)。
+ *               页写入延时通过I2C驱动内的重发次数来实现，这样等待时间最短
  *               驱动自动处理页边界,写入后回读校验确保数据正确。
  *
  * @warning      写入前会解除写保护(wp_enable=0),写入后重新使能写保护。
@@ -102,6 +104,8 @@ static int32_t at24cxx_open(driver_t **pdrv)
             break;
         }
         err = E_OK;
+
+        // TODO:FIX 此处有bug，如果init函数为空，最后eeprom也会返回E_OK
         if (pdesc->ops.init) {
             if (!pdesc->ops.init()) {
                 err = E_ERROR;
@@ -165,7 +169,7 @@ static int32_t at24cxx_write(driver_t **pdrv, void *buf, uint32_t addition, uint
     pdesc = container_of(pdrv, device_t, pdrv)->pdesc;
     uint16_t pageWriteSize = pdesc->config.ee_page_size - addition % pdesc->config.ee_page_size;
     uint8_t *ptr = buf;
-    uint8_t compare_buf[128] = { 0 };
+    uint8_t compare_buf[256] = { 0 };
     uint8_t *compare_ptr = compare_buf;
     assert(pdesc);
     assert(pdesc->bus);
