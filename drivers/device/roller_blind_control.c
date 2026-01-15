@@ -82,7 +82,7 @@ static int32_t _motor_open(driver_t **pdrv)
     roller_blind_control_describe_t *pdesc = NULL;
     int32_t err = E_WRONG_ARGS;
 
-    ASSERT(pdrv);
+    assert(pdrv);
     pdesc = container_of(pdrv, device_t, pdrv)->pdesc;
     do {
         if (!pdesc) {
@@ -117,7 +117,7 @@ static void _motor_close(driver_t **pdrv)
 {
     roller_blind_control_describe_t *pdesc = NULL;
 
-    ASSERT(pdrv);
+    assert(pdrv);
     pdesc = container_of(pdrv, device_t, pdrv)->pdesc;
     do {
         if (!pdesc) {
@@ -137,7 +137,7 @@ static int32_t _motor_ioctl(driver_t **pdrv, uint32_t cmd, void *args)
     int32_t err = E_WRONG_ARGS;
     int32_t (*cb)(roller_blind_control_describe_t *, void *) = NULL;
 
-    ASSERT(pdrv);
+    assert(pdrv);
     pdesc = container_of(pdrv, device_t, pdrv)->pdesc;
     do {
         if (!pdesc) {
@@ -259,7 +259,7 @@ static int32_t _motor_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *a
     roller_blind_control_describe_t *pdesc = NULL;
     int32_t err = E_WRONG_ARGS;
 
-    ASSERT(pdrv);
+    assert(pdrv);
     pdesc = container_of(pdrv, device_t, pdrv)->pdesc;
     do {
         if (!pdesc) {
@@ -683,7 +683,7 @@ static int32_t _motor_set_down_route(roller_blind_control_describe_t *pdesc, voi
                 break;
             }
         }
-        pdesc->config.route_down = pdesc->config.route_curr;
+        pdesc->config->route_down = pdesc->config->route_curr;
         if (pdesc->ops.save_config) {
             pdesc->ops.save_config();
         }
@@ -698,8 +698,8 @@ static int32_t _motor_clear_route(roller_blind_control_describe_t *pdesc, void *
     _motor_stop(pdesc, NULL);
 
     do {
-        pdesc->config.route_up = MOTOR_ROUTE_FREE;
-        pdesc->config.route_down = MOTOR_ROUTE_FREE;
+        pdesc->config->route_up = MOTOR_ROUTE_FREE;
+        pdesc->config->route_down = MOTOR_ROUTE_FREE;
         if (pdesc->ops.save_config) {
             pdesc->ops.save_config();
         }
