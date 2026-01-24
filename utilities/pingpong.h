@@ -38,7 +38,8 @@ typedef struct pingpong_buffer {
     void *buffer[2];
     volatile uint8_t write_index;
     volatile uint8_t read_index;
-    volatile uint8_t read_avaliable[2];
+    volatile uint8_t read_avaliable[2];  /* 缓冲是否有数据可读 */
+    volatile uint8_t read_active[2];     /* 缓冲是否正在被读取 */
 } pingpong_buffer_t;
 
 /*---------- variable prototype ----------*/
@@ -71,9 +72,9 @@ extern void pingpong_buffer_set_read_done(struct pingpong_buffer *handler);
  * @brief Get writable buffer.
  * @param handler: Pointer to the ping-pong buffer.
  * @param pwrite_buf: Pointer to the ponter to the buffer to be write.
- * @retval None
+ * @retval Returns true if get buffer successfully, false if both buffers are full (data will be overwritten).
  */
-extern void pingpong_buffer_get_write_buf(struct pingpong_buffer *handler, void **pwrite_buf);
+extern bool pingpong_buffer_get_write_buf(struct pingpong_buffer *handler, void **pwrite_buf);
 
 /**
  * @brief Notify buffer write completion.

@@ -18,7 +18,6 @@ extern "C" {
 /*---------- includes ----------*/
 #include "stdbool.h"
 #include "device.h"
-#include "drv_err.h"
 #include "clists.h"
 /*---------- macro ----------*/
 #define STORAGE_MAIGC_CODE 0xAABB
@@ -46,7 +45,6 @@ struct storage_section_node {
 typedef struct {
     bool (*device_write)(uint8_t *pbuf, uint32_t address, uint32_t size); // ture:成功 false:失败
     bool (*device_read)(uint8_t *pbuf, uint32_t address, uint32_t size);  // ture:成功 false:失败
-    void (*delay_ms)(uint32_t ms);                                        // 延时函数
 } storage_ops_t;
 
 typedef struct {

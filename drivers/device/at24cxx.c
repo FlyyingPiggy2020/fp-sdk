@@ -3,9 +3,60 @@
  * @FilePath     : at24cxx.c
  * @Author       : lxf
  * @Date         : 2024-12-10 08:43:28
- * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
- * @LastEditTime : 2024-12-10 10:56:56
- * @Brief        :
+ * @LastEditors  : lxf_zjnb@qq.com
+ * @LastEditTime : 2026-01-13 13:54:50
+ * @Brief        : AT24C系列EEPROM驱动(I2C接口)
+ * @features     :
+ *               - 支持AT24C01/02/04/08/16/32/64/128/256等型号
+ *               - 支持页写入模式(自动分页处理)
+ *               - 写入后自动校验(回读比较)
+ *               - 支持1/2字节地址模式
+ *               - 可选写保护(WP)控制
+ *               - 可选电源(VCC)控制
+ *               - 通过I2C总线设备通信
+ *
+ * @usage        :
+ *               @code
+ *               // 1. 定义AT24C设备(在bsp层实现)
+ *               static void my_wp_enable(bool on) {
+ *                   // 控制写保护引脚
+ *               }
+ *               static at24cxx_describe_t at24c02 = {
+ *                   .config = {
+ *                       .ee_size = 256,           // 2Kb = 256字节
+ *                       .ee_page_size = 8,        // 页大小8字节
+ *                       .ee_dev_addr = 0xA0,      // 设备地址
+ *                       .ee_addr_btyes = 1,       // 1字节地址
+ *                   },
+ *                   .ops = {
+ *                       .wp_enable = my_wp_enable,
+ *                   },
+ *                   .bus_name = "i2c1",          // 绑定的I2C总线
+ *                   .retries = 1000,// 页写入后需要等待内部写周期
+ *               };
+ *               DEVICE_DEFINED(eeprom, at24cxx, &at24c02);
+ *
+ *               // 2. 使用EEPROM
+ *               device_t *eeprom = device_open("eeprom");
+ *
+ *               // 3. 写入数据(addition为地址偏移)
+ *               uint8_t data[] = "Hello EEPROM!";
+ *               device_write(eeprom, data, 0, sizeof(data));
+ *
+ *               // 4. 读取数据
+ *               uint8_t rx_buf[32];
+ *               device_read(eeprom, rx_buf, 0, sizeof(rx_buf));
+ *
+ *               // 5. 关闭设备
+ *               device_close(eeprom);
+ *               @endcode
+ *
+ * @note         AT24C系列EEPROM使用I2C接口,页写入后需要等待内部写周期(约5-10ms)。
+ *               页写入延时通过I2C驱动内的重发次数来实现，这样等待时间最短
+ *               驱动自动处理页边界,写入后回读校验确保数据正确。
+ *
+ * @warning      写入前会解除写保护(wp_enable=0),写入后重新使能写保护。
+ *               页写入不能跨页边界,驱动会自动分页处理。
  */
 
 /*---------- includes ----------*/
@@ -34,6 +85,11 @@ static struct protocol_callback ioctl_cbs[] = {
     { 0, NULL },
 };
 /*---------- function ----------*/
+/**
+ * @Brief  打开AT24C设备,绑定I2C总线
+ * @param  pdrv: 驱动指针
+ * @return 0=成功, <0=失败
+ */
 static int32_t at24cxx_open(driver_t **pdrv)
 {
     at24cxx_describe_t *pdesc = NULL;
@@ -41,13 +97,15 @@ static int32_t at24cxx_open(driver_t **pdrv)
     void *bus = NULL;
     pdesc = container_of(pdrv, device_t, pdrv)->pdesc;
 
-    ASSERT(pdrv != NULL);
+    assert(pdrv != NULL);
 
     do {
         if (!pdesc) {
             break;
         }
         err = E_OK;
+
+        // TODO:FIX 此处有bug，如果init函数为空，最后eeprom也会返回E_OK
         if (pdesc->ops.init) {
             if (!pdesc->ops.init()) {
                 err = E_ERROR;
@@ -56,7 +114,7 @@ static int32_t at24cxx_open(driver_t **pdrv)
         }
         /* 绑定i2c总线 */
         if (NULL == (bus = device_open(pdesc->bus_name))) {
-            TRACE("%s bind %s failed!\n", container_of(pdrv, device_t, pdrv)->dev_name, pdesc->bus_name);
+            xlog_error("%s bind %s failed!\n", container_of(pdrv, device_t, pdrv)->dev_name, pdesc->bus_name);
             if (pdesc->ops.deinit) {
                 pdesc->ops.deinit();
             }
@@ -73,11 +131,17 @@ static int32_t at24cxx_open(driver_t **pdrv)
     } while (0);
     return err;
 }
+
+/**
+ * @Brief  关闭AT24C设备,释放资源
+ * @param  pdrv: 驱动指针
+ * @return 无
+ */
 static void at24cxx_close(driver_t **pdrv)
 {
     at24cxx_describe_t *pdesc = NULL;
 
-    ASSERT(pdrv);
+    assert(pdrv);
     pdesc = container_of(pdrv, device_t, pdrv)->pdesc;
     if (pdesc) {
         if (pdesc->bus) {
@@ -105,10 +169,10 @@ static int32_t at24cxx_write(driver_t **pdrv, void *buf, uint32_t addition, uint
     pdesc = container_of(pdrv, device_t, pdrv)->pdesc;
     uint16_t pageWriteSize = pdesc->config.ee_page_size - addition % pdesc->config.ee_page_size;
     uint8_t *ptr = buf;
-    uint8_t compare_buf[128] = { 0 };
+    uint8_t compare_buf[256] = { 0 };
     uint8_t *compare_ptr = compare_buf;
-    ASSERT(pdesc);
-    ASSERT(pdesc->bus);
+    assert(pdesc);
+    assert(pdesc->bus);
 
     if (addition + len > pdesc->config.ee_size) {
         err = E_WRONG_ARGS;
@@ -177,8 +241,8 @@ static int32_t at24cxx_read(driver_t **pdrv, void *buf, uint32_t addition, uint3
     uint16_t pageReadSize = pdesc->config.ee_page_size - addition % pdesc->config.ee_page_size;
     pdesc = container_of(pdrv, device_t, pdrv)->pdesc;
     uint8_t *ptr = buf;
-    ASSERT(pdesc);
-    ASSERT(pdesc->bus);
+    assert(pdesc);
+    assert(pdesc->bus);
 
     if (addition + len > pdesc->config.ee_size) {
         err = E_WRONG_ARGS;
@@ -226,13 +290,13 @@ static int32_t at24xx_ioctl(driver_t **pdrv, uint32_t cmd, void *args)
     int32_t err = E_WRONG_ARGS;
     int32_t (*cb)(at24cxx_describe_t *, void *) = NULL;
 
-    ASSERT(pdrv);
+    assert(pdrv);
     pdesc = container_of(pdrv, device_t, pdrv)->pdesc;
     do {
         if (!pdesc) {
             break;
         }
-        cb = (int32_t(*)(at24cxx_describe_t *, void *))protocol_callback_find(cmd, ioctl_cbs, ARRAY_SIZE(ioctl_cbs));
+        cb = (int32_t (*)(at24cxx_describe_t *, void *))protocol_callback_find(cmd, ioctl_cbs, ARRAY_SIZE(ioctl_cbs));
         if (!cb) {
             break;
         }
