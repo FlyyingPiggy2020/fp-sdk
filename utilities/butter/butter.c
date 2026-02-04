@@ -38,7 +38,6 @@ int16_t low_pass_filter(FilterCoefficients *coeffs, int16_t input)
     return output;
 }
 
-
 /**
  * @brief 低通滤波器函数 (浮点数版本)
  * @param coeffs: 滤波器系数结构体指针

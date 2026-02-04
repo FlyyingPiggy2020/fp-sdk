@@ -336,7 +336,9 @@ int fsm_execute(struct fsm *fsm)
 
     fsm_log("FSM: Exit state '%s'\r\n", fsm->current->name);
     fsm_log("FSM: Transition '%s' -> '%s' via '%s'\r\n",
-            fsm->current->name, next_state->name, event_name ? event_name : "unknown");
+            fsm->current->name,
+            next_state->name,
+            event_name ? event_name : "unknown");
 
     /* 切换到新状态 */
     fsm->current = next_state;

@@ -89,7 +89,7 @@ static int32_t _hall_ioctl(driver_t **pdrv, uint32_t cmd, void *args)
         if (!pdesc) {
             break;
         }
-        cb = (int32_t(*)(hall_describe_t *, void *))protocol_callback_find(cmd, ioctl_cbs, ARRAY_SIZE(ioctl_cbs));
+        cb = (int32_t (*)(hall_describe_t *, void *))protocol_callback_find(cmd, ioctl_cbs, ARRAY_SIZE(ioctl_cbs));
         if (!cb) {
             break;
         }

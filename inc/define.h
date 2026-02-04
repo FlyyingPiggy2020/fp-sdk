@@ -28,7 +28,7 @@ SOFTWARE.
  * @Date         : 2023-12-20 16:57:16
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
  * @LastEditTime : 2023-12-20 16:58:28
- * @Brief        :
+ * @Brief        : 编译器属性宏定义
  */
 #ifndef __FP_DEF_H__
 #define __FP_DEF_H__

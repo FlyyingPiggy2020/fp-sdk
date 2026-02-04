@@ -122,7 +122,7 @@ static int32_t _ioctl_get(analog_describe_t *pdesc, void *args)
 
 static int32_t _ioctl_set_irq_handler(analog_describe_t *pdesc, void *args)
 {
-    pdesc->ops.irq_handler = (int32_t(*)(uint32_t, void *, uint32_t))args;
+    pdesc->ops.irq_handler = (int32_t (*)(uint32_t, void *, uint32_t))args;
 
     return E_OK;
 }

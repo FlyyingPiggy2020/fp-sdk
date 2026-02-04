@@ -5,7 +5,7 @@
  * @Date         : 2025-05-09 09:19:24
  * @LastEditors  : lxf_zjnb@qq.com
  * @LastEditTime : 2025-05-09 09:19:26
- * @Brief        :
+ * @Brief        : 事件标志位按位操作宏定义
  */
 
 #ifndef __FPEVENT_H__

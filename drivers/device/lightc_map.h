@@ -31,19 +31,23 @@ extern "C" {
 #include <stddef.h>
 #include "device.h"
 /*---------- macro ----------*/
-#define IOCTL_LIGHTC_CMD_OFF                      (IOCTL_USER_START + 0x01) // turn off light
-#define IOCTL_LIGHTC_CMD_ON                       (IOCTL_USER_START + 0x02) // turn on light
-#define IOCTL_LIGHTC_SET_BRIGHTNESS               (IOCTL_USER_START + 0x03) // set brightness [0,100]
-#define IOCTL_LIGHTC_STEP_BRIGHTNESS_INC          (IOCTL_USER_START + 0x04) // step brightness inc (+5% per step)
-#define IOCTL_LIGHTC_STEP_BRIGHTNESS_DEC          (IOCTL_USER_START + 0x05) // step brightness dec (-5% per step)
-#define IOCTL_LIGHTC_CONTINUE_BRIGHTNESS_INC      (IOCTL_USER_START + 0x06) // continue brightness inc
-#define IOCTL_LIGHTC_CONTINUE_BRIGHTNESS_DEC      (IOCTL_USER_START + 0x07) // continue brightness dec
-#define IOCTL_LIGHTC_LIGHT_ADJUSTMENT_FINISH      (IOCTL_USER_START + 0x08) // finish continue brightness inc/dec
-#define IOCTL_LIGHTC_LOOP_LIGHT_ADJ_START         (IOCTL_USER_START + 0x09) // loop light adjustment start (0->100->0->100...)
-#define IOCTL_LIGHTC_LOOP_LIGHT_ADJ_STOP          (IOCTL_USER_START + 0x0A) // loop light adjustment stop (same as IOCTL_LIGHTC_LIGHT_ADJUSTMENT_FINISH)
-#define IOCTL_LIGHTC_REVERSE                      (IOCTL_USER_START + 0x0B) // if light brigness is 50% now, first brightness goto 0%, then goto 50%
-#define IOCTL_LIGHTC_SET_BRIGHTNESS_BY_TIME       (IOCTL_USER_START + 0x0C)
-#define IOCTL_LIGHTC_REVERSE_EXT                  (IOCTL_USER_START + 0x0D) // 1：100%单键开关灯循环<br />3：最暖最冷色温循环 <br />4: 亮度调光反向 <br />5: 色温调光反向
+#define IOCTL_LIGHTC_CMD_OFF                 (IOCTL_USER_START + 0x01) // turn off light
+#define IOCTL_LIGHTC_CMD_ON                  (IOCTL_USER_START + 0x02) // turn on light
+#define IOCTL_LIGHTC_SET_BRIGHTNESS          (IOCTL_USER_START + 0x03) // set brightness [0,100]
+#define IOCTL_LIGHTC_STEP_BRIGHTNESS_INC     (IOCTL_USER_START + 0x04) // step brightness inc (+5% per step)
+#define IOCTL_LIGHTC_STEP_BRIGHTNESS_DEC     (IOCTL_USER_START + 0x05) // step brightness dec (-5% per step)
+#define IOCTL_LIGHTC_CONTINUE_BRIGHTNESS_INC (IOCTL_USER_START + 0x06) // continue brightness inc
+#define IOCTL_LIGHTC_CONTINUE_BRIGHTNESS_DEC (IOCTL_USER_START + 0x07) // continue brightness dec
+#define IOCTL_LIGHTC_LIGHT_ADJUSTMENT_FINISH (IOCTL_USER_START + 0x08) // finish continue brightness inc/dec
+#define IOCTL_LIGHTC_LOOP_LIGHT_ADJ_START    (IOCTL_USER_START + 0x09) // loop light adjustment start (0->100->0->100...)
+#define IOCTL_LIGHTC_LOOP_LIGHT_ADJ_STOP \
+    (IOCTL_USER_START + 0x0A) // loop light adjustment stop (same as IOCTL_LIGHTC_LIGHT_ADJUSTMENT_FINISH)
+#define IOCTL_LIGHTC_REVERSE \
+    (IOCTL_USER_START + 0x0B) // if light brigness is 50% now, first brightness goto 0%, then goto 50%
+#define IOCTL_LIGHTC_SET_BRIGHTNESS_BY_TIME (IOCTL_USER_START + 0x0C)
+#define IOCTL_LIGHTC_REVERSE_EXT \
+    (IOCTL_USER_START            \
+     + 0x0D) // 1：100%单键开关灯循环<br />3：最暖最冷色温循环 <br />4: 亮度调光反向 <br />5: 色温调光反向
 #define IOCTL_LIGHTC_START                        (IOCTL_USER_START + 0x0F)
 #define IOCTL_LIGHTC_PARAM_READ                   (IOCTL_USER_START + 0x10)
 #define IOCTL_LIGHTC_PARAM_WRITE                  (IOCTL_USER_START + 0x11)
@@ -132,7 +136,8 @@ typedef struct {
         lightc_status_e last_status;
         lightc_mode_e mode;
         lightc_mode_e color_mode;
-        uint8_t remeber_brightness; // default:100  device will remeber last brightness.the cmd "light on" means change the brightness to "remeber brightness".
+        uint8_t remeber_brightness; // default:100  device will remeber last brightness.the cmd "light on" means change
+                                    // the brightness to "remeber brightness".
         uint16_t remeber_color;
         uint8_t poweron_brightness;
         double last_brightness_postion;

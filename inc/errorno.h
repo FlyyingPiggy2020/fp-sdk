@@ -5,7 +5,7 @@
  * @Date         : 2024-12-05 15:29:19
  * @LastEditors  : lxf_zjnb@qq.com
  * @LastEditTime : 2025-08-22 16:17:46
- * @Brief        : 从岑老板的代码中抄袭
+ * @Brief        : 通用错误码定义
  */
 
 #ifndef __DRV_ERR_H__

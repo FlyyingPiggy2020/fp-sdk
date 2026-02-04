@@ -4,7 +4,7 @@
  * @Author       : lxf
  * @Date         : 2024-12-10 08:43:34
  * @LastEditors  : lxf_zjnb@qq.com
- * @LastEditTime : 2025-05-12 08:37:22
+ * @LastEditTime : 2026-02-04 13:37:03
  * @Brief        : AT24C系列EEPROM驱动头文件
  * @usage        :
  *               @code
@@ -60,13 +60,9 @@ extern "C" {
 #define AT24C_TYPE_1024  1024
 
 /* 根据型号获取配置参数的宏 */
-#define AT24C_SIZE(type)      ((type) * 128)
+#define AT24C_SIZE(type) ((type) * 128)
 #define AT24C_PAGE_SIZE(type) \
-    ((type) <= 2  ? 8  : \
-     (type) <= 16 ? 16 : \
-     (type) <= 64 ? 32 : \
-     (type) <= 256 ? 64 : \
-     (type) == 512 ? 128 : 256)
+    ((type) <= 2 ? 8 : (type) <= 16 ? 16 : (type) <= 64 ? 32 : (type) <= 256 ? 64 : (type) == 512 ? 128 : 256)
 #define AT24C_ADDR_BYTES(type) ((type) <= 16 ? 1 : 2)
 
 /*
@@ -75,12 +71,13 @@ extern "C" {
  * @param addr: I2C设备地址(如0xA0)
  * @example: AT24C_CONFIG(AT24C_TYPE_02, 0xA0)
  */
-#define AT24C_CONFIG(type, addr) { \
-    .ee_size = AT24C_SIZE(type), \
-    .ee_page_size = AT24C_PAGE_SIZE(type), \
-    .ee_dev_addr = (addr), \
-    .ee_addr_btyes = AT24C_ADDR_BYTES(type), \
-}
+#define AT24C_CONFIG(type, addr)                 \
+    {                                            \
+        .ee_size = AT24C_SIZE(type),             \
+        .ee_page_size = AT24C_PAGE_SIZE(type),   \
+        .ee_dev_addr = (addr),                   \
+        .ee_addr_btyes = AT24C_ADDR_BYTES(type), \
+    }
 
 /*---------- type define ----------*/
 typedef struct {

@@ -50,15 +50,15 @@ extern "C" {
 
 /*---------- macro ----------*/
 // MGT-ABS 命令定义
-#define MGT_ABS_CMD_READ_POSITION   0x02    // 读取单圈绝对位置
-#define MGT_ABS_CMD_ENTER_CALIB     0xBA    // 进入校准状态 (连续发送10次)
-#define MGT_ABS_CMD_ZERO_POSITION   0xC2    // 当前位置归零 (连续发送10次)
+#define MGT_ABS_CMD_READ_POSITION   0x02 // 读取单圈绝对位置
+#define MGT_ABS_CMD_ENTER_CALIB     0xBA // 进入校准状态 (连续发送10次)
+#define MGT_ABS_CMD_ZERO_POSITION   0xC2 // 当前位置归零 (连续发送10次)
 
 // MGT-ABS 响应格式
-#define MGT_ABS_RESP_FRAME_SIZE     5       // 响应帧大小: CF SF DF0 DF1 CRC
+#define MGT_ABS_RESP_FRAME_SIZE     5 // 响应帧大小: CF SF DF0 DF1 CRC
 
 // MGT-ABS 状态帧位定义
-#define MGT_ABS_STATUS_RUNNING_MASK 0x08    // bit3: 运行状态 (1=正常运行, 0=校准)
+#define MGT_ABS_STATUS_RUNNING_MASK 0x08 // bit3: 运行状态 (1=正常运行, 0=校准)
 
 // MGT-ABS 接收缓冲区大小
 #define MGT_ABS_RX_BUF_SIZE         32
@@ -69,14 +69,14 @@ extern "C" {
  * @brief  MGT-ABS 位置传感器结构体
  */
 struct mgt_abs_sensor {
-    device_t *uart_dev;                     // UART设备句柄
-    uint16_t position;                      // 当前位置值
-    uint8_t status;                         // 传感器状态
-    bool data_valid;                        // 数据是否有效 (CRC校验通过)
-    uint8_t rx_buf[MGT_ABS_RX_BUF_SIZE];    // 接收缓冲区
-    uint64_t tick_last;                     // 上次发送命令时间
-    uint8_t calib_cmd_count;                // 校准命令计数
-    uint8_t zero_cmd_count;                 // 归零命令计数
+    device_t *uart_dev;                  // UART设备句柄
+    uint16_t position;                   // 当前位置值
+    uint8_t status;                      // 传感器状态
+    bool data_valid;                     // 数据是否有效 (CRC校验通过)
+    uint8_t rx_buf[MGT_ABS_RX_BUF_SIZE]; // 接收缓冲区
+    uint64_t tick_last;                  // 上次发送命令时间
+    uint8_t calib_cmd_count;             // 校准命令计数
+    uint8_t zero_cmd_count;              // 归零命令计数
 };
 
 /*---------- variable prototype ----------*/
