@@ -32,16 +32,16 @@ extern "C" {
 
 /*---------- macro ----------*/
 // 常用 CRC 多项式
-#define CRC8_POLY_MAXIM      0x31    // x^8 + x^5 + x^4 + 1
-#define CRC8_POLY_DEFAULT    0x07    // x^8 + x^2 + x + 1
+#define CRC8_POLY_MAXIM   0x31 // x^8 + x^5 + x^4 + 1
+#define CRC8_POLY_DEFAULT 0x07 // x^8 + x^2 + x + 1
 
-#define CRC16_POLY_IBM       0x8005  // x^16 + x^15 + x^2 + 1
-#define CRC16_POLY_CCITT     0x1021  // x^16 + x^12 + x^5 + 1
-#define CRC16_POLY_MODBUS    0x8005  // 同 IBM
+#define CRC16_POLY_IBM    0x8005 // x^16 + x^15 + x^2 + 1
+#define CRC16_POLY_CCITT  0x1021 // x^16 + x^12 + x^5 + 1
+#define CRC16_POLY_MODBUS 0x8005 // 同 IBM
 
 // CRC16 初始值
-#define CRC16_INIT_MODBUS    0xFFFF
-#define CRC16_INIT_CCITT     0xFFFF
+#define CRC16_INIT_MODBUS 0xFFFF
+#define CRC16_INIT_CCITT  0xFFFF
 
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/

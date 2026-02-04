@@ -369,7 +369,7 @@ static fp_err_t _dev_uart_ioctl(driver_t **pdrv, uint32_t cmd, void *args)
         }
 
         /* 查表找到对应的回调函数 */
-        cb = (fp_err_t (*)(struct dev_uart_describe *, void *))protocol_callback_find(
+        cb = (fp_err_t(*)(struct dev_uart_describe *, void *))protocol_callback_find(
             cmd, ioctl_cbs, ARRAY_SIZE(ioctl_cbs));
         if (!cb) {
             break;

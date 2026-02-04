@@ -67,11 +67,11 @@ struct fsm_transition;
  * @brief  状态机结构体
  */
 struct fsm {
-    struct list_head states;      /* 所有状态的链表 */
-    struct fsm_state *current;    /* 当前状态 */
-    struct fsm_state *initial;    /* 初始状态 */
-    bool is_running;              /* 运行状态标志 */
-    void *user_context;           /* 用户上下文，传递给回调函数 */
+    struct list_head states;   /* 所有状态的链表 */
+    struct fsm_state *current; /* 当前状态 */
+    struct fsm_state *initial; /* 初始状态 */
+    bool is_running;           /* 运行状态标志 */
+    void *user_context;        /* 用户上下文，传递给回调函数 */
 };
 
 /**

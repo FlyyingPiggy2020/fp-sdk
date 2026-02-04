@@ -416,7 +416,7 @@ int storage_add_seciton_to_table(storage_hanle_t *handle, uint8_t *buf, uint32_t
         /* 更新偏移量并添加到链表 */
         handle->section_offset = aligned_size;
         fd = node->fd;
-        list_add_tail(&node->node,&handle->section);
+        list_add_tail(&node->node, &handle->section);
         xlog_count("add section(%d) success. address(%d) size(%d)", fd, node->address, node->size);
     } while (0);
     return fd;

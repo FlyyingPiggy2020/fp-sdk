@@ -5,7 +5,7 @@
  * @Date         : 2025-08-04 11:53:56
  * @LastEditors  : lxf_zjnb@qq.com
  * @LastEditTime : 2025-12-13 09:11:57
- * @Brief        :
+ * @Brief        : 系统配置选项入口文件，包含系统API封装、内存管理算法选择、调试日志接口等
  */
 
 #ifndef __OPTIONS_H__

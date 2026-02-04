@@ -27,7 +27,7 @@ SOFTWARE.
  * @Date         : 2023-12-20 10:55:34
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
  * @LastEditTime : 2023-12-20 10:57:01
- * @Brief        :
+ * @Brief        : 双向链表数据结构和操作函数
  */
 
 /*---------- includes ----------*/
@@ -52,10 +52,7 @@ extern "C" {
 /*---------- macro ----------*/
 /* initialize list head
  */
-#define LIST_HEAD_INIT(name) \
-    {                        \
-        &(name), &(name)     \
-    }
+#define LIST_HEAD_INIT(name)                        { &(name), &(name) }
 #define LIST_HEAD(name)                             struct list_head name = LIST_HEAD_INIT(name)
 
 /**

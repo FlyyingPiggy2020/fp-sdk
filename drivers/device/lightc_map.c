@@ -149,7 +149,8 @@ static int32_t _light_ioctl(driver_t **pdrv, uint32_t cmd, void *args)
         if (!pdesc) {
             break;
         }
-        cb = (int32_t(*)(lightc_map_describe_t *, void *))protocol_callback_find(cmd, ioctl_cbs, ARRAY_SIZE(ioctl_cbs));
+        cb =
+            (int32_t (*)(lightc_map_describe_t *, void *))protocol_callback_find(cmd, ioctl_cbs, ARRAY_SIZE(ioctl_cbs));
         if (!cb) {
             break;
         }
@@ -1041,7 +1042,7 @@ static int32_t __light_set_color(lightc_map_describe_t *pdesc, void *args)
             err = DRV_ERR_EOK;
             break;
         }
-        
+
         if (pdesc->is_virtual == false) {
             pdesc->priv.color_mode = LIGHTC_MAP_MODE_NORMAL;
             pdesc->priv.color_postion = color;

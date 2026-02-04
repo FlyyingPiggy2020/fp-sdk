@@ -31,16 +31,16 @@ extern "C" {
 
 /* 定点数滤波器系数结构体 (Q14格式) */
 typedef struct {
-    int16_t b[2];          /* 分子系数 Q14 */
-    int16_t a[2];          /* 分母系数 Q14 */
+    int16_t b[2]; /* 分子系数 Q14 */
+    int16_t a[2]; /* 分母系数 Q14 */
     int16_t last_input;
     int16_t last_output;
 } FilterCoefficients;
 
 /* 浮点数滤波器系数结构体 */
 typedef struct {
-    float b[2];            /* 分子系数 */
-    float a[2];            /* 分母系数 */
+    float b[2]; /* 分子系数 */
+    float a[2]; /* 分母系数 */
     float last_input;
     float last_output;
 } FilterCoefficientsFloat;

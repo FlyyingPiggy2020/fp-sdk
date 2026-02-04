@@ -38,8 +38,8 @@ typedef struct pingpong_buffer {
     void *buffer[2];
     volatile uint8_t write_index;
     volatile uint8_t read_index;
-    volatile uint8_t read_avaliable[2];  /* 缓冲是否有数据可读 */
-    volatile uint8_t read_active[2];     /* 缓冲是否正在被读取 */
+    volatile uint8_t read_avaliable[2]; /* 缓冲是否有数据可读 */
+    volatile uint8_t read_active[2];    /* 缓冲是否正在被读取 */
 } pingpong_buffer_t;
 
 /*---------- variable prototype ----------*/

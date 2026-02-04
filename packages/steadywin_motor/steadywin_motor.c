@@ -18,6 +18,7 @@
 
 /*---------- includes ----------*/
 #include "steadywin_motor.h"
+#include "misc.h"
 #include <string.h>
 
 /*---------- macro ----------*/
@@ -79,12 +80,6 @@ typedef struct {
  * @brief IEEE浮点数转化联合体
  * @return {*}
  */
-typedef union {
-    float f;
-    int32_t i;
-    uint32_t u;
-    uint8_t b[4];
-} sw_bytes_t;
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
 /*---------- variable ----------*/
@@ -280,7 +275,7 @@ static void _parse_conf(sw_motor_t *m, uint8_t *d)
     uint8_t type = d[1];
     uint8_t id = d[2];
 
-    sw_bytes_t v;
+    le_float_bytes_t v;
     v.b[0] = d[4];
     v.b[1] = d[5];
     v.b[2] = d[6];
@@ -392,7 +387,7 @@ static void _parse_conf(sw_motor_t *m, uint8_t *d)
 static void _parse_param(sw_motor_t *m, uint8_t *d)
 {
     uint8_t id = d[1];
-    sw_bytes_t v;
+    le_float_bytes_t v;
     v.b[0] = d[4];
     v.b[1] = d[5];
     v.b[2] = d[6];
@@ -434,7 +429,7 @@ static void _parse_param(sw_motor_t *m, uint8_t *d)
 static void _parse_mmetric(sw_motor_t *m, uint8_t *d)
 {
     uint8_t id = d[1];
-    sw_bytes_t v;
+    le_float_bytes_t v;
     v.b[0] = d[4];
     v.b[1] = d[5];
     v.b[2] = d[6];
@@ -529,7 +524,7 @@ static bool _feed_packet(sw_motor_t *m, struct can_msg *msg)
             break;
 
         case SW_CMD_GET_VER: {
-            sw_bytes_t v;
+            le_float_bytes_t v;
             memcpy(v.b, &msg->data[4], 4);
             m->cache.config.fw_version = v.u;
             if (m->logic_state == SW_STATE_INITIALIZING) {
@@ -756,7 +751,7 @@ void sw_bus_poll(device_t *can, uint8_t max_packets)
 // 示例控制函数 (简写)
 static int _ctrl(sw_motor_t *motor, uint8_t cmd, float val, uint32_t ms)
 {
-    sw_bytes_t v;
+    le_float_bytes_t v;
     v.f = val;
     uint8_t d[8] = { 0 };
 

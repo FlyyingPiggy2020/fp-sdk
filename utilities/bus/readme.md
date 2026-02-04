@@ -1,123 +1,133 @@
-# 总线通信组件
+# 串行总线组件
 
-本目录提供了各种总线通信的实现，包括Modbus、全双工总线和半双工总线等。
+本目录提供统一的串行总线通信实现，通过 `write_buf` 的不同实现支持全双工和半双工模式。
 
 ## 文件结构
 
 ```
 bus/
-├── example/              # 总线通信示例
-│   ├── simple_mobus_485_port.c
-│   └── simple_mobus_485_port.h
-├── full/                 # 全双工总线实现
-│   ├── full_duplex_bus.c
-│   └── full_duplex_bus.h
-├── half/                 # 半双工总线实现
-│   ├── Readme.md
-│   ├── half_duplex_bus.c
-│   └── half_duplex_bus.h
-├── serial_bus.c          # 串行总线公共实现
-└── serial_bus.h          # 串行总线公共头文件
+├── readme.md           # 本文件
+├── serial_bus.c        # 串行总线统一实现
+└── serial_bus.h        # 串行总线统一接口
 ```
 
-## 核心组件说明
+## 设计理念
 
-### 1. serial_bus.c/h
+**"框架层只管'发', 驱动层管'能不能发'"**
 
-**功能**：提供串行总线的公共实现，为各种总线通信提供基础支持
+框架层负责：
+- 优先级队列管理
+- 重发机制
+- ACK停止重发
+- 总线忙避让（write_buf返回<0时不推进状态）
 
-**主要内容**：
-- 串行总线通用API
-- 数据缓冲管理
-- 错误检测和处理
+驱动层负责：
+- 硬件寄存器操作
+- 总线忙检测
+- 方向控制（RS485 DE/RE）
+- 帧间静默期检测
 
-### 2. 全双工总线 (full/)
+## 支持的模式
 
-**功能**：提供全双工总线通信实现，支持同时发送和接收数据
+### 全双工模式
 
-**主要内容**：
-- 全双工总线初始化和配置
-- 数据发送和接收函数
-- 中断处理机制
+适用于：UART、SPI等硬件支持全双工的接口
 
-**使用示例**：
+**特点**：
+- 收发独立，可同时进行
+- write_buf 直接发送数据
+
+**示例**：
 ```c
-#include "full_duplex_bus.h"
+int uart_write(uint8_t *buf, uint16_t len) {
+    return UART_Send(buf, len);  // 直接发送
+}
 
-// 定义全双工总线配置
-static full_duplex_bus_config_t bus_config = {
-    .baud_rate = 115200,
-    .data_bits = 8,
-    .stop_bits = 1,
-    .parity = FULL_DUPLEX_BUS_PARITY_NONE
+struct serial_bus_ops ops = {
+    .write_buf = uart_write,
 };
-
-// 初始化总线
-full_duplex_bus_handle_t bus = full_duplex_bus_init(&bus_config);
-
-// 发送数据
-uint8_t send_data[] = {0x01, 0x02, 0x03};
-full_duplex_bus_send(bus, send_data, sizeof(send_data));
-
-// 接收数据
-uint8_t recv_data[10];
-size_t recv_len = full_duplex_bus_receive(bus, recv_data, sizeof(recv_data), 100);
-
-// 关闭总线
-full_duplex_bus_deinit(bus);
+serial_bus_t *bus = serial_bus_new(&ops, &cb, 10);
 ```
 
-### 3. 半双工总线 (half/)
+### 半双工模式
 
-**功能**：提供半双工总线通信实现，支持分时发送和接收数据
+适用于：RS485、单线UART等需要方向控制的接口
 
-**主要内容**：
-- 半双工总线初始化和配置
-- 数据发送和接收函数
-- 总线状态管理
+**特点**：
+- write_buf 内部处理：
+  - RS485方向控制（DE/RE引脚）
+  - 帧间静默期检测（Inter-frame Gap）
+  - 总线仲裁（与接收字节的时间戳比较）
+- 返回 <0 表示总线忙，框架会重试
 
-### 4. Modbus示例 (example/)
-
-**功能**：提供Modbus 485通信的示例实现
-
-**主要内容**：
-- Modbus RTU协议实现
-- 485端口初始化和配置
-- 数据读写示例
-
-**使用示例**：
+**示例**：
 ```c
-#include "simple_mobus_485_port.h"
+static uint32_t last_rx_tick = 0;
 
-// 初始化Modbus 485端口
-modbus_485_port_t *modbus_port = modbus_485_port_init(115200);
-
-// 读取保持寄存器
-uint16_t reg_value;
-if (modbus_485_port_read_holding_registers(modbus_port, 0x01, 0x1000, 1, &reg_value) == MODBUS_OK) {
-    printf("Register value: %d\n", reg_value);
+void uart_rx_isr(uint8_t data) {
+    last_rx_tick = get_tick();
+    serial_bus_receive(g_bus, &data, 1);
 }
 
-// 写入保持寄存器
-if (modbus_485_port_write_holding_register(modbus_port, 0x01, 0x1000, 1234) == MODBUS_OK) {
-    printf("Register written successfully\n");
+int rs485_write(uint8_t *buf, uint16_t len) {
+    // 1. 检查帧间静默期 (3.5字节时间)
+    if (get_tick() - last_rx_tick < FRAME_GAP_MS) {
+        return -EBUSY;  // 总线忙
+    }
+    // 2. 方向控制
+    RS485_DE_TX();
+    // 3. 发送
+    UART_Send(buf, len);
+    // 4. 发送完成后在 TC 中断中记录 last_rx_tick
+    return 0;
 }
 
-// 关闭Modbus 485端口
-modbus_485_port_deinit(modbus_port);
+struct serial_bus_ops ops = {
+    .write_buf = rs485_write,
+};
+serial_bus_t *bus = serial_bus_new(&ops, &cb, 10);
 ```
 
-## 选择指南
+## API 说明
 
-| 总线类型 | 适用场景 | 特点 |
-| ------ | ------ | ---- |
-| 全双工总线 | 需要同时发送和接收数据的场景 | 通信效率高，实现相对复杂 |
-| 半双工总线 | 不需要同时发送和接收数据的场景 | 实现简单，硬件成本低 |
-| Modbus 485 | 工业自动化、传感器网络等场景 | 协议成熟，抗干扰能力强 |
+### serial_bus_ops
 
-## 使用建议
+```c
+struct serial_bus_ops {
+    int (*write_buf)(uint8_t *buf, uint16_t len);  // 必需
+    void (*send_delay)(uint16_t ms);               // 可选
+    void (*lock)(void);                            // 可选
+    void (*unlock)(void);                          // 可选
+};
+```
 
-1. 根据通信需求选择合适的总线类型
-2. 合理配置总线参数（波特率、数据位、停止位等）
-3. 实现适当的错误处理机制
-4. 对于长距离通信，考虑使用Modbus 485等抗干扰能力强的协议
+### serial_bus_cb
+
+```c
+struct serial_bus_cb {
+    int (*recv_callback)(uint8_t *recv, uint16_t recv_len,
+                        uint8_t *trans, uint16_t trans_len);
+    uint16_t (*get_delay_ms)(uint8_t trans_cnt, uint8_t trans_max);
+};
+```
+
+### 优先级定义
+
+```c
+enum {
+    SERIAL_BUS_PRIORITY_IDLE = 0,
+    SERIAL_BUS_PRIORITY_NORMAL,
+    SERIAL_BUS_PRIORITY_REGISTER,
+    SERIAL_BUS_PRIORITY_ACK,
+    SERIAL_BUS_PRIORITY_MAX
+};
+```
+
+## 使用流程
+
+1. **定义 write_buf 函数**（必需）
+2. **定义 serial_bus_ops 结构**
+3. **定义 serial_bus_cb 回调结构**（可选）
+4. **调用 serial_bus_new 创建总线**
+5. **在中断中调用 serial_bus_receive 接收数据**
+6. **在主循环中调用 serial_bus_poll 处理发送**
