@@ -4,7 +4,7 @@
  * @Author       : Lu Xianfan
  * @Date         : 2025-12-26 15:00:00
  * @LastEditors  : lxf_zjnb@qq.com
- * @LastEditTime : 2025-12-26 16:34:48
+ * @LastEditTime : 2026-02-09 15:19:46
  * @Brief        : STBD系列扭矩传感器驱动层 (Modbus RTU协议)
  */
 
@@ -22,8 +22,21 @@ extern "C" {
 
 /*---------- macro ----------*/
 // STBD扭矩传感器默认配置
-#define STBD_TORQUE_DEFAULT_SLAVE_ID  1      // 默认从机ID
-#define STBD_TORQUE_DEFAULT_BAUDRATE  115200 // 默认波特率
+#ifndef STBD_TORQUE_DEFAULT_SLAVE_ID
+#define STBD_TORQUE_DEFAULT_SLAVE_ID 1 // 默认从机ID
+#endif
+
+#ifndef STBD_TORQUE_DEFAULT_BAUDRATE
+#define STBD_TORQUE_DEFAULT_BAUDRATE 115200 // 默认波特率
+#endif
+
+#ifndef STBD_TORQUE_OFFLINE_THRESHOLD
+#define STBD_TORQUE_OFFLINE_THRESHOLD 20 // 离线判定超时次数
+#endif
+
+#ifndef STBD_TORQUE_POLL_INTERVAL_MS
+#define STBD_TORQUE_POLL_INTERVAL_MS 15 // 轮询间隔 (ms)
+#endif
 
 // STBD扭矩传感器寄存器地址定义 (根据Modbus协议规范)
 #define STBD_REG_ADDR_TORQUE_FLOAT    0x0000 // 实时扭矩 (Float32, 小端, 2个寄存器)
@@ -45,23 +58,11 @@ struct stbd_torque_sensor {
     _MBX_MASTER_TEAM_MEMBER MBxMember;
     _MBX_MAP_LIST_ENTRY map_list[8];
     _MBX_MASTER *mbx_master; /* 主机对象指针 */
-
-    /* 浮点数值 (直接使用float, modbusX自动处理字节序转换) */
-    float torque_value; /* 实时扭矩值 (单位: Nm) */
-    // float speed_value;        /* 实时转速值 (单位: RPM) */
-    // float torque_peak;        /* 扭矩峰值 (单位: Nm) */
-    // float torque_valley;      /* 扭矩谷值 (单位: Nm) */
-    // float peak_threshold;     /* 峰值阈值(单位：Nm) */
-
-    // uint16_t peak_valley_en; /* 峰谷检测使能状态 */
-    // uint16_t measure_mode;   /* 测量模式 (0:保持最大, 1:实时更新) */
-
-    /* 从机ID */
-    uint8_t slave_id;
-
-    /* 在线状态 */
-    uint64_t update_time; /* 上次更新时间戳(ms) */
+    float torque_value;      /* 实时扭矩值 (单位: Nm) */
+    uint8_t slave_id;        /* 从机ID */
+    uint64_t update_time;    /* 上次更新时间戳(ms) */
     bool is_online;
+    uint16_t timeout_count; /* 连续超时计数 */
 };
 
 /*---------- variable prototype ----------*/

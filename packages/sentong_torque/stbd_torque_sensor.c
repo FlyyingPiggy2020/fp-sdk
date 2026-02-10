@@ -4,7 +4,7 @@
  * @Author       : Lu Xianfan
  * @Date         : 2025-12-26 15:00:00
  * @LastEditors  : lxf_zjnb@qq.com
- * @LastEditTime : 2025-12-29 10:56:15
+ * @LastEditTime : 2026-02-10 08:35:22
  * @Brief        : STBD系列扭矩传感器驱动层实现 (Modbus RTU协议)
  *
  * @hardware     :
@@ -175,7 +175,7 @@ struct stbd_torque_sensor *stbd_torque_sensor_create(uint8_t slave_id, _MBX_MAST
     sensor->mbx_master = mbx_master;
 
     // 初始化数据缓存
-    sensor->is_online = false;
+    sensor->is_online = true;
 
     /* 初始化寄存器映射表(必须按地址升序排列) */
     /* Modbus浮点数字节序: 2EC3 AD3F -> 使用 MBX_REG_TYPE_U32_CD */
@@ -326,31 +326,49 @@ int stbd_torque_sensor_set_measure_mode(struct stbd_torque_sensor *sensor, uint8
 }
 
 /**
- * @Brief  默认轮询函数 - 读取扭矩、转速、峰值、谷值
+ * @Brief  默认轮询函数 - 读取扭矩、转速
  * @param  sensor: 传感器句柄
  * @return 0=成功, <0=失败
  * @note   内部读取以下寄存器:
  *         - STBD_REG_ADDR_TORQUE_FLOAT (0x0000): 实时扭矩
  *         - STBD_REG_ADDR_SPEED_FLOAT (0x0002): 实时转速
- *         - STBD_REG_ADDR_PEAK_TORQUE (0x0018): 扭矩峰值
- *         - STBD_REG_ADDR_VALLEY_TORQUE (0x001C): 扭矩谷值
+ * @note   读取浮点数值示例:
+ *         float torque = sensor->torque_value;  // 直接访问, 无需转换
+ *         float speed  = sensor->speed_value;
+ * @note   内部自动管理轮询间隔 (默认5ms)
  */
 int stbd_torque_sensor_poll_default(struct stbd_torque_sensor *sensor)
 {
     uint32_t ret;
-
+    uint8_t func_code, error_type;
+    uint16_t addr_start, reg_num;
+    static bool check_flag = false;
     if (sensor == NULL || sensor->mbx_master == NULL) {
         return -1;
     }
 
-    // 读取实时扭矩和转速 (0x0000-0x0003, 连续4个寄存器)
-    ret = MBx_Master_Read_Reg_Request(sensor->mbx_master, sensor->slave_id, STBD_REG_ADDR_TORQUE_FLOAT, 2);
-    if (ret != MBX_API_RETURN_DEFAULT) {
-        sensor->is_online = false;
-        return -1;
+    // 需要保证调用MBx_Master_Error_Get的时刻，大于设置的超时时间。
+    if (get_ticks() - sensor->update_time >= STBD_TORQUE_POLL_INTERVAL_MS) {
+        ret = MBx_Master_Read_Reg_Request(sensor->mbx_master, sensor->slave_id, STBD_REG_ADDR_TORQUE_FLOAT, 2);
+        if (ret != MBX_API_RETURN_DEFAULT) {
+            return -1;
+        }
+        check_flag = true;
+        sensor->update_time = get_ticks();
+    } else if (get_ticks() - sensor->update_time == (STBD_TORQUE_POLL_INTERVAL_MS - 1) && check_flag == true) {
+        check_flag = false;
+        ret = MBx_Master_Error_Get(sensor->mbx_master, &func_code, &error_type, &addr_start, &reg_num);
+        if (ret == MBX_API_RETURN_DEFAULT) {
+            if (sensor->timeout_count < STBD_TORQUE_OFFLINE_THRESHOLD) {
+                sensor->timeout_count++;
+            } else {
+                sensor->is_online = false;
+            }
+        } else {
+            sensor->timeout_count = 0;
+            sensor->is_online = true;
+        }
     }
-
-    sensor->is_online = true;
     return 0;
 }
 
