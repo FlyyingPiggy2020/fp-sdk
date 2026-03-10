@@ -88,10 +88,16 @@ int mgt_abs_sensor_poll(struct mgt_abs_sensor *sensor)
         return -1;
     }
 
-    // 周期发送读取命令
+    // 周期发送读取命令 (每1ms)
     if (get_ticks() - sensor->tick_last >= 1) {
         sensor->tick_last = get_ticks();
         device_write(sensor->uart_dev, &cmd, 0, 1);
+    }
+
+    // 周期增加timeout_count (每50ms)
+    if (get_ticks() - sensor->tick_timeout >= MGT_ABS_TIMEOUT_INTERVAL_MS) {
+        sensor->tick_timeout = get_ticks();
+        sensor->timeout_count++;
     }
 
     // 接收并解析响应
@@ -100,10 +106,19 @@ int mgt_abs_sensor_poll(struct mgt_abs_sensor *sensor)
         // 查找完整帧 (CF SF DF0 DF1 CRC)
         for (int32_t i = 0; i <= len - MGT_ABS_RESP_FRAME_SIZE; i++) {
             if (sensor->rx_buf[i] == MGT_ABS_CMD_READ_POSITION) {
-                mgt_abs_parse_frame(sensor, &sensor->rx_buf[i]);
+                if (mgt_abs_parse_frame(sensor, &sensor->rx_buf[i]) == 0) {
+                    // CRC校验通过，数据有效，清零timeout_count
+                    sensor->timeout_count = 0;
+                    sensor->is_online = true;
+                }
                 break;
             }
         }
+    }
+
+    // 检查离线判定
+    if (sensor->timeout_count >= MGT_ABS_OFFLINE_THRESHOLD) {
+        sensor->is_online = false;
     }
 
     return 0;
@@ -121,6 +136,20 @@ uint16_t mgt_abs_sensor_get_position(struct mgt_abs_sensor *sensor)
     }
 
     return sensor->position;
+}
+
+/**
+ * @brief  检查传感器在线状态
+ * @param  sensor: 传感器结构体指针
+ * @return true=在线, false=离线
+ */
+bool mgt_abs_sensor_is_online(struct mgt_abs_sensor *sensor)
+{
+    if (sensor == NULL) {
+        return false;
+    }
+
+    return sensor->is_online;
 }
 
 /**

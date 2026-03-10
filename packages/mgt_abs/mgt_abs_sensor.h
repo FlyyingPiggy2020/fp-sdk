@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2026 by Lu Xianfan.
- * @FilePath     : components/fp-sdk/packages/mgt_abs/mgt_abs_sensor.h
+ * @FilePath     : mgt_abs_sensor.h
  * @Author       : lxf
  * @Date         : 2026-01-09 10:00:00
  * @LastEditors  : lxf_zjnb@qq.com
- * @LastEditTime : 2026-01-09 10:00:00
+ * @LastEditTime : 2026-02-27 08:58:30
  * @Brief        : MGT-ABS 位置传感器驱动层 (UART协议)
  *
  * @hardware     :
@@ -63,6 +63,10 @@ extern "C" {
 // MGT-ABS 接收缓冲区大小
 #define MGT_ABS_RX_BUF_SIZE         32
 
+// MGT-ABS 离线检测配置
+#define MGT_ABS_OFFLINE_THRESHOLD   20  // 离线判定超时次数
+#define MGT_ABS_TIMEOUT_INTERVAL_MS 50 // timeout_count增加的时间间隔(ms)
+
 /*---------- type define ----------*/
 
 /**
@@ -75,6 +79,9 @@ struct mgt_abs_sensor {
     bool data_valid;                     // 数据是否有效 (CRC校验通过)
     uint8_t rx_buf[MGT_ABS_RX_BUF_SIZE]; // 接收缓冲区
     uint64_t tick_last;                  // 上次发送命令时间
+    uint64_t tick_timeout;                // 上次timeout_count增加时间
+    uint16_t timeout_count;              // 连续超时计数
+    bool is_online;                      // 在线状态
     uint8_t calib_cmd_count;             // 校准命令计数
     uint8_t zero_cmd_count;              // 归零命令计数
 };
@@ -97,6 +104,13 @@ int mgt_abs_sensor_init(struct mgt_abs_sensor *sensor, device_t *uart_dev);
  * @note   内部自动发送命令、接收数据、解析位置
  */
 int mgt_abs_sensor_poll(struct mgt_abs_sensor *sensor);
+
+/**
+ * @brief  检查传感器在线状态
+ * @param  sensor: 传感器结构体指针
+ * @return true=在线, false=离线
+ */
+bool mgt_abs_sensor_is_online(struct mgt_abs_sensor *sensor);
 
 /**
  * @brief  获取当前位置值
