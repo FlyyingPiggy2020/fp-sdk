@@ -4,11 +4,12 @@
  * @Author       : lxf
  * @Date         : 2024-12-05 14:37:50
  * @LastEditors  : lxf_zjnb@qq.com
- * @LastEditTime : 2025-09-22 20:02:43
+ * @LastEditTime : 2026-03-18 14:08:57
  * @Brief        : pwm设备抽象,通道从0开始
  *
  * 2025年3月17日 lxf 初版
  * 2025年9月22日 lxf 支持多通道
+ * 2026年3月18日 lxf 增加注释，针对Freq自动生成ARR和Prescaler的功能进行优化，增加手动设置频率的选项。
  */
 
 #ifndef __PWMC_H__
@@ -35,24 +36,26 @@ extern "C" {
 #define IOCTL_PWMC_ENABLE         (IOCTL_USER_START + 0x00)
 #define IOCTL_PWMC_DISABLE        (IOCTL_USER_START + 0x01)
 #define IOCTL_PWMC_GET_FREQ       (IOCTL_USER_START + 0x02)
-#define IOCTL_PWMC_SET_FREQ       (IOCTL_USER_START + 0x03)
+#define IOCTL_PWMC_SET_FREQ       (IOCTL_USER_START + 0x03) // (当手动配置Freq时，该函数无效)
 #define IOCTL_PWMC_GET_DUTY       (IOCTL_USER_START + 0x05)
 #define IOCTL_PWMC_SET_DUTY       (IOCTL_USER_START + 0x06)
 #define IOCTL_PWMC_GET_DUTY_RAW   (IOCTL_USER_START + 0x07)
 #define IOCTL_PWMC_SET_DUTY_RAW   (IOCTL_USER_START + 0x08)
-#define IOCTL_PWMC_SET_FREQ_DUTY  (IOCTL_USER_START + 0x09)
+#define IOCTL_PWMC_SET_FREQ_DUTY  (IOCTL_USER_START + 0x09) // 设置FREQ和DUTY(当手动配置Freq时，该函数只设置DUTY)
 /*---------- type define ----------*/
 typedef int32_t (*pwmc_irq_handler_fn)(uint32_t irq_handler, void *args, uint32_t len);
 
 // this struct is describe one channel
 typedef struct {
-    bool is_enable;     // true:enable; false:disable
-    uint32_t clock;     // timer clock. unit:hz
-    uint32_t frequence; // timer frequence
+    bool is_enable;     // 配合ST等系列芯片的使能函数使用
+    uint32_t clock;     // 定时器的时钟频率，单位Hz（当手动配置freq时，该参数无效）
+    uint32_t frequence; // 该定时器的频率，单位Hz（当手动配置freq时，该参数无效）
+
+    bool is_manual_freq; // 是否手动设置频率，如果为true，则不自动计算arr和prescaler，用户需要自己设置。
 
     struct {
-        uint32_t prescaler;
-        uint32_t arr;
+        uint32_t prescaler; // 预分频器的值，实际值为该值+1
+        uint32_t arr;       // 自动重装载寄存器的值，实际值为该值+1
         struct {
             bool used; // 该通道是否被使用
             float duty;

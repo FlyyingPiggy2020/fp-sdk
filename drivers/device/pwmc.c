@@ -4,11 +4,12 @@
  * @Author       : lxf
  * @Date         : 2024-12-05 14:37:46
  * @LastEditors  : lxf_zjnb@qq.com
- * @LastEditTime : 2025-09-22 19:55:07
+ * @LastEditTime : 2026-03-18 13:51:21
  * @Brief        :
- * todo:以定时器为基本抽象，还是以单个通道为抽象？
+ *
  * 2025年3月17日 lxf 初版单通道独立频率的模型
  * 2025年9月22日 lxf 改为定时器+多通道的模型。
+ * 2026年3月18日 lxf 增加注释，针对Freq自动生成ARR和Prescaler的功能进行优化，增加手动设置频率的选项。
  */
 
 /*---------- includes ----------*/
@@ -20,7 +21,7 @@
 /*---------- type define ----------*/
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/
-static int32_t __update_prescaler_arr_by_freq(pwmc_describe_t *pdesc, uint32_t frequence);
+static int32_t __update_prescaler_arr_by_freq_auto(pwmc_describe_t *pdesc, uint32_t frequence);
 
 static int32_t pwmc_open(driver_t **pdrv);
 static void pwmc_close(driver_t **pdrv);
@@ -64,11 +65,10 @@ static int32_t pwmc_open(driver_t **pdrv)
             err = E_POINT_NONE;
             break;
         }
-        if (!pdesc->ops.update_precaler_arr) {
-            err = E_POINT_NONE;
-            break;
+
+        if (!pdesc->is_manual_freq) {
+            __update_prescaler_arr_by_freq_auto(pdesc, pdesc->frequence);
         }
-        __update_prescaler_arr_by_freq(pdesc, pdesc->frequence);
 
         if (!pdesc->ops.init()) {
             err = E_ERROR;
@@ -139,7 +139,7 @@ static int32_t pwmc_irq_handler(driver_t **pdrv, uint32_t irq_handler, void *arg
     return err;
 }
 
-static int32_t __update_prescaler_arr_by_freq(pwmc_describe_t *pdesc, uint32_t frequence)
+static int32_t __update_prescaler_arr_by_freq_auto(pwmc_describe_t *pdesc, uint32_t frequence)
 {
     // this is depend on timer clock.
     if (frequence < 600) {
@@ -243,7 +243,11 @@ static int32_t _ioctl_set_freq(pwmc_describe_t *pdesc, void *args)
         if (pdesc->priv.channel[param->set.channel].used == false) {
             break;
         }
-        __update_prescaler_arr_by_freq(pdesc, param->set.freq);
+
+        if (pdesc->is_manual_freq) { // 手动配置freq时，这个接口不支持被调用
+            break;
+        }
+        __update_prescaler_arr_by_freq_auto(pdesc, param->set.freq);
         err = __update_crr_by_duty(pdesc);
     } while (0);
 
@@ -384,8 +388,11 @@ static int32_t _ioctl_set_freq_duty(pwmc_describe_t *pdesc, void *args)
             break;
         }
         pdesc->priv.channel[param->set.channel].duty = param->set.duty;
-        __update_prescaler_arr_by_freq(pdesc, param->set.freq);
+        if (!pdesc->is_manual_freq) {
+            __update_prescaler_arr_by_freq_auto(pdesc, param->set.freq);
+        }
         err = __update_crr_by_duty(pdesc);
+
     } while (0);
 
     return err;
