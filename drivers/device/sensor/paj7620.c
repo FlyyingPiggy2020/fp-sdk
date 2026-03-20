@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024 by Lu Xianfan.
- * @FilePath     : paj7620.c
+ * @FilePath     : components/fp-sdk/drivers/device/sensor/paj7620.c
  * @Author       : lxf
  * @Date         : 2024-12-10 11:43:23
  * @LastEditors  : lxf_zjnb@qq.com

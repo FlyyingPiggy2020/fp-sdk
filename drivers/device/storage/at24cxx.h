@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024 by Lu Xianfan.
- * @FilePath     : at24cxx.h
+ * @FilePath     : components/fp-sdk/drivers/device/storage/at24cxx.h
  * @Author       : lxf
  * @Date         : 2024-12-10 08:43:34
  * @LastEditors  : lxf_zjnb@qq.com
