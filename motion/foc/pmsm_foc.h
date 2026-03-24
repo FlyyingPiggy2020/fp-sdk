@@ -3,8 +3,8 @@
  * @FilePath     : pmsm_foc.h
  * @Author       : Codex
  * @Date         : 2026-03-16
- * @LastEditors  : Codex
- * @LastEditTime : 2026-03-17
+ * @LastEditors  : lxf_zjnb@qq.com
+ * @LastEditTime : 2026-03-23 11:14:25
  * @Brief        : PMSM FOC 控制器骨架
  */
 
@@ -12,13 +12,18 @@
 #define __PMSM_FOC_H__
 
 /*---------- includes ----------*/
-#include "control/foc_pi.h"
+#ifdef FOC_INCLDUE_BOARD_OPTIONS_FILE
+#include "foc_options.h"
+#endif
+#include "foc_cfg.h"
+#include "foc_log.h"
+
+#include "foc_pi.h"
 #include "foc_hal.h"
-#include "math/foc_svpwm.h"
-#include "math/foc_transform.h"
-#include "profile/foc_profile.h"
+#include "foc_profile.h"
 #include <stdbool.h>
 /*---------- macro ----------*/
+
 /*---------- type define ----------*/
 typedef struct {
     /* 配置对象由业务层或板级层持有，控制器只引用 */

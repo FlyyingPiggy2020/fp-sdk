@@ -35,7 +35,6 @@ typedef struct {
     /* 输出归一化占空比到具体 PWM 外设 */
     void (*write_pwm_duty)(void *user_data, const foc_pwm_duty_t *duty);
     void (*set_output_enable)(void *user_data, bool enable);
-    uint32_t (*get_tick_us)(void *user_data);
 } foc_hal_ops_t;
 
 #endif

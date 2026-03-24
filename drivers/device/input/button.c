@@ -4,7 +4,7 @@
  * @Author       : Codex
  * @Date         : 2026-03-20 15:10:00
  * @LastEditors  : lxf_zjnb@qq.com
- * @LastEditTime : 2026-03-20 15:10:00
+ * @LastEditTime : 2026-03-20 16:20:00
  * @Brief        : 通用按键设备驱动
  */
 
@@ -71,6 +71,7 @@ static int32_t _button_open(driver_t **pdrv)
             break;
         }
 
+        /* 每次打开设备都重置运行态，避免残留计数和 FIFO 影响本次使用。 */
         _button_reset_runtime(pdesc);
         err = E_OK;
     } while (0);
@@ -229,6 +230,7 @@ static int32_t _button_scan_all(button_describe_t *pdesc)
 {
     uint32_t i = 0U;
 
+    /* 多键扫描共享状态和 FIFO，锁由移植层按需提供。 */
     if (pdesc->ops.lock != NULL) {
         pdesc->ops.lock(pdesc);
     }
@@ -257,6 +259,7 @@ static void _button_detect_one(button_describe_t *pdesc, uint32_t key_id)
     active = (cfg->is_active != NULL) ? cfg->is_active(cfg->ctx) : false;
 
     if (active) {
+        /* 按下和释放共用一套对称滤波计数，稳定后才改变逻辑状态。 */
         if (state->filter_count < filter_time) {
             state->filter_count = filter_time;
         } else if (state->filter_count < (uint16_t)(2U * filter_time)) {
@@ -267,6 +270,7 @@ static void _button_detect_one(button_describe_t *pdesc, uint32_t key_id)
                 _button_emit_event(pdesc, BUTTON_EVENT_CODE(key_id, BUTTON_EVENT_DOWN));
             }
 
+            /* 长按和连发只在稳定按下后开始计数。 */
             if (state->long_time > 0U) {
                 if (state->long_count < state->long_time) {
                     state->long_count++;
@@ -301,6 +305,7 @@ static void _button_detect_one(button_describe_t *pdesc, uint32_t key_id)
 
 static void _button_emit_event(button_describe_t *pdesc, uint32_t event_code)
 {
+    /* 事件同时进入 FIFO 和可选回调，兼容轮询与即时通知两种使用方式。 */
     _button_fifo_push(pdesc, event_code);
     if (pdesc->cb.event != NULL) {
         pdesc->cb.event(event_code, pdesc->cb.ctx);

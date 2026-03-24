@@ -3,8 +3,8 @@
  * @FilePath     : foc_pi.c
  * @Author       : Codex
  * @Date         : 2026-03-16
- * @LastEditors  : Codex
- * @LastEditTime : 2026-03-17
+ * @LastEditors  : lxf_zjnb@qq.com
+ * @LastEditTime : 2026-03-23 17:02:17
  * @Brief        : FOC 域专用 PI 控制器
  */
 
@@ -128,6 +128,7 @@ foc_scalar_t foc_pi_run(foc_pi_t *pi, foc_scalar_t reference, foc_scalar_t feedb
 
     /* 第一版先使用最基础的 PI 形式，后续再补 anti-windup 等能力 */
     pi->integral += pi->ki * error;
+    // 直接积分限幅
     pi->integral = _foc_pi_clamp(pi->integral, pi->integral_min, pi->integral_max);
 
     pi->output = (pi->kp * error) + pi->integral;

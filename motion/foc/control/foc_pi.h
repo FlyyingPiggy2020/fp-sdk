@@ -3,8 +3,8 @@
  * @FilePath     : foc_pi.h
  * @Author       : Codex
  * @Date         : 2026-03-16
- * @LastEditors  : Codex
- * @LastEditTime : 2026-03-17
+ * @LastEditors  : lxf_zjnb@qq.com
+ * @LastEditTime : 2026-03-21 09:21:34
  * @Brief        : FOC 域专用 PI 控制器
  */
 
@@ -12,7 +12,7 @@
 #define __FOC_PI_H__
 
 /*---------- includes ----------*/
-#include "../math/foc_math_types.h"
+#include "foc_math_types.h"
 #include <stdbool.h>
 /*---------- macro ----------*/
 /*---------- type define ----------*/

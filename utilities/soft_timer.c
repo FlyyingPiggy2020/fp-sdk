@@ -128,7 +128,7 @@ bool fp_timer_del(fp_timer_t *timer)
         fp_timer_t *entry = list_entry(pos, fp_timer_t, list);
         if (entry == timer) {
             list_del(pos);
-            __free(entry);
+            free(entry);
             ret = true;
             break;
         }
@@ -191,7 +191,7 @@ uint32_t fp_timer_handler(void)
         run_cnt++;
         if (run_cnt > 100) {
             run_cnt = 0;
-            log_e("It seems fp_tick_inc() is not called\n");
+            xlog_count("It seems fp_tick_inc() is not called\n");
         }
     }
 
@@ -237,7 +237,7 @@ fp_timer_t *fp_timer_create(fp_tiemr_cb_t timer_xcb, uint32_t period, void *user
 {
     fp_timer_t *new_timer = NULL;
 
-    new_timer = (fp_timer_t *)__malloc(sizeof(fp_timer_t));
+    new_timer = (fp_timer_t *)malloc(sizeof(fp_timer_t));
     if (new_timer == NULL) {
         return NULL;
     }

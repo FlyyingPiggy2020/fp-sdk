@@ -3,8 +3,8 @@
  * @FilePath     : foc_math_types.h
  * @Author       : Codex
  * @Date         : 2026-03-16
- * @LastEditors  : Codex
- * @LastEditTime : 2026-03-16
+ * @LastEditors  : lxf_zjnb@qq.com
+ * @LastEditTime : 2026-03-21 10:02:05
  * @Brief        : FOC 数学公共类型
  */
 
@@ -16,6 +16,7 @@
 #include <stdint.h>
 
 /*---------- type define ----------*/
+// 这里的a,b,c,alpha,beta,d,q都为标幺值
 typedef struct {
     /* 三相量，常用于相电流或相电压 */
     foc_scalar_t a;

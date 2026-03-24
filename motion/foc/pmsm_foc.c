@@ -4,12 +4,14 @@
  * @Author       : Codex
  * @Date         : 2026-03-16
  * @LastEditors  : lxf_zjnb@qq.com
- * @LastEditTime : 2026-03-17 09:40:54
+ * @LastEditTime : 2026-03-23 16:44:28
  * @Brief        : PMSM FOC 控制器骨架
  */
 
 /*---------- includes ----------*/
-#include "foc_log.h"
+#include "foc_pi.h"
+#include "foc_svpwm.h"
+#include "foc_transform.h"
 #include "pmsm_foc.h"
 #include <string.h>
 /*---------- macro ----------*/
@@ -96,13 +98,17 @@ bool pmsm_foc_init(pmsm_foc_t *foc,
     foc->runtime.mode = FOC_MODE_STOP;
 
     /* 初始化各控制环 */
-    foc_pi_init(&foc->id_pi, ctrl_cfg->id_kp, ctrl_cfg->id_ki);
-    foc_pi_init(&foc->iq_pi, ctrl_cfg->iq_kp, ctrl_cfg->iq_ki);
-    foc_pi_init(&foc->speed_pi, ctrl_cfg->speed_kp, ctrl_cfg->speed_ki);
+    foc_pi_init(&foc->id_pi, ctrl_cfg->id_kp_pu, ctrl_cfg->id_ki_pu);
+    foc_pi_init(&foc->id_pi, ctrl_cfg->id_kp_pu, ctrl_cfg->id_ki_pu);
+    // foc_pi_init(&foc->speed_pi,
+    //             ctrl_cfg->speed_kp * (foc->scale.current_to_pu / foc->scale.speed_to_pu),
+    //             ctrl_cfg->speed_ki * (foc->scale.current_to_pu / foc->scale.speed_to_pu));
 
-    foc_pi_set_output_limit(&foc->id_pi, -ctrl_cfg->voltage_limit, ctrl_cfg->voltage_limit);
-    foc_pi_set_output_limit(&foc->iq_pi, -ctrl_cfg->voltage_limit, ctrl_cfg->voltage_limit);
-    foc_pi_set_output_limit(&foc->speed_pi, -ctrl_cfg->iq_limit, ctrl_cfg->iq_limit);
+    foc_pi_set_output_limit(&foc->id_pi, -ctrl_cfg->voltage_limit_pu, ctrl_cfg->voltage_limit_pu);
+    foc_pi_set_output_limit(&foc->iq_pi, -ctrl_cfg->voltage_limit_pu, ctrl_cfg->voltage_limit_pu);
+    // foc_pi_set_output_limit(
+    //     &foc->speed_pi, -ctrl_cfg->iq_limit * foc->scale.current_to_pu, ctrl_cfg->iq_limit *
+    //     foc->scale.current_to_pu);
 
     if (!_pmsm_foc_profile_ready(foc)) {
         /* 参数非法时直接进入故障态，避免错误输出 */
@@ -201,6 +207,8 @@ bool pmsm_foc_current_loop(pmsm_foc_t *foc)
 {
     foc_current_loop_sample_t current_sample = { 0 };
     foc_angle_sample_t angle_sample = { 0 };
+    foc_abc_t phase_current = { 0 };
+    foc_scalar_t bus_voltage_pu = 0.0f;
     foc_ab_t current_ab;
 
     if ((foc == NULL) || (foc->hal_ops.read_current_loop_sample == NULL)
@@ -217,17 +225,26 @@ bool pmsm_foc_current_loop(pmsm_foc_t *foc)
     foc->hal_ops.read_current_loop_sample(foc->hal_user_data, &current_sample);
     foc->hal_ops.get_electrical_angle(foc->hal_user_data, current_sample.sample_tick_us, &angle_sample);
 
-    foc->runtime.bus_voltage = current_sample.bus_voltage;
+    /* 电流环主链路：原始电流值 -> 标幺化 -> Clarke/Park -> PI -> 反变换 -> SVPWM */
+    /* 1. 计算三相电流的标幺值以及母线电压的标幺值 */
+#if (FOC_CURRENT_SENSE_MODE == 1)
+// TODO 单电阻采样方案
+#elif (FOC_CURRENT_SENSE_MODE == 2)
+    phase_current.a = current_sample.a_real / foc->motor_profile->inv_i_base;
+    phase_current.b = current_sample.b_real / foc->motor_profile->inv_i_base;
+#elif (FOC_CURRENT_SENSE_MODE == 3)
+    // TODO 三电阻采样方案
+#endif
+    foc->runtime.bus_voltage_pu = current_sample.bus_voltage / foc->motor_profile->inv_v_base;
     foc->runtime.current_sample_tick_us = current_sample.sample_tick_us;
 
-    /* 当前版本默认角度提供器返回可消费角度，非可消费状态的处理后续再细化 */
     foc->runtime.electrical_angle = angle_sample.electrical_angle;
     foc->runtime.electrical_speed = angle_sample.electrical_speed;
     foc->runtime.angle_sample_tick_us = angle_sample.angle_tick_us;
     foc->runtime.angle_status = angle_sample.status;
 
-    /* 电流环主链路：采样 -> 角度对齐 -> Clarke/Park -> PI -> 反变换 -> SVPWM */
-    foc_clarke(&current_ab, &current_sample.phase_current);
+    /* 2. 将电流的标幺值转换到dq轴 */
+    foc_clarke(&current_ab, &phase_current);
     foc_park(&foc->runtime.current_meas_dq, &current_ab, foc->runtime.electrical_angle);
 
     foc->runtime.voltage_cmd_dq.d =
