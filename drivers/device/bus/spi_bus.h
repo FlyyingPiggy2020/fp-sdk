@@ -47,8 +47,6 @@ struct spi_bus_config {
     uint8_t cpha;
     uint8_t cs_active_high;
     uint8_t lsb_first;
-    uint8_t single_wire;
-    uint8_t open_drain;
     uint16_t half_period_us;
 };
 

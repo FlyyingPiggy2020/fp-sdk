@@ -169,17 +169,19 @@ static fp_err_t _spi_bus_xfer(struct spi_bus_describe *self, struct spi_bus_msg 
             break;
         }
 
+        if (self->ops->lock != NULL) {
+            self->ops->lock(self);
+        }
+
         if (self->ops->xfer != NULL) {
-            return self->ops->xfer(self, msgs, number);
+            err = self->ops->xfer(self, msgs, number);
+            goto exit;
         }
 
         if ((self->ops->cs_set == NULL) || (self->ops->sck_set == NULL) || (self->ops->sda_set == NULL)
             || (self->ops->sda_get == NULL) || (self->ops->sda_dir == NULL)) {
-            break;
-        }
-
-        if (self->ops->lock != NULL) {
-            self->ops->lock(self);
+            err = E_WRONG_ARGS;
+            goto exit;
         }
 
         for (uint32_t msg_index = 0U; msg_index < number; ++msg_index) {

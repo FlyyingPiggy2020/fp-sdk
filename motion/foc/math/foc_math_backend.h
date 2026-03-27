@@ -22,7 +22,7 @@
 
 /*---------- type define ----------*/
 typedef float foc_scalar_t;
-typedef uint16_t foc_angle_t;
+typedef float foc_angle_t;
 
 typedef struct {
     /* 基于当前后端计算得到的正余弦值 */

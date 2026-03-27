@@ -230,12 +230,12 @@ bool pmsm_foc_current_loop(pmsm_foc_t *foc)
 #if (FOC_CURRENT_SENSE_MODE == 1)
 // TODO 单电阻采样方案
 #elif (FOC_CURRENT_SENSE_MODE == 2)
-    phase_current.a = current_sample.a_real / foc->motor_profile->inv_i_base;
-    phase_current.b = current_sample.b_real / foc->motor_profile->inv_i_base;
+    phase_current.a = current_sample.a_real * foc->motor_profile->inv_i_base;
+    phase_current.b = current_sample.b_real * foc->motor_profile->inv_i_base;
 #elif (FOC_CURRENT_SENSE_MODE == 3)
     // TODO 三电阻采样方案
 #endif
-    foc->runtime.bus_voltage_pu = current_sample.bus_voltage / foc->motor_profile->inv_v_base;
+    foc->runtime.bus_voltage_pu = current_sample.bus_voltage * foc->motor_profile->inv_v_base;
     foc->runtime.current_sample_tick_us = current_sample.sample_tick_us;
 
     foc->runtime.electrical_angle = angle_sample.electrical_angle;
@@ -244,14 +244,17 @@ bool pmsm_foc_current_loop(pmsm_foc_t *foc)
     foc->runtime.angle_status = angle_sample.status;
 
     /* 2. 将电流的标幺值转换到dq轴 */
-    foc_clarke(&current_ab, &phase_current);
-    foc_park(&foc->runtime.current_meas_dq, &current_ab, foc->runtime.electrical_angle);
+//    foc_clarke(&current_ab, &phase_current);
+//    foc_park(&foc->runtime.current_meas_dq, &current_ab, foc->runtime.electrical_angle);
 
-    foc->runtime.voltage_cmd_dq.d =
-        foc_pi_run(&foc->id_pi, foc->runtime.current_ref_dq.d, foc->runtime.current_meas_dq.d);
-    foc->runtime.voltage_cmd_dq.q =
-        foc_pi_run(&foc->iq_pi, foc->runtime.current_ref_dq.q, foc->runtime.current_meas_dq.q);
+//    foc->runtime.voltage_cmd_dq.d =
+//        foc_pi_run(&foc->id_pi, foc->runtime.current_ref_dq.d, foc->runtime.current_meas_dq.d);
+//    foc->runtime.voltage_cmd_dq.q =
+//        foc_pi_run(&foc->iq_pi, foc->runtime.current_ref_dq.q, foc->runtime.current_meas_dq.q);
 
+    foc->runtime.voltage_cmd_dq.d = 0;
+    foc->runtime.voltage_cmd_dq.q = 0.1;
+    
     foc_inv_park(&foc->runtime.voltage_cmd_ab, &foc->runtime.voltage_cmd_dq, foc->runtime.electrical_angle);
     foc_svpwm_run(&foc->runtime.pwm_duty, &foc->runtime.voltage_cmd_ab);
 
