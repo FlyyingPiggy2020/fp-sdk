@@ -98,6 +98,32 @@ void pmsm_foc_set_current_ref(pmsm_foc_t *foc, foc_scalar_t id_ref, foc_scalar_t
 void pmsm_foc_set_speed_ref(pmsm_foc_t *foc, foc_scalar_t speed_ref);
 
 /**
+ * @brief  设置运行时电角度零位偏移
+ * @param  foc: 控制器对象
+ * @param  electrical_zero_offset: 电角度零位偏移
+ * @return 无
+ */
+void pmsm_foc_set_electrical_zero_offset(pmsm_foc_t *foc, foc_angle_t electrical_zero_offset);
+
+/**
+ * @brief  清除运行时电角度零位偏移有效标志
+ * @param  foc: 控制器对象
+ * @return 无
+ */
+void pmsm_foc_clear_electrical_zero_offset(pmsm_foc_t *foc);
+
+/**
+ * @brief  直接输出固定电压矢量
+ * @param  foc: 控制器对象
+ * @param  voltage_cmd_dq: d-q 电压指令标幺值
+ * @param  electrical_angle: 输出使用的电角度
+ * @param  enable_output: true=输出前使能功率级, false=保持当前使能状态
+ * @return true=执行成功, false=执行失败
+ */
+bool pmsm_foc_apply_voltage_vector(
+    pmsm_foc_t *foc, const foc_dq_t *voltage_cmd_dq, foc_angle_t electrical_angle, bool enable_output);
+
+/**
  * @brief  执行一次电流环控制
  * @param  foc: 控制器对象
  * @return true=执行成功, false=执行失败

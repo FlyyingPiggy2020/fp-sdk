@@ -30,8 +30,8 @@ void motor_profile_init(motor_profile_t *profile)
     }
 
     profile->pole_pairs = 1U;
-    profile->electrical_direction = 1;
-    profile->electrical_offset = 0U;
+    profile->inv_i_base = 0.0f;
+    profile->inv_v_base = 0.0f;
 }
 
 /**
@@ -63,8 +63,7 @@ void sensor_profile_init(sensor_profile_t *profile)
     }
 
     profile->encoder_cpr = 0U;
-    profile->encoder_direction = 1;
-    profile->electrical_offset = 0U;
+    profile->angle_direction = 1;
     profile->current_a_offset = 0.0f;
     profile->current_b_offset = 0.0f;
     profile->current_c_offset = 0.0f;
@@ -124,7 +123,7 @@ bool sensor_profile_is_valid(const sensor_profile_t *profile)
         return false;
     }
 
-    return true;
+    return (profile->encoder_cpr > 0U) && ((profile->angle_direction == 1) || (profile->angle_direction == -1));
 }
 
 /**

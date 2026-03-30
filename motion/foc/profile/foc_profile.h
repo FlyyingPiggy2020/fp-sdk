@@ -20,11 +20,9 @@
 /*---------- type define ----------*/
 typedef struct {
     /* 电机本体参数 */
-    uint8_t pole_pairs;            /* 极对数，用于机械角速度与电角速度换算 */
-    int8_t electrical_direction;   /* 电角度方向，通常取 1 或 -1，用于统一旋转方向定义 */
-    foc_angle_t electrical_offset; /* 电角度零点偏移，用于将传感器原始角度对齐到控制坐标系 */
-    foc_scalar_t inv_i_base;       /* 电流基准值的倒数，单位 A，用于标幺化电流和参数 */
-    foc_scalar_t inv_v_base;       /* 电压基准值的倒数，单位 V，用于标幺化电压和参数 */
+    uint8_t pole_pairs;      /* 极对数，用于机械角速度与电角速度换算 */
+    foc_scalar_t inv_i_base; /* 电流基准值的倒数，单位 A，用于标幺化电流和参数 */
+    foc_scalar_t inv_v_base; /* 电压基准值的倒数，单位 V，用于标幺化电压和参数 */
 } motor_profile_t;
 
 typedef struct {
@@ -38,8 +36,7 @@ typedef struct {
 typedef struct {
     /* 传感器与采样通道参数 */
     uint16_t encoder_cpr;          /* 编码器每机械转一圈的计数数，含线数换算后的最终分辨率 */
-    int8_t encoder_direction;      /* 编码器计数方向，通常取 1 或 -1，用于统一角度正方向 */
-    foc_angle_t electrical_offset; /* 传感器对应的电角度零点偏移，可与电机对齐结果绑定 */
+    int8_t angle_direction;        /* 机械角到电角度换算方向，通常取 1 或 -1 */
     foc_scalar_t current_a_offset; /* A 相电流 ADC 零偏码值，用于去除运放与 ADC 的直流偏置 */
     foc_scalar_t current_b_offset; /* B 相电流 ADC 零偏码值，用于去除运放与 ADC 的直流偏置 */
     foc_scalar_t current_c_offset; /* C 相电流 ADC 零偏码值，三相采样场景下用于去偏 */

@@ -54,6 +54,14 @@ typedef struct {
 } foc_angle_sample_t;
 
 typedef struct {
+    /* 角度提供器返回的机械角估计 */
+    foc_angle_t mechanical_angle;  /* 对齐到目标时刻后的机械角度结果 */
+    foc_scalar_t mechanical_speed; /* 与该角度配套的机械角速度估计 */
+    uint32_t angle_tick_us;        /* 当前角度样本自身对应的时间戳 */
+    foc_angle_status_t status;     /* 当前机械角是否可消费 */
+} foc_mechanical_angle_sample_t;
+
+typedef struct {
     /* 运行模式和故障状态 */
     foc_mode_t mode;
     uint32_t fault_mask;
@@ -62,6 +70,8 @@ typedef struct {
     foc_angle_t electrical_angle;    /* 当前电流环实际使用的电角度 */
     foc_scalar_t electrical_speed;   /* 当前电流环实际使用的电角速度 */
     foc_angle_status_t angle_status; /* 当前电流环使用的角度状态 */
+    foc_angle_t electrical_zero_offset; /* 运行时电角度零位偏移 */
+    bool electrical_zero_valid;         /* 运行时电角度零位是否已经标定 */
     foc_scalar_t bus_voltage_pu;     /* 当前电流环使用的母线电压标幺值 */
     uint32_t current_sample_tick_us; /* 电流与母线电压样本的同步时间戳 */
     uint32_t angle_sample_tick_us;   /* 角度样本自身的时间戳，可能早于或等于 current_sample_tick_us */

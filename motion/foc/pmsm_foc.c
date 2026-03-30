@@ -4,7 +4,7 @@
  * @Author       : Codex
  * @Date         : 2026-03-16
  * @LastEditors  : lxf_zjnb@qq.com
- * @LastEditTime : 2026-03-23 16:44:28
+ * @LastEditTime : 2026-03-30 13:08:16
  * @Brief        : PMSM FOC 控制器骨架
  */
 
@@ -26,6 +26,24 @@
 static bool _pmsm_foc_profile_ready(const pmsm_foc_t *foc);
 
 /**
+ * @brief  角度归一化到 [0, 360)
+ * @param  angle: 输入角度
+ * @return 归一化后的角度
+ */
+static foc_angle_t _pmsm_foc_wrap_angle_deg(foc_angle_t angle);
+
+/**
+ * @brief  将机械角样本转换为电角度样本
+ * @param  foc: 控制器对象
+ * @param  mechanical_sample: 机械角样本
+ * @param  electrical_sample: 输出电角度样本
+ * @return true=转换成功, false=转换失败
+ */
+static bool _pmsm_foc_convert_mechanical_to_electrical(const pmsm_foc_t *foc,
+                                                       const foc_mechanical_angle_sample_t *mechanical_sample,
+                                                       foc_angle_sample_t *electrical_sample);
+
+/**
  * @brief  关闭功率输出并回到安全占空比
  * @param  foc: 控制器对象
  * @return 无
@@ -43,9 +61,63 @@ static bool _pmsm_foc_profile_ready(const pmsm_foc_t *foc)
            && sensor_profile_is_valid(foc->sensor_profile) && foc_ctrl_cfg_is_valid(foc->ctrl_cfg);
 }
 
+static foc_angle_t _pmsm_foc_wrap_angle_deg(foc_angle_t angle)
+{
+    while (angle >= 360.0f) {
+        angle -= 360.0f;
+    }
+    while (angle < 0.0f) {
+        angle += 360.0f;
+    }
+
+    return angle;
+}
+
+static bool _pmsm_foc_convert_mechanical_to_electrical(const pmsm_foc_t *foc,
+                                                       const foc_mechanical_angle_sample_t *mechanical_sample,
+                                                       foc_angle_sample_t *electrical_sample)
+{
+    foc_scalar_t direction = 1.0f;
+
+    if ((foc == NULL) || (mechanical_sample == NULL) || (electrical_sample == NULL)) {
+        return false;
+    }
+    if ((foc->motor_profile == NULL) || (foc->sensor_profile == NULL)) {
+        return false;
+    }
+
+    memset(electrical_sample, 0, sizeof(*electrical_sample));
+    electrical_sample->angle_tick_us = mechanical_sample->angle_tick_us;
+    electrical_sample->status = mechanical_sample->status;
+
+    if (!foc->runtime.electrical_zero_valid) {
+        electrical_sample->status = FOC_ANGLE_STATUS_INVALID;
+        return false;
+    }
+    if ((mechanical_sample->status != FOC_ANGLE_STATUS_VALID)
+        && (mechanical_sample->status != FOC_ANGLE_STATUS_PREDICTED)
+        && (mechanical_sample->status != FOC_ANGLE_STATUS_ESTIMATED)) {
+        electrical_sample->status = FOC_ANGLE_STATUS_INVALID;
+        return false;
+    }
+
+    direction = (foc_scalar_t)foc->sensor_profile->angle_direction;
+    electrical_sample->electrical_angle = _pmsm_foc_wrap_angle_deg(mechanical_sample->mechanical_angle * direction
+                                                                       * (foc_scalar_t)foc->motor_profile->pole_pairs
+                                                                   + foc->runtime.electrical_zero_offset);
+    electrical_sample->electrical_speed =
+        mechanical_sample->mechanical_speed * direction * (foc_scalar_t)foc->motor_profile->pole_pairs;
+
+    return true;
+}
+
 static void _pmsm_foc_disable_output(pmsm_foc_t *foc)
 {
     foc_pwm_duty_t duty = { 0 };
+
+    if (foc == NULL) {
+        return;
+    }
 
     /* 停机时先回到 50% 占空比中点 */
     duty.duty_a = 0.5f;
@@ -53,10 +125,17 @@ static void _pmsm_foc_disable_output(pmsm_foc_t *foc)
     duty.duty_c = 0.5f;
     duty.sector = 0U;
 
-    if ((foc != NULL) && (foc->hal_ops.write_pwm_duty != NULL)) {
+    /* 输出被拉回安全态时，运行时显示值也同步回到当前真实输出。 */
+    foc->runtime.voltage_cmd_dq.d = 0.0f;
+    foc->runtime.voltage_cmd_dq.q = 0.0f;
+    foc->runtime.voltage_cmd_ab.alpha = 0.0f;
+    foc->runtime.voltage_cmd_ab.beta = 0.0f;
+    foc->runtime.pwm_duty = duty;
+
+    if (foc->hal_ops.write_pwm_duty != NULL) {
         foc->hal_ops.write_pwm_duty(foc->hal_user_data, &duty);
     }
-    if ((foc != NULL) && (foc->hal_ops.set_output_enable != NULL)) {
+    if (foc->hal_ops.set_output_enable != NULL) {
         foc->hal_ops.set_output_enable(foc->hal_user_data, false);
     }
 }
@@ -96,10 +175,13 @@ bool pmsm_foc_init(pmsm_foc_t *foc,
     foc->hal_ops = *hal_ops;
     foc->hal_user_data = hal_user_data;
     foc->runtime.mode = FOC_MODE_STOP;
+    foc->runtime.electrical_zero_offset = 0.0f;
+    foc->runtime.electrical_zero_valid = false;
+    foc->runtime.angle_status = FOC_ANGLE_STATUS_NONE;
 
     /* 初始化各控制环 */
     foc_pi_init(&foc->id_pi, ctrl_cfg->id_kp_pu, ctrl_cfg->id_ki_pu);
-    foc_pi_init(&foc->id_pi, ctrl_cfg->id_kp_pu, ctrl_cfg->id_ki_pu);
+    foc_pi_init(&foc->iq_pi, ctrl_cfg->iq_kp_pu, ctrl_cfg->iq_ki_pu);
     // foc_pi_init(&foc->speed_pi,
     //             ctrl_cfg->speed_kp * (foc->scale.current_to_pu / foc->scale.speed_to_pu),
     //             ctrl_cfg->speed_ki * (foc->scale.current_to_pu / foc->scale.speed_to_pu));
@@ -137,6 +219,13 @@ void pmsm_foc_start(pmsm_foc_t *foc, foc_mode_t mode)
         foc->runtime.mode = FOC_MODE_FAULT;
         foc->runtime.fault_mask |= FOC_FAULT_INVALID_PROFILE;
         FOC_LOG_ERROR("pmsm_foc_start profile invalid\r\n");
+        _pmsm_foc_disable_output(foc);
+        return;
+    }
+    if (((mode == FOC_MODE_CURRENT) || (mode == FOC_MODE_SPEED)) && !foc->runtime.electrical_zero_valid) {
+        FOC_LOG_ERROR("pmsm_foc_start electrical zero invalid\r\n");
+        foc->runtime.angle_status = FOC_ANGLE_STATUS_INVALID;
+        foc->runtime.mode = FOC_MODE_STOP;
         _pmsm_foc_disable_output(foc);
         return;
     }
@@ -198,6 +287,50 @@ void pmsm_foc_set_speed_ref(pmsm_foc_t *foc, foc_scalar_t speed_ref)
     foc->runtime.speed_ref = speed_ref;
 }
 
+void pmsm_foc_set_electrical_zero_offset(pmsm_foc_t *foc, foc_angle_t electrical_zero_offset)
+{
+    if (foc == NULL) {
+        return;
+    }
+
+    foc->runtime.electrical_zero_offset = _pmsm_foc_wrap_angle_deg(electrical_zero_offset);
+    foc->runtime.electrical_zero_valid = true;
+}
+
+void pmsm_foc_clear_electrical_zero_offset(pmsm_foc_t *foc)
+{
+    if (foc == NULL) {
+        return;
+    }
+
+    foc->runtime.electrical_zero_offset = 0.0f;
+    foc->runtime.electrical_zero_valid = false;
+    foc->runtime.angle_status = FOC_ANGLE_STATUS_NONE;
+}
+
+bool pmsm_foc_apply_voltage_vector(pmsm_foc_t *foc,
+                                   const foc_dq_t *voltage_cmd_dq,
+                                   foc_angle_t electrical_angle,
+                                   bool enable_output)
+{
+    if ((foc == NULL) || (voltage_cmd_dq == NULL) || (foc->hal_ops.write_pwm_duty == NULL)) {
+        return false;
+    }
+
+    foc->runtime.electrical_angle = electrical_angle;
+    foc->runtime.voltage_cmd_dq = *voltage_cmd_dq;
+    foc_inv_park(&foc->runtime.voltage_cmd_ab, &foc->runtime.voltage_cmd_dq, electrical_angle);
+    foc_svpwm_run(&foc->runtime.pwm_duty, &foc->runtime.voltage_cmd_ab);
+
+    if (enable_output && (foc->hal_ops.set_output_enable != NULL)) {
+        foc->hal_ops.set_output_enable(foc->hal_user_data, true);
+    }
+
+    foc->hal_ops.write_pwm_duty(foc->hal_user_data, &foc->runtime.pwm_duty);
+
+    return true;
+}
+
 /**
  * @brief  执行一次电流环控制
  * @param  foc: 控制器对象
@@ -206,13 +339,13 @@ void pmsm_foc_set_speed_ref(pmsm_foc_t *foc, foc_scalar_t speed_ref)
 bool pmsm_foc_current_loop(pmsm_foc_t *foc)
 {
     foc_current_loop_sample_t current_sample = { 0 };
+    foc_mechanical_angle_sample_t mechanical_sample = { 0 };
     foc_angle_sample_t angle_sample = { 0 };
     foc_abc_t phase_current = { 0 };
-    foc_scalar_t bus_voltage_pu = 0.0f;
     foc_ab_t current_ab;
 
     if ((foc == NULL) || (foc->hal_ops.read_current_loop_sample == NULL)
-        || (foc->hal_ops.get_electrical_angle == NULL)) {
+        || (foc->hal_ops.get_mechanical_angle == NULL)) {
         FOC_LOG_ERROR("pmsm_foc_current_loop hal invalid\r\n");
         return false;
     }
@@ -223,7 +356,11 @@ bool pmsm_foc_current_loop(pmsm_foc_t *foc)
 
     /* 电流样本与 PWM 采样同步，角度可来自异步传感器或观测器 */
     foc->hal_ops.read_current_loop_sample(foc->hal_user_data, &current_sample);
-    foc->hal_ops.get_electrical_angle(foc->hal_user_data, current_sample.sample_tick_us, &angle_sample);
+    foc->hal_ops.get_mechanical_angle(foc->hal_user_data, current_sample.sample_tick_us, &mechanical_sample);
+    if (!_pmsm_foc_convert_mechanical_to_electrical(foc, &mechanical_sample, &angle_sample)) {
+        foc->runtime.angle_status = FOC_ANGLE_STATUS_INVALID;
+        return false;
+    }
 
     /* 电流环主链路：原始电流值 -> 标幺化 -> Clarke/Park -> PI -> 反变换 -> SVPWM */
     /* 1. 计算三相电流的标幺值以及母线电压的标幺值 */
@@ -244,17 +381,17 @@ bool pmsm_foc_current_loop(pmsm_foc_t *foc)
     foc->runtime.angle_status = angle_sample.status;
 
     /* 2. 将电流的标幺值转换到dq轴 */
-//    foc_clarke(&current_ab, &phase_current);
-//    foc_park(&foc->runtime.current_meas_dq, &current_ab, foc->runtime.electrical_angle);
+    //    foc_clarke(&current_ab, &phase_current);
+    //    foc_park(&foc->runtime.current_meas_dq, &current_ab, foc->runtime.electrical_angle);
 
-//    foc->runtime.voltage_cmd_dq.d =
-//        foc_pi_run(&foc->id_pi, foc->runtime.current_ref_dq.d, foc->runtime.current_meas_dq.d);
-//    foc->runtime.voltage_cmd_dq.q =
-//        foc_pi_run(&foc->iq_pi, foc->runtime.current_ref_dq.q, foc->runtime.current_meas_dq.q);
+    //    foc->runtime.voltage_cmd_dq.d =
+    //        foc_pi_run(&foc->id_pi, foc->runtime.current_ref_dq.d, foc->runtime.current_meas_dq.d);
+    //    foc->runtime.voltage_cmd_dq.q =
+    //        foc_pi_run(&foc->iq_pi, foc->runtime.current_ref_dq.q, foc->runtime.current_meas_dq.q);
 
     foc->runtime.voltage_cmd_dq.d = 0;
-    foc->runtime.voltage_cmd_dq.q = 0.1;
-    
+    foc->runtime.voltage_cmd_dq.q = 0.12;
+
     foc_inv_park(&foc->runtime.voltage_cmd_ab, &foc->runtime.voltage_cmd_dq, foc->runtime.electrical_angle);
     foc_svpwm_run(&foc->runtime.pwm_duty, &foc->runtime.voltage_cmd_ab);
 
