@@ -38,7 +38,7 @@ static int32_t analog_open(driver_t **pdrv)
     analog_describe_t *pdesc = NULL;
     int32_t err = E_WRONG_ARGS;
 
-    ASSERT(pdrv);
+    assert(pdrv);
     pdesc = container_of(pdrv, device_t, pdrv)->pdesc;
     if (pdesc) {
         err = E_OK;
@@ -54,7 +54,7 @@ static void analog_close(driver_t **pdrv)
 {
     analog_describe_t *pdesc = NULL;
 
-    ASSERT(pdrv);
+    assert(pdrv);
     pdesc = container_of(pdrv, device_t, pdrv)->pdesc;
     if (pdesc && pdesc->ops.deinit) {
         pdesc->ops.deinit();
@@ -66,7 +66,7 @@ static int32_t analog_irq_handler(driver_t **pdrv, uint32_t irq, void *args, uin
     analog_describe_t *pdesc = NULL;
     int32_t err = E_OK;
 
-    ASSERT(pdrv);
+    assert(pdrv);
     pdesc = container_of(pdrv, device_t, pdrv)->pdesc;
     if (pdesc && pdesc->ops.irq_handler) {
         err = pdesc->ops.irq_handler(irq, args, length);
@@ -133,7 +133,7 @@ static int32_t analog_ioctl(driver_t **pdrv, uint32_t cmd, void *args)
     int32_t err = E_WRONG_ARGS;
     int32_t (*cb)(analog_describe_t *, void *) = NULL;
 
-    ASSERT(pdrv);
+    assert(pdrv);
     pdesc = container_of(pdrv, device_t, pdrv)->pdesc;
     do {
         if (!pdesc) {

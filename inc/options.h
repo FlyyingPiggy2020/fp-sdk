@@ -4,7 +4,7 @@
  * @Author       : lxf
  * @Date         : 2025-08-04 11:53:56
  * @LastEditors  : lxf_zjnb@qq.com
- * @LastEditTime : 2025-12-13 09:11:57
+ * @LastEditTime : 2026-03-20 13:52:10
  * @Brief        : 系统配置选项入口文件，包含系统API封装、内存管理算法选择、调试日志接口等
  */
 
@@ -36,12 +36,11 @@ extern "C" {
 // 0: 用户自定义动态内存管理算法
 // 1: 系统默认动态内存管理算法heap4
 #if (0 == CONFIG_HEAP_TYPE)
-#ifndef __malloc
-#define __malloc(size) heap_malloc(size)
+#if !defined(__MALLOC_FREE_CHECKED__)
+#define __MALLOC_FREE_CHECKED__
+#if !defined(__malloc) || !defined(__free)
+#error "Error: CONFIG_HEAP_TYPE is set to 0 (user-defined), but __malloc or __free is not defined. Please define these functions or change CONFIG_HEAP_TYPE to 1."
 #endif
-
-#ifndef __free
-#define __free(ptr) heap_free(ptr)
 #endif
 
 #elif (1 == CONFIG_HEAP_TYPE)

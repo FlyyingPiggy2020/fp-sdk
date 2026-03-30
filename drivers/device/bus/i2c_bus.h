@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024 by Lu Xianfan.
- * @FilePath     : i2c_bus.h
+ * @FilePath     : components/fp-sdk/drivers/device/bus/i2c_bus.h
  * @Author       : lxf
  * @Date         : 2024-12-08 11:54:38
  * @LastEditors  : FlyyingPiggy2020 154562451@qq.com
