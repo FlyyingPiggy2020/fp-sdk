@@ -67,16 +67,16 @@ typedef struct {
     uint32_t fault_mask;
 
     /* 关键观测量与给定量 */
-    foc_angle_t electrical_angle;    /* 当前电流环实际使用的电角度 */
-    foc_scalar_t electrical_speed;   /* 当前电流环实际使用的电角速度 */
-    foc_angle_status_t angle_status; /* 当前电流环使用的角度状态 */
+    foc_angle_t electrical_angle;       /* 当前电流环实际使用的电角度 */
+    foc_scalar_t electrical_speed;      /* 当前电流环实际使用的电角速度 */
+    foc_angle_status_t angle_status;    /* 当前电流环使用的角度状态 */
     foc_angle_t electrical_zero_offset; /* 运行时电角度零位偏移 */
     bool electrical_zero_valid;         /* 运行时电角度零位是否已经标定 */
-    foc_scalar_t bus_voltage_pu;     /* 当前电流环使用的母线电压标幺值 */
-    uint32_t current_sample_tick_us; /* 电流与母线电压样本的同步时间戳 */
-    uint32_t angle_sample_tick_us;   /* 角度样本自身的时间戳，可能早于或等于 current_sample_tick_us */
-    foc_scalar_t speed_ref;          /* 速度参考标幺值 */
-    foc_scalar_t speed_feedback;     /* 速度反馈标幺值 */
+    foc_scalar_t bus_voltage_pu;        /* 当前电流环使用的母线电压标幺值 */
+    uint32_t current_sample_tick_us;    /* 电流与母线电压样本的同步时间戳 */
+    uint32_t angle_sample_tick_us;      /* 角度样本自身的时间戳，可能早于或等于 current_sample_tick_us */
+    foc_scalar_t speed_ref;             /* 速度参考标幺值 */
+    foc_scalar_t speed_feedback;        /* 速度反馈标幺值 */
 
     /* 电流环与调制链路中间量 */
     foc_dq_t current_ref_dq;  /* d-q 电流参考标幺值 */

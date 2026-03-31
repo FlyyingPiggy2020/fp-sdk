@@ -127,10 +127,8 @@ int32_t pixel_framebuffer_mark_dirty(struct pixel_framebuffer *fb);
  * @param  len: 数据长度
  * @return E_OK=成功, 其他=失败
  */
-int32_t pixel_framebuffer_write_region(struct pixel_framebuffer *fb,
-                                       uint32_t offset,
-                                       const uint8_t *data,
-                                       uint32_t len);
+int32_t
+pixel_framebuffer_write_region(struct pixel_framebuffer *fb, uint32_t offset, const uint8_t *data, uint32_t len);
 
 /**
  * @brief  Set one pixel in back buffer
@@ -139,9 +137,7 @@ int32_t pixel_framebuffer_write_region(struct pixel_framebuffer *fb,
  * @param  color: RGB 颜色值
  * @return E_OK=成功, 其他=失败
  */
-int32_t pixel_framebuffer_set_pixel(struct pixel_framebuffer *fb,
-                                    uint16_t index,
-                                    struct pixel_framebuffer_color color);
+int32_t pixel_framebuffer_set_pixel(struct pixel_framebuffer *fb, uint16_t index, struct pixel_framebuffer_color color);
 
 /**
  * @brief  Fill one pixel range in back buffer

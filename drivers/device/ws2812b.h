@@ -90,12 +90,12 @@ struct ws2812b_describe {
         int32_t (*start_transfer)(uint16_t *buf, uint32_t len);
         int32_t (*stop_transfer)(void);
         bool (*is_busy)(void);
-    } ops;                   /* 板级硬件操作集合。 */
+    } ops; /* 板级硬件操作集合。 */
 
     struct {
         uint16_t *encode_buf;
         uint32_t encode_len;
-    } priv;                  /* 驱动私有编码缓存。 */
+    } priv; /* 驱动私有编码缓存。 */
 };
 /*---------- variable prototype ----------*/
 /*---------- function prototype ----------*/

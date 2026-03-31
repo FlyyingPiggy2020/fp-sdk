@@ -227,7 +227,8 @@ static int32_t ws2812b_ioctl(driver_t **pdrv, uint32_t cmd, void *args)
             break;
         }
 
-        cb = (int32_t (*)(struct ws2812b_describe *, void *))protocol_callback_find(cmd, ioctl_cbs, ARRAY_SIZE(ioctl_cbs));
+        cb = (int32_t (*)(struct ws2812b_describe *, void *))protocol_callback_find(
+            cmd, ioctl_cbs, ARRAY_SIZE(ioctl_cbs));
         if (!cb) {
             break;
         }

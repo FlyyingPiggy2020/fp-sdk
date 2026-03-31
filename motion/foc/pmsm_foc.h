@@ -120,8 +120,10 @@ void pmsm_foc_clear_electrical_zero_offset(pmsm_foc_t *foc);
  * @param  enable_output: true=输出前使能功率级, false=保持当前使能状态
  * @return true=执行成功, false=执行失败
  */
-bool pmsm_foc_apply_voltage_vector(
-    pmsm_foc_t *foc, const foc_dq_t *voltage_cmd_dq, foc_angle_t electrical_angle, bool enable_output);
+bool pmsm_foc_apply_voltage_vector(pmsm_foc_t *foc,
+                                   const foc_dq_t *voltage_cmd_dq,
+                                   foc_angle_t electrical_angle,
+                                   bool enable_output);
 
 /**
  * @brief  执行一次电流环控制

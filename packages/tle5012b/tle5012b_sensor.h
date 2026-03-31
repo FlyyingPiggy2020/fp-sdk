@@ -18,9 +18,9 @@ extern "C" {
 #include "device.h"
 #include <stdint.h>
 /*---------- macro ----------*/
-#define TLE5012B_E_SYSTEM              (-101)
-#define TLE5012B_E_INTERFACE           (-102)
-#define TLE5012B_E_INVALID_ANGLE       (-103)
+#define TLE5012B_E_SYSTEM        (-101)
+#define TLE5012B_E_INTERFACE     (-102)
+#define TLE5012B_E_INVALID_ANGLE (-103)
 /*---------- type define ----------*/
 struct tle5012b_angle_data {
     float mechanical_angle_deg;

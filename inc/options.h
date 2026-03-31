@@ -39,7 +39,8 @@ extern "C" {
 #if !defined(__MALLOC_FREE_CHECKED__)
 #define __MALLOC_FREE_CHECKED__
 #if !defined(__malloc) || !defined(__free)
-#error "Error: CONFIG_HEAP_TYPE is set to 0 (user-defined), but __malloc or __free is not defined. Please define these functions or change CONFIG_HEAP_TYPE to 1."
+#error \
+    "Error: CONFIG_HEAP_TYPE is set to 0 (user-defined), but __malloc or __free is not defined. Please define these functions or change CONFIG_HEAP_TYPE to 1."
 #endif
 #endif
 

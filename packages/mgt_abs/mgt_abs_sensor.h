@@ -64,7 +64,7 @@ extern "C" {
 #define MGT_ABS_RX_BUF_SIZE         32
 
 // MGT-ABS 离线检测配置
-#define MGT_ABS_OFFLINE_THRESHOLD   20  // 离线判定超时次数
+#define MGT_ABS_OFFLINE_THRESHOLD   20 // 离线判定超时次数
 #define MGT_ABS_TIMEOUT_INTERVAL_MS 50 // timeout_count增加的时间间隔(ms)
 
 /*---------- type define ----------*/
@@ -79,7 +79,7 @@ struct mgt_abs_sensor {
     bool data_valid;                     // 数据是否有效 (CRC校验通过)
     uint8_t rx_buf[MGT_ABS_RX_BUF_SIZE]; // 接收缓冲区
     uint64_t tick_last;                  // 上次发送命令时间
-    uint64_t tick_timeout;                // 上次timeout_count增加时间
+    uint64_t tick_timeout;               // 上次timeout_count增加时间
     uint16_t timeout_count;              // 连续超时计数
     bool is_online;                      // 在线状态
     uint8_t calib_cmd_count;             // 校准命令计数

@@ -358,7 +358,8 @@ msgbus_service_t msgbus_service_find(message_bus_t bus, const char *name)
     return _msgbus_find_service(bus, name);
 }
 
-int32_t msgbus_service_call(msgbus_service_t service, const void *req, uint32_t req_size, void *resp, uint32_t *resp_size)
+int32_t
+msgbus_service_call(msgbus_service_t service, const void *req, uint32_t req_size, void *resp, uint32_t *resp_size)
 {
     if ((service == NULL) || (req == NULL) || (req_size == 0U)) {
         return -MSGBUS_ERR_INVALID_ARGS;
