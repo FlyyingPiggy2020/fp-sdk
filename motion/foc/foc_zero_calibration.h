@@ -36,13 +36,6 @@ bool foc_zero_calibration_apply_alignment_vector(pmsm_foc_t *foc,
                                                  bool enable_output);
 
 /**
- * @brief  判断机械角样本是否可用于零位标定
- * @param  sample: 机械角样本
- * @return true=可用, false=不可用
- */
-bool foc_zero_calibration_is_mechanical_sample_valid(const foc_mechanical_angle_sample_t *sample);
-
-/**
  * @brief  更新机械角平均值
  * @param  current_avg_deg: 当前平均值
  * @param  sample_count: 当前已累计样本数

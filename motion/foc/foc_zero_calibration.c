@@ -47,16 +47,6 @@ bool foc_zero_calibration_apply_alignment_vector(pmsm_foc_t *foc,
     return pmsm_foc_apply_voltage_vector(foc, &voltage_cmd_dq, target_angle_deg, enable_output);
 }
 
-bool foc_zero_calibration_is_mechanical_sample_valid(const foc_mechanical_angle_sample_t *sample)
-{
-    if (sample == NULL) {
-        return false;
-    }
-
-    return (sample->status == FOC_ANGLE_STATUS_VALID) || (sample->status == FOC_ANGLE_STATUS_PREDICTED)
-           || (sample->status == FOC_ANGLE_STATUS_ESTIMATED);
-}
-
 foc_angle_t
 foc_zero_calibration_update_average(foc_angle_t current_avg_deg, uint16_t sample_count, foc_angle_t sample_deg)
 {

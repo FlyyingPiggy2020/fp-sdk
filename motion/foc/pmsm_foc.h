@@ -126,6 +126,13 @@ bool pmsm_foc_apply_voltage_vector(pmsm_foc_t *foc,
                                    bool enable_output);
 
 /**
+ * @brief  更新一次运行时电流观测量
+ * @param  foc: 控制器对象
+ * @return true=执行成功, false=执行失败
+ */
+bool pmsm_foc_update_current_feedback(pmsm_foc_t *foc);
+
+/**
  * @brief  执行一次电流环控制
  * @param  foc: 控制器对象
  * @return true=执行成功, false=执行失败
