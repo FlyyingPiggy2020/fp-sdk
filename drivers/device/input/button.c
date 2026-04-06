@@ -276,6 +276,7 @@ static void _button_detect_one(button_describe_t *pdesc, uint32_t key_id)
                 if (state->long_count < state->long_time) {
                     state->long_count++;
                     if (state->long_count == state->long_time) {
+                        state->state = 2U;
                         _button_emit_event(pdesc, BUTTON_EVENT_CODE(key_id, BUTTON_EVENT_LONG));
                     }
                 } else if (state->repeat_speed > 0U) {
@@ -295,7 +296,10 @@ static void _button_detect_one(button_describe_t *pdesc, uint32_t key_id)
         } else {
             if (state->state == 1U) {
                 state->state = 0U;
-                _button_emit_event(pdesc, BUTTON_EVENT_CODE(key_id, BUTTON_EVENT_UP));
+                _button_emit_event(pdesc, BUTTON_EVENT_CODE(key_id, BUTTON_EVENT_SHORT_UP));
+            } else if (state->state == 2U) {
+                state->state = 0U;
+                _button_emit_event(pdesc, BUTTON_EVENT_CODE(key_id, BUTTON_EVENT_LONG_UP));
             }
         }
 

@@ -61,14 +61,15 @@ extern "C" {
 #define IOCTL_BUTTON_SET_PARAM         (IOCTL_USER_START + 0x04)
 #define IOCTL_BUTTON_SET_EVENT_CB      (IOCTL_USER_START + 0x05)
 
-#define BUTTON_EVENT_CODE(key_id, evt) ((uint32_t)((key_id) * 3U + (uint32_t)(evt)))
+#define BUTTON_EVENT_CODE(key_id, evt) ((uint32_t)((key_id) * 4U + (uint32_t)(evt)))
 #define BUTTON_EVENT_NONE_CODE         (0U)
 /*---------- type define ----------*/
 typedef enum {
     BUTTON_EVENT_NONE = 0,
     BUTTON_EVENT_DOWN = 1,
-    BUTTON_EVENT_UP = 2,
+    BUTTON_EVENT_SHORT_UP = 2,
     BUTTON_EVENT_LONG = 3,
+    BUTTON_EVENT_LONG_UP = 4,
 } button_event_t;
 
 struct button_key_cfg {
