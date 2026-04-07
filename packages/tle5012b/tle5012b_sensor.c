@@ -16,6 +16,7 @@
 /*---------- macro ----------*/
 #define TLE5012B_REG_STAT             0x00U
 #define TLE5012B_REG_AVAL             0x02U
+#define TLE5012B_REG_ASPD             0x03U
 #define TLE5012B_CMD_READ_MASK        0x8000U
 #define TLE5012B_CMD_WORD_COUNT_ONE   0x0001U
 #define TLE5012B_SEGMENT_DELAY_US     1U
@@ -27,7 +28,11 @@
 #define TLE5012B_SAFETY_STAT_ACC_MASK 0x2000U
 #define TLE5012B_SAFETY_STAT_ANG_MASK 0x1000U
 #define TLE5012B_ANGLE_RAW_MASK       0x7FFFU
+#define TLE5012B_SPEED_RAW_MASK       0x7FFFU
+#define TLE5012B_SPEED_SIGN_MASK      0x4000U
+#define TLE5012B_SPEED_SIGN_EXT_MASK  0x8000U
 #define TLE5012B_ANGLE_FULL_SCALE     32768.0f
+#define TLE5012B_SPEED_UPDATE_TIME_S  42.7e-6f
 #define TLE5012B_CRC8_SEED            0xFFU
 #define TLE5012B_CRC8_XOR_OUT         0xFFU
 /*---------- type define ----------*/
@@ -226,6 +231,38 @@ int32_t tle5012b_sensor_read_angle(struct tle5012b_sensor *sensor, struct tle501
 
     angle_data->mechanical_angle_deg =
         ((float)(raw_word & TLE5012B_ANGLE_RAW_MASK) * 360.0f) / TLE5012B_ANGLE_FULL_SCALE;
+
+    return read_ret;
+}
+
+int32_t tle5012b_sensor_read_speed(struct tle5012b_sensor *sensor, struct tle5012b_speed_data *speed_data)
+{
+    uint16_t raw_word = 0U;
+    uint16_t safety_word = 0U;
+    int16_t speed_raw = 0;
+    int32_t read_ret = E_OK;
+
+    if ((sensor == NULL) || (speed_data == NULL)) {
+        return E_WRONG_ARGS;
+    }
+
+    memset(speed_data, 0, sizeof(*speed_data));
+
+    read_ret = _tle5012b_sensor_read_reg16(sensor, TLE5012B_REG_ASPD, &raw_word, &safety_word);
+    if (read_ret != E_OK) {
+        return read_ret;
+    }
+
+    (void)safety_word;
+
+    speed_raw = (int16_t)(raw_word & TLE5012B_SPEED_RAW_MASK);
+    if ((raw_word & TLE5012B_SPEED_SIGN_MASK) != 0U) {
+        speed_raw |= (int16_t)TLE5012B_SPEED_SIGN_EXT_MASK;
+    }
+
+    /* E1000 默认关闭 prediction，ANG_SPD 表示跨两个更新周期的角度差值。 */
+    speed_data->mechanical_speed_deg_s =
+        ((float)speed_raw * 360.0f) / (TLE5012B_ANGLE_FULL_SCALE * (2.0f * TLE5012B_SPEED_UPDATE_TIME_S));
 
     return read_ret;
 }

@@ -4,7 +4,7 @@
  * @Author       : lxf
  * @Date         : 2026-04-02 16:20:00
  * @LastEditors  : lxf_zjnb@qq.com
- * @LastEditTime : 2026-04-06 09:28:17
+ * @LastEditTime : 2026-04-06 13:37:38
  * @Brief        : FOC 板级端口接口
  */
 
@@ -21,6 +21,7 @@ struct foc_fast_sample {
     foc_scalar_t ia;
     foc_scalar_t ib;
     foc_angle_t mech_angle_deg;
+    foc_scalar_t angle_speed_rad_s;
 };
 
 struct foc_mechanical_sample {

@@ -4,7 +4,7 @@
  * @Author       : lxf
  * @Date         : 2026-04-02 16:20:00
  * @LastEditors  : lxf_zjnb@qq.com
- * @LastEditTime : 2026-04-06 09:37:24
+ * @LastEditTime : 2026-04-07 13:40:00
  * @Brief        : 扁平 FOC 核心实现
  */
 
@@ -27,7 +27,7 @@ struct foc_frame {
     struct foc_ab voltage_ab_pu;
     struct foc_pwm_out pwm;
     foc_angle_t electrical_angle_deg;
-    foc_scalar_t electrical_speed_deg_s;
+    foc_scalar_t electrical_speed_deg_pu;
 };
 /*---------- variable prototype ----------*/
 static bool _foc_config_valid(const struct foc_config *config, const struct foc_port *port);
@@ -54,6 +54,9 @@ static bool _foc_config_valid(const struct foc_config *config, const struct foc_
         return false;
     }
 
+    if (config->motor.speed_base_omega == 0.0f) {
+        return false;
+    }
     return true;
 }
 
@@ -213,6 +216,7 @@ bool foc_run_fast(struct foc_motor *motor)
     struct foc_align_state *align = NULL;
     foc_angle_t mechanical_angle_deg = 0.0f;
     foc_scalar_t voltage_limit = 0.0f;
+    foc_scalar_t v_back_emf;
     bool run_result = true;
     uint64_t now_ms = 0;
 
@@ -238,16 +242,17 @@ bool foc_run_fast(struct foc_motor *motor)
 
     /* 读取电流、角度的真实值 */
     if (!motor->port->read_fast_sample(motor->port_ctx, &frame.sample)) {
-        // TODO 读取参数失败
+        // TODO 电机保护
         return false;
     }
 
     /* 机械角转电角度 */
     mechanical_angle_deg = frame.sample.mech_angle_deg - motor->state.electrical_zero_offset_deg;
     frame.electrical_angle_deg = _foc_mech_to_electrical_deg(motor, mechanical_angle_deg);
-    /* AB相电流转标幺值 */
+    /* AB相电流转标幺值 速度标幺值*/
     frame.read_abc_pu.a = frame.sample.ia / motor->cfg->motor.current_base_a;
     frame.read_abc_pu.b = frame.sample.ib / motor->cfg->motor.current_base_a;
+    frame.electrical_speed_deg_pu = frame.sample.angle_speed_rad_s / motor->cfg->motor.speed_base_omega;
     /* 将AB相电流转换到DQ坐标系 */
     foc_clarke(&frame.read_ab_pu, &frame.read_abc_pu);
     foc_park(&frame.read_dq_pu, &frame.read_ab_pu, frame.electrical_angle_deg);
@@ -285,13 +290,21 @@ bool foc_run_fast(struct foc_motor *motor)
             }
             break;
         case FOC_MODE_STOP:
+            break;
         case FOC_MODE_CURRENT:
         case FOC_MODE_SPEED:
             /* 输入PI控制器 */
             foc_pi_run(&motor->state.id_pi, motor->state.id_ref_pu, frame.read_dq_pu.d);
             foc_pi_run(&motor->state.iq_pi, motor->state.iq_ref_pu, frame.read_dq_pu.q);
-            frame.voltage_dq_pu.d = motor->state.id_pi.output;
-            frame.voltage_dq_pu.q = motor->state.iq_pi.output;
+            v_back_emf = frame.electrical_speed_deg_pu * motor->cfg->motor.phi_pu;
+            /* PI项+前馈项这里的电流用ref值 */
+            //-w_e*L_q*iq;
+            frame.voltage_dq_pu.d = motor->state.id_pi.output
+                                    - frame.electrical_speed_deg_pu * motor->state.iq_ref_pu * motor->cfg->motor.lq_pu;
+            // w_e*L_d*i_d+w_e*fb;
+            frame.voltage_dq_pu.q = motor->state.iq_pi.output
+                                    + frame.electrical_speed_deg_pu * motor->state.id_ref_pu * motor->cfg->motor.lq_pu
+                                    + frame.electrical_speed_deg_pu * motor->cfg->motor.phi_pu;
             foc_inv_park(&frame.voltage_ab_pu, &frame.voltage_dq_pu, frame.electrical_angle_deg);
             break;
         case FOC_MODE_FAULT:
@@ -310,6 +323,7 @@ bool foc_run_fast(struct foc_motor *motor)
     debug_sample->ib = frame.sample.ib;
     debug_sample->ic = -(frame.sample.ia + frame.sample.ib);
     debug_sample->mech_angle_deg = frame.sample.mech_angle_deg;
+    debug_sample->mech_speed_rad_s = frame.electrical_speed_deg_pu;
     debug_sample->electrical_angle_deg = motor->state.electrical_angle_deg;
     debug_sample->i_alpha_pu = frame.read_ab_pu.alpha;
     debug_sample->i_beta_pu = frame.read_ab_pu.beta;
@@ -324,7 +338,7 @@ bool foc_run_fast(struct foc_motor *motor)
     debug_sample->duty_c = frame.pwm.duty_c;
     debug_sample->speed_ref = motor->state.speed_ref;
     debug_sample->speed_feedback = motor->state.speed_feedback;
-
+    debug_sample->extra[0] = motor->state.iq_pi.integral;
     return true;
 }
 

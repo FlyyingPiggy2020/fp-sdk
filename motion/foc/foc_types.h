@@ -4,7 +4,7 @@
  * @Author       : lxf
  * @Date         : 2026-04-02 16:20:00
  * @LastEditors  : lxf_zjnb@qq.com
- * @LastEditTime : 2026-04-06 09:05:36
+ * @LastEditTime : 2026-04-07 10:20:00
  * @Brief        : FOC 公共类型定义
  */
 
@@ -37,10 +37,14 @@ enum foc_fault_mask {
 };
 
 struct foc_motor_cfg {
-    uint8_t pole_pairs;
-    int8_t angle_direction;
-    foc_scalar_t current_base_a; // 电流基值：安培
-    foc_scalar_t voltage_base_v; // 电压基值：伏特
+    uint8_t pole_pairs;            // 极对数
+    int8_t angle_direction;        // 方向
+    foc_scalar_t current_base_a;   // 电流基值：安培
+    foc_scalar_t voltage_base_v;   // 电压基值：伏特
+    foc_scalar_t speed_base_omega; // 速度基值：弧度每秒
+    foc_scalar_t ld_pu;            // 电感基值：亨利
+    foc_scalar_t lq_pu;            // 电感基值：亨利
+    foc_scalar_t phi_pu;           // 磁链：韦伯
 };
 
 struct foc_ctrl_cfg {
@@ -77,8 +81,8 @@ struct foc_align_state {
 };
 
 struct foc_state {
-    enum foc_mode mode;
-    uint32_t fault_mask;
+    enum foc_mode mode;  // 当前运行模式
+    uint32_t fault_mask; // 故障标志位，位域定义见 enum foc_fault_mask
 
     foc_scalar_t id_ref_pu;
     foc_scalar_t iq_ref_pu;
@@ -87,7 +91,7 @@ struct foc_state {
 
     foc_angle_t electrical_angle_deg;
     foc_scalar_t electrical_speed_deg_s;
-    foc_angle_t electrical_zero_offset_deg;
+    foc_angle_t electrical_zero_offset_deg; // 电角度零点偏移
 
     struct foc_pi id_pi;
     struct foc_pi iq_pi;
@@ -103,6 +107,7 @@ struct foc_debug_sample {
     foc_scalar_t ib;
     foc_scalar_t ic;
     foc_angle_t mech_angle_deg;
+    foc_scalar_t mech_speed_rad_s;
     foc_angle_t electrical_angle_deg;
 
     foc_scalar_t i_alpha_pu;
@@ -120,6 +125,8 @@ struct foc_debug_sample {
 
     foc_scalar_t speed_ref;
     foc_scalar_t speed_feedback;
+
+    foc_scalar_t extra[4]; // 预留字段
 };
 
 struct foc_port;
