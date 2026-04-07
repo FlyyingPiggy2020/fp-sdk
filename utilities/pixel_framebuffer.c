@@ -123,10 +123,7 @@ int32_t pixel_framebuffer_mark_dirty(struct pixel_framebuffer *fb)
     return E_OK;
 }
 
-int32_t pixel_framebuffer_write_region(struct pixel_framebuffer *fb,
-                                       uint32_t offset,
-                                       const uint8_t *data,
-                                       uint32_t len)
+int32_t pixel_framebuffer_write_region(struct pixel_framebuffer *fb, uint32_t offset, const uint8_t *data, uint32_t len)
 {
     if (!fb || !fb->back_buf || !data) {
         return E_POINT_NONE;
@@ -141,9 +138,7 @@ int32_t pixel_framebuffer_write_region(struct pixel_framebuffer *fb,
     return E_OK;
 }
 
-int32_t pixel_framebuffer_set_pixel(struct pixel_framebuffer *fb,
-                                    uint16_t index,
-                                    struct pixel_framebuffer_color color)
+int32_t pixel_framebuffer_set_pixel(struct pixel_framebuffer *fb, uint16_t index, struct pixel_framebuffer_color color)
 {
     uint32_t offset = 0U;
 

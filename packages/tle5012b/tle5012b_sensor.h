@@ -18,12 +18,16 @@ extern "C" {
 #include "device.h"
 #include <stdint.h>
 /*---------- macro ----------*/
-#define TLE5012B_E_SYSTEM              (-101)
-#define TLE5012B_E_INTERFACE           (-102)
-#define TLE5012B_E_INVALID_ANGLE       (-103)
+#define TLE5012B_E_SYSTEM        (-101)
+#define TLE5012B_E_INTERFACE     (-102)
+#define TLE5012B_E_INVALID_ANGLE (-103)
 /*---------- type define ----------*/
 struct tle5012b_angle_data {
     float mechanical_angle_deg;
+};
+
+struct tle5012b_speed_data {
+    float mechanical_speed_deg_s;
 };
 
 struct tle5012b_sensor {
@@ -33,6 +37,7 @@ struct tle5012b_sensor {
 /*---------- function prototype ----------*/
 int32_t tle5012b_sensor_init(struct tle5012b_sensor *sensor, device_t *spi_dev);
 int32_t tle5012b_sensor_read_angle(struct tle5012b_sensor *sensor, struct tle5012b_angle_data *angle_data);
+int32_t tle5012b_sensor_read_speed(struct tle5012b_sensor *sensor, struct tle5012b_speed_data *speed_data);
 /*---------- end of file ----------*/
 #ifdef __cplusplus
 }

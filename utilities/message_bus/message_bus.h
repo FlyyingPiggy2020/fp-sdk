@@ -158,7 +158,8 @@ msgbus_service_t msgbus_service_find(message_bus_t bus, const char *name);
  * @param  resp_size: 响应长度输入输出参数，可为 NULL
  * @return 0=成功, <0=失败
  */
-int32_t msgbus_service_call(msgbus_service_t service, const void *req, uint32_t req_size, void *resp, uint32_t *resp_size);
+int32_t
+msgbus_service_call(msgbus_service_t service, const void *req, uint32_t req_size, void *resp, uint32_t *resp_size);
 
 #ifdef __cplusplus
 }

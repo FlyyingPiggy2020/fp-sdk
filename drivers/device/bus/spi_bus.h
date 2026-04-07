@@ -20,11 +20,11 @@ extern "C" {
 #include <stdbool.h>
 #include <stdint.h>
 /*---------- macro ----------*/
-#define IOCTL_SPIBUS_XFER           (IOCTL_USER_START + 0x00)
+#define IOCTL_SPIBUS_XFER        (IOCTL_USER_START + 0x00)
 
-#define SPI_BUS_MSG_FLAG_READ       (1U << 0)
-#define SPI_BUS_MSG_FLAG_WRITE      (1U << 1)
-#define SPI_BUS_MSG_FLAG_KEEP_CS    (1U << 2)
+#define SPI_BUS_MSG_FLAG_READ    (1U << 0)
+#define SPI_BUS_MSG_FLAG_WRITE   (1U << 1)
+#define SPI_BUS_MSG_FLAG_KEEP_CS (1U << 2)
 /*---------- type define ----------*/
 struct spi_bus_describe;
 
